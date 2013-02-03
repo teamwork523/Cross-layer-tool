@@ -8,6 +8,9 @@ Then map the packets from PCAP with the RRC states in the log
 """
 
 import sys
+import calendar
+import const
+from datetime import datetime
 from optparse import OptionParser
 
 class QCATEntry:
@@ -21,15 +24,39 @@ class QCATEntry:
         self.title = title
         self.detail = detail
         self.hex_dump = hex_dump
+        # timestamp: [unix_timestamp, milliseconds]
+        self.timestamp = []
+        # order matters
+        self.__procTitle()
+        #self.__procDetail()
+        #self.__procHexDump()
 
     # TODO
-    def procTitle(self):
-        print "a"
+    def __procTitle(self):
+        print "Process Titile"
+        if self.title != "":
+            tList = self.title.split()
+            # TODO: Support time difference
+            # only support UTC right now
+            year = (int)(tList[0])
+            month = (int)(const.MONTH_MAP[tList[1].lower()])
+            day = (int)(tList[2])
+            [secsList, millisec] = tList[3].split('.')
+            [hour, minutes, sec] = secsList.split(':')
+            dt = datetime(year, month, day, (int)(hour), (int)(minutes), (int)(sec))
+            unixTime = calendar.timegm(dt.utctimetuple())
+            self.timestamp = [unixTime, (int)(millisec)]
+            print self.timestamp
+        else:
+            self.title = None
 
-    def procDetail(self):
-        print "b"
+    def __procDetail(self):
+        if self.detail.find("not supported") != -1:
+            self.detail = None
+        else:
+            print "b"
 
-    def procHexDump(self):
+    def __procHexDump(self):
         print "c"
 
 

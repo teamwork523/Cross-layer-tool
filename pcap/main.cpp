@@ -50,10 +50,13 @@ int main(int argc, char **argv) {
 	}
 
 	while (packet = pcap_next(handle,&header)) {
-		u_char *pkt_ptr = (u_char *)packet; 
-		time_t timestamp=header.ts.tv_sec;
-		cout<<"***"<<endl;
-		cout<<"T: "<<timestamp<<endl;
+		u_char *pkt_ptr = (u_char *)packet;
+                // seconds
+		time_t timestamp = header.ts.tv_sec;
+                // convert microseconds into milliseconds
+                long int millisec = header.ts.tv_usec/1000; 
+		cout << "***" << endl;
+		cout << timestamp << " " << millisec << endl;
 		int caplen=header.caplen;
 
 		for (int i=0;i<caplen;i++){
