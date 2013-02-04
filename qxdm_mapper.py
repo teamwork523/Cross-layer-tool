@@ -7,7 +7,7 @@ This program analyze the Data Set generated from QXDM filtered log file
 Then map the packets from PCAP with the RRC states in the log
 """
 
-import sys
+import sys, re
 import calendar
 import const
 from datetime import datetime
@@ -26,18 +26,21 @@ class QCATEntry:
         self.hex_dump = hex_dump
         # timestamp: [unix_timestamp, milliseconds]
         self.timestamp = []
+        # log id
+        self.logID = None
+        # RRC id
+        self.rrcID = None
         # order matters
         self.__procTitle()
-        #self.__procDetail()
+        self.__procDetail()
         #self.__procHexDump()
 
-    # TODO
     def __procTitle(self):
         print "Process Titile"
         if self.title != "":
             tList = self.title.split()
             # TODO: Support time difference
-            # only support UTC right now
+            # Parse the timestamp, only support UTC right now
             year = (int)(tList[0])
             month = (int)(const.MONTH_MAP[tList[1].lower()])
             day = (int)(tList[2])
@@ -47,18 +50,25 @@ class QCATEntry:
             unixTime = calendar.timegm(dt.utctimetuple())
             self.timestamp = [unixTime, (int)(millisec)]
             print self.timestamp
+            # Parse the log id
+            self.logID = tList[5]
+            print self.logID
         else:
             self.title = None
 
     def __procDetail(self):
-        if self.detail.find("not supported") != -1:
+        if self.detail[0].find("not supported") != -1:
             self.detail = None
         else:
-            print "b"
+            print "Process detail"
+            if self.logID == const.RRC_ID:
+                rrclist = self.detail[0].split()
+                # extract int from parentheses
+                self.rrcID = (int)(re.findall("\d+",rrclist[-1])[0])
+                print "Id:%s, RRC_state:%s" % (self.rrcID, const.RRC_MAP[self.rrcID])
 
     def __procHexDump(self):
         print "c"
-
 
 def init_optParser():
     optParser = OptionParser(usage="./%prog [-l, --log] QCAT_LOG_PATH")
