@@ -1,3 +1,5 @@
+# Timestamp accuracy, in terms of milliseconds
+TS_DELTA = 1
 
 # Map month to numerical value
 MONTH_MAP = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, \
