@@ -22,5 +22,9 @@ RRC_MAP = {FACH_ID: "CELL_FACH",
 
 # transport layer protocol map
 IP_ID = int("0x01", 16) # QCAT protocol id
-TLP_MAP = {6:"TCP",
-           17: "UDP"}
+TCP_ID = 6
+UDP_ID = 17
+IDtoTLP_MAP = {TCP_ID: "TCP",
+               UDP_ID: "UDP"}
+TLPtoID_MAP = {"TCP": TCP_ID,
+               "UDP": UDP_ID}
