@@ -9,8 +9,14 @@ MONTH_MAP = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, \
 # Map between log id with log entry
 PROTOCOL_ID = int("0x11EB", 16)
 RRC_ID = int("0x4125", 16)
+EUL_STATS_ID = int("0x4311", 16)
+UL_PDU_ID = int("0x4134", 16)   # ReTx info
+DL_PDU_ID = int("0x413B", 16)   # ReTx info
 LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
-               RRC_ID: "WCDMA RRC States"}
+               RRC_ID: "WCDMA RRC States",
+               EUL_STATS_ID: "EUL Link Statistics", 
+               UL_PDU_ID: "UL PDU information", 
+               DL_PDU_ID: "DL PDU information"}
 
 # map between RRC id and RRC state
 FACH_ID = 2

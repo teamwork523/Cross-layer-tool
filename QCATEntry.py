@@ -6,7 +6,7 @@
 Define QCAT log entry class
 """
 
-import re
+import re, math
 import calendar
 from datetime import datetime
 import const
@@ -55,6 +55,22 @@ class QCATEntry:
         self.udp = {"src_port": None, \
                     "dst_port": None, \
                     "total_len": None}
+        # TODO: Link layer state info parse
+        #       1. Retransmission rate
+        #       2. Row bits
+        #       3. scheduled bits
+        #       4. power limited bits
+        self.eul = {"sample_len": None,
+                    "tti": None, # ms
+                    "retx_rate": None, 
+                    "raw_bit_rate": None, # kbps
+                    "sched_bit_rate": None, # kbps
+                    "power_bit_rate": None, # kbps
+                    "SG_bit_rate": None, # kbps
+                    "t2p_ec": None, # mW
+                    "t2p_ed": None, # mW
+                    "sched_buffer": None, # bytes
+                    "non_sched_buffer": None}
         # order matters
         self.__procTitle()
         self.__procDetail()
@@ -86,12 +102,46 @@ class QCATEntry:
         if self.detail[0].find("not supported") != -1:
             self.detail = None
         else:
-            # print "Process detail"
+            # Parse RRC state entry
             if self.logID == const.RRC_ID:
                 rrclist = self.detail[0].split()
                 # extract int from parentheses
                 self.rrcID = (int)(re.findall("\d+",rrclist[-1])[0])
                 # print "Id:%s, RRC_state:%s" % (self.rrcID, const.RRC_MAP[self.rrcID])
+            # Parse Uplink state entry
+            elif self.logID == const.EUL_STATS_ID:
+                """
+                {"sample_len": None,
+                    "tti": None, # ms
+                    "retx_rate": None, 
+                    "raw_bit_rate": None, # kbps
+                    "sched_bit_rate": None, # kbps
+                    "power_bit_rate": None, # kbps
+                    "SG_bit_rate": None, # kbps
+                    "hs_power": None, # mW
+                    "sched_buffer": None, # bytes
+                    "non_sched_buffer": None}
+                """
+                self.eul["sample_len"] = float(self.detail[0].split()[-1])
+                self.eul["tti"] = float(re.findall(r"[\d.-]+", self.detail[1].split()[-1])[0])
+                # self.eul["retx_rate"] = float(self.detail[9].split()[-1].split(":")[1])/self.eul["sample_len"]
+                self.eul["raw_bit_rate"] = float(self.detail[14].split()[-1])/self.eul["tti"]
+                self.eul["sched_bit_rate"] = float(self.detail[15].split()[-1])/self.eul["tti"]
+                self.eul["power_bit_rate"] = float(self.detail[17].split()[-1])/self.eul["tti"]
+                self.eul["SG_bit_rate"] = float(self.detail[18].split()[-1])/self.eul["tti"]
+                ec_power = self.detail[23].split()[-2]
+                if ec_power != "=":
+                    self.eul["t2p_ec"] = math.pow(10, float(ec_power)/10.0)*1000
+                else:
+                    self.eul["t2p_ec"] = -1
+                ed_power = self.detail[24].split()[-2]
+                if ed_power != "=":
+                    self.eul["t2p_ed"] = math.pow(10, float(ed_power)/10.0)*1000
+                else:
+                    self.eul["t2p_ed"] = -1
+                self.eul["sched_buffer"] = float(self.detail[32].split()[-2])
+                self.eul["non_sched_buffer"] = float(self.detail[33].split()[-2])
+                
             # TODO: process other type of log entry
 
     def __procHexDump(self):
@@ -183,4 +233,18 @@ class QCATEntry:
         print "UDP src port is %d" % (self.udp["src_port"])
         print "UDP dst prot is %d" % (self.udp["dst_port"])
         print "UDP total length is %d" % (self.udp["total_len"])
+        
+    def __debugEUL(self):
+        print "*"* 40
+        print "sample length %f" % self.eul["sample_len"] 
+        print "tti is %f " % self.eul["tti"]
+        print "retransmission rate is %f" % self.eul["retx_rate"]
+        print "Raw bit rate is %f" % self.eul["raw_bit_rate"] 
+        print "Scheduled bit rate is %f" % self.eul["sched_bit_rate"] 
+        print "Power bit rate is %f" % self.eul["power_bit_rate"] 
+        print "SG bit rate is %f" % self.eul["SG_bit_rate"]
+        print "Power EC is %f" % self.eul["t2p_ec"]
+        print "Power ED is %f" % self.eul["t2p_ed"]
+        print "scheduled buffer is %f" % self.eul["sched_buffer"]
+        print "non scheduled buffer is %f" % self.eul["non_sched_buffer"]
                 

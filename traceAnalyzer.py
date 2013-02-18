@@ -50,16 +50,17 @@ def main():
 
     QCATEntries = util.readQCATLog(options.inQCATLogFile)
     util.assignRRCState(QCATEntries)
+    util.assignEULState(QCATEntries)
     
     # validate ip address
     cond = {}
     if options.srcIP != None:
-        if util.validateIP(option.srcIP) == None:
+        if util.validateIP(options.srcIP) == None:
             optParser.error("Invalid source IP")
         else:
             cond["src_ip"] = options.srcIP
     if options.dstIP != None:
-        if util.validateIP(option.dstIP) == None:
+        if util.validateIP(options.dstIP) == None:
             optParser.error("Invalid destination IP")
         else:
             cond["dst_ip"] = options.dstIP
@@ -71,14 +72,16 @@ def main():
         cond["tlp_id"] = const.TLPtoID_MAP[options.protocolType.upper()]
     
     # TODO: add filter
-    util.packetFilter(QCATEntries, cond)
+    QCATEntries = util.packetFilter(QCATEntries, cond)
     
     """
     for i in QCATEntries:
         if i.rrcID != None and i.ip["tlp_id"] != None:
             print "RRC: %d, Protocol: %d" % (i.rrcID, i.ip["tlp_id"])
     """
-
+    
+    util.printResult(QCATEntries)
+    
     # TODO: might consider not to use external traces
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
@@ -100,7 +103,7 @@ def main():
         print "DCH state rate is %f"%((float)(countMap[const.DCH_ID])/(float)(len(PCAPPackets)))
         print "FACH state rate is %f"%((float)(countMap[const.FACH_ID])/(float)(len(PCAPPackets)))
         print "PCH state rate is %f"%((float)(countMap[const.PCH_ID])/(float)(len(PCAPPackets)))
-    else:
+    elif options.isMapping == False and options.inPCAPFile != "":
         optParser.error("Include -m is you want to map PCAP file to QCAT log file")
 
 if __name__ == "__main__":

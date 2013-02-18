@@ -73,9 +73,29 @@ def assignRRCState(entries):
     for entry in entries:
         if entry.logID == const.RRC_ID:
             mostRecentRRCID = entry.rrcID
-        elif entry.logID == const.PROTOCOL_ID:
+        else:
             if entry.rrcID == None and mostRecentRRCID != None:
                 entry.rrcID = mostRecentRRCID
+
+def assignEULState(entries):
+    mostRecentRC = None
+    mostRecentED = None
+    mostRecentSpeed = None
+    for entry in entries:
+        if entry.logID == const.EUL_STATS_ID:
+            if entry.eul["t2p_ec"] != -1:
+                mostRecentRC = entry.eul["t2p_ec"]
+            if entry.eul["t2p_ed"] != -1:
+                mostRecentED = entry.eul["t2p_ed"]
+            if entry.eul["raw_bit_rate"] != 0:
+                mostRecentSpeed = entry.eul["raw_bit_rate"]
+        else:
+            if mostRecentRC != None:
+                entry.eul["t2p_ec"] = mostRecentRC
+            if mostRecentED != None:
+                entry.eul["t2p_ed"] = mostRecentED
+            if mostRecentSpeed != None:
+                entry.eul["raw_bit_rate"] = mostRecentSpeed
 
 # Use timestamp as key to create the map
 def createTSbasedMap(entries):
@@ -91,6 +111,8 @@ def createTSbasedMap(entries):
 # filter out proper packets
 def packetFilter(entries, cond):
     selectedEntries = []
+    privTime = 0
+    startTime = 0
     for i in entries:
         # ip src
         if cond.has_key("src_ip") and i.ip["src_ip"] != cond["src_ip"]:
@@ -114,6 +136,25 @@ def packetFilter(entries, cond):
                 if cond.has_key("dst_port") and cond["dst_port"] != i.udp["dst_port"]:
                     continue
         selectedEntries.append(i)
+        if privTime == 0:
+            diff = 0
+        else:
+            diff = i.timestamp[0]*1000+i.timestamp[1] - privTime
+        ts = datetime.fromtimestamp(i.timestamp[0]).strftime('%Y-%m-%d %H:%M:%S')
+        if startTime == 0:
+            startTime = i.timestamp[0] + float(i.timestamp[1])/1000.0
+        # print "%s %d %s %s %dms" % (ts, i.ip["total_len"], const.IDtoTLP_MAP[i.ip["tlp_id"]], const.RRC_MAP[i.rrcID], diff)
+        """
+        if i.rrcID == 2:
+            tab = "\t2\t0\t0"
+        elif i.rrcID == 3:
+            tab = "\t0\t3\t0"
+        elif i.rrcID == 4:
+            tab = "\t0\t0\t4"
+        print "%f %s %d" % (i.timestamp[0] + float(i.timestamp[1])/1000.0 - startTime, tab, i.rrcID)
+        """
+        privTime = i.timestamp[0]*1000+i.timestamp[1]
+    return selectedEntries
 
 def mapPCAPwithQCAT(p, q):
     countMap = {}
@@ -156,3 +197,17 @@ def mapPCAPwithQCAT(p, q):
 def validateIP (ip_address):
     valid = re.compile("^([0-9]{1,3}.){3}[0-9]{1,3}")
     return valid.match(ip_address)
+    
+    
+def printResult (entries):
+    for i in entries:
+        ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
+        """
+        if i.eul["t2p_ec"] != None and i.eul["t2p_ed"] != None:
+            print "%f\t%f\t%f" % (ts, i.eul["t2p_ec"], i.eul["t2p_ed"])
+        if i.eul["raw_bit_rate"] != None:
+            print "%f\t%f" % (ts, i.eul["raw_bit_rate"])
+        """
+        if i.rrcID != None:
+            print "%f\t%d" % (ts, i.rrcID)
+      
