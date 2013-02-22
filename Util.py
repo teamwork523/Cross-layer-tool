@@ -21,12 +21,14 @@ def readQCATLog(inQCATLogFile):
     hexDump = []
     # store all entries in a list
     QCATEntries = []
-
+    
+    isHex = False
     while True:
         line = infile.readline()
         if not line: break
-        if line[0] == "%":
+        if line[0] == "%" or line.strip() == "":
             continue
+        """
         if line.strip() == "":
             countNewline += 1
             if countNewline > 1 and countNewline % 2 == 1:
@@ -41,6 +43,27 @@ def readQCATLog(inQCATLogFile):
             else:
                 # hexdump
                 hexDump.append(line.strip())
+        """
+        if line.strip().split()[0] == "2013":
+            isHex = False
+            if titleAndDetail != [] and hexDump != []:
+                entry = qe.QCATEntry(titleAndDetail[0], titleAndDetail[1:], hexDump)
+                QCATEntries.append(entry)
+                titleAndDetail = []
+                hexDump = []
+            titleAndDetail.append(line.strip())
+        elif line.strip().split()[0] == "Length:":
+            isHex = True
+            hexDump.append(line.strip())
+        else:
+            if isHex:
+                hexDump.append(line.strip())
+            else:
+                titleAndDetail.append(line.strip())
+    
+    if titleAndDetail != [] and hexDump != []:
+        entry = qe.QCATEntry(titleAndDetail[0], titleAndDetail[1:], hexDump)
+        QCATEntries.append(entry)    
 
     return QCATEntries
 
@@ -81,6 +104,8 @@ def assignEULState(entries):
     mostRecentRC = None
     mostRecentED = None
     mostRecentSpeed = None
+    # need bottom up approach
+    entries.reverse()
     for entry in entries:
         if entry.logID == const.EUL_STATS_ID:
             if entry.eul["t2p_ec"] != -1:
@@ -96,6 +121,7 @@ def assignEULState(entries):
                 entry.eul["t2p_ed"] = mostRecentED
             if mostRecentSpeed != None:
                 entry.eul["raw_bit_rate"] = mostRecentSpeed
+    entries.reverse()
 
 # Use timestamp as key to create the map
 def createTSbasedMap(entries):
@@ -114,47 +140,91 @@ def packetFilter(entries, cond):
     privTime = 0
     startTime = 0
     for i in entries:
-        # ip src
-        if cond.has_key("src_ip") and i.ip["src_ip"] != cond["src_ip"]:
-            continue
-        # ip dst
-        if cond.has_key("dst_ip") and i.ip["dst_ip"] != cond["dst_ip"]:
-            continue
-        # transport layer type
-        if cond.has_key("tlp_id")and i.ip["tlp_id"] != cond["tlp_id"]:
-            continue
-        # src/dst port
-        if cond.has_key("tlp_id"):
-            if cond["tlp_id"] == const.TCP_ID:
-                if cond.has_key("src_port") and cond["src_port"] != i.tcp["src_port"]:
-                    continue
-                if cond.has_key("dst_port") and cond["dst_port"] != i.tcp["dst_port"]:
-                    continue
-            elif cond["tlp_id"] == const.UDP_ID:
-                if cond.has_key("src_port") and cond["src_port"] != i.udp["src_port"]:
-                    continue
-                if cond.has_key("dst_port") and cond["dst_port"] != i.udp["dst_port"]:
-                    continue
-        selectedEntries.append(i)
-        if privTime == 0:
-            diff = 0
+        if i.logID == const.PROTOCOL_ID:
+            # ip src
+            if cond.has_key("src_ip") and i.ip["src_ip"] != cond["src_ip"]:
+                continue
+            # ip dst
+            if cond.has_key("dst_ip") and i.ip["dst_ip"] != cond["dst_ip"]:
+                continue
+            # transport layer type
+            if cond.has_key("tlp_id")and i.ip["tlp_id"] != cond["tlp_id"]:
+                continue
+            # src/dst port
+            if cond.has_key("tlp_id"):
+                if cond["tlp_id"] == const.TCP_ID:
+                    if cond.has_key("src_port") and cond["src_port"] != i.tcp["src_port"]:
+                        continue
+                    if cond.has_key("dst_port") and cond["dst_port"] != i.tcp["dst_port"]:
+                        continue
+                elif cond["tlp_id"] == const.UDP_ID:
+                    if cond.has_key("src_port") and cond["src_port"] != i.udp["src_port"]:
+                        continue
+                    if cond.has_key("dst_port") and cond["dst_port"] != i.udp["dst_port"]:
+                        continue
+            selectedEntries.append(i)
+            if privTime == 0:
+                diff = 0
+            else:
+                diff = i.timestamp[0]*1000+i.timestamp[1] - privTime
+            ts = datetime.fromtimestamp(i.timestamp[0]).strftime('%Y-%m-%d %H:%M:%S')
+            if startTime == 0:
+                startTime = i.timestamp[0] + float(i.timestamp[1])/1000.0
+            # print "%s %d %s %s %dms" % (ts, i.ip["total_len"], const.IDtoTLP_MAP[i.ip["tlp_id"]], const.RRC_MAP[i.rrcID], diff)
+            """
+            if i.rrcID == 2:
+                tab = "\t2\t0\t0"
+            elif i.rrcID == 3:
+                tab = "\t0\t3\t0"
+            elif i.rrcID == 4:
+                tab = "\t0\t0\t4"
+            print "%f %s %d" % (i.timestamp[0] + float(i.timestamp[1])/1000.0 - startTime, tab, i.rrcID)
+            """
+            privTime = i.timestamp[0]*1000+i.timestamp[1]
         else:
-            diff = i.timestamp[0]*1000+i.timestamp[1] - privTime
-        ts = datetime.fromtimestamp(i.timestamp[0]).strftime('%Y-%m-%d %H:%M:%S')
-        if startTime == 0:
-            startTime = i.timestamp[0] + float(i.timestamp[1])/1000.0
-        # print "%s %d %s %s %dms" % (ts, i.ip["total_len"], const.IDtoTLP_MAP[i.ip["tlp_id"]], const.RRC_MAP[i.rrcID], diff)
-        """
-        if i.rrcID == 2:
-            tab = "\t2\t0\t0"
-        elif i.rrcID == 3:
-            tab = "\t0\t3\t0"
-        elif i.rrcID == 4:
-            tab = "\t0\t0\t4"
-        print "%f %s %d" % (i.timestamp[0] + float(i.timestamp[1])/1000.0 - startTime, tab, i.rrcID)
-        """
-        privTime = i.timestamp[0]*1000+i.timestamp[1]
+            selectedEntries.append(i)
     return selectedEntries
+
+# process link layer retransmission
+def procRLCReTx(Entries):
+    seqNumULSet = set()
+    seqNumDLSet = set()
+    for entry in Entries:
+        if entry.logID == const.UL_PDU_ID:
+            for i in entry.ul_pdu[0]["sn"]:
+                if i in seqNumULSet:
+                    entry.retx["ul"] += 1
+                else:
+                    seqNumULSet.add(i)
+        elif entry.logID == const.DL_PDU_ID:
+            for i in entry.dl_pdu[0]["sn"]:
+                if i in seqNumDLSet:
+                    entry.retx["dl"] += 1
+                else:
+                    seqNumDLSet.add(i)
+                    
+# assign retransmission of transport layer and return total amount
+def procTPReTx (entries):
+    if not entries:
+        return
+    count = 0
+    priv_ACK = None
+    priv_SEQ = None
+    for entry in entries:
+        if entry.ip["tlp_id"] == const.TCP_ID:
+            if not priv_ACK and not priv_SEQ:
+                priv_ACK = entry.tcp["ACK_NUM"]
+                priv_SEQ = entry.tcp["SEQ_NUM"]
+                continue
+            else:
+                if entry.tcp["ACK_NUM"] and entry.tcp["SEQ_NUM"] and \
+                   entry.tcp["ACK_NUM"] == priv_ACK and \
+                   entry.tcp["SEQ_NUM"] == priv_SEQ:
+                    entry.retx["tp"] += 1
+                    count += 1
+            priv_ACK = entry.tcp["ACK_NUM"]
+            priv_SEQ = entry.tcp["SEQ_NUM"]
+    return count
 
 def mapPCAPwithQCAT(p, q):
     countMap = {}
@@ -197,9 +267,16 @@ def mapPCAPwithQCAT(p, q):
 def validateIP (ip_address):
     valid = re.compile("^([0-9]{1,3}.){3}[0-9]{1,3}")
     return valid.match(ip_address)
-    
-    
+
 def printResult (entries):
+    ULBytes_total = 0.0
+    DLBytes_total = 0.0
+    ReTxUL = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
+    ReTxDL = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
+    rrc_state = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
+    Bytes_on_fly = 0.0
+    retxul_bytes = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
+    retxdl_bytes =  {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
     for i in entries:
         ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
         """
@@ -209,5 +286,51 @@ def printResult (entries):
             print "%f\t%f" % (ts, i.eul["raw_bit_rate"])
         """
         if i.rrcID != None:
-            print "%f\t%d" % (ts, i.rrcID)
+            # print "%f\t%d\t%d\t%d" % (ts, i.rrcID, i.retx["ul"], i.retx["dl"])
+            rrc_state[i.rrcID] += 1
+            ReTxUL[i.rrcID] += i.retx["ul"]
+            ReTxDL[i.rrcID] += i.retx["dl"]
+            if i.logID == const.PROTOCOL_ID:
+                Bytes_on_fly += i.ip["total_len"]
+            if i.logID == const.UL_PDU_ID:
+                ULBytes_total += i.ul_pdu[0]["numPDU"]*i.ul_pdu[0]["size"]
+                if i.retx["ul"] != 0:
+                    retxul_bytes[i.rrcID] += i.retx["ul"]*i.ul_pdu[0]["size"]
+            if i.logID == const.DL_PDU_ID:
+                DLBytes_total += i.dl_pdu[0]["size"]
+                if i.retx["dl"] != 0:
+                    retxdl_bytes[i.rrcID] += i.retx["dl"]*i.dl_pdu[0]["size"]
+            
+    # print "***************"
+    totUL = float(ReTxUL[2]+ReTxUL[3]+ReTxUL[4])
+    totDL = float(ReTxDL[2]+ReTxDL[3]+ReTxDL[4])
+    totState = float(rrc_state[2]+rrc_state[3]+rrc_state[4])
+    totULBytes = float(retxul_bytes[2]+retxul_bytes[3]+retxul_bytes[4])
+    totDLBytes = float(retxdl_bytes[2]+retxdl_bytes[3]+retxdl_bytes[4])
+    # print "%d\t%d\t%d\t%d\t%d\t%d" % (ReTxUL[const.FACH_ID], ReTxUL[const.DCH_ID], ReTxUL[const.PCH_ID], ReTxDL[const.FACH_ID], ReTxDL[const.DCH_ID], ReTxDL[const.PCH_ID])
+    
+    """
+    print "Total UL retx: %f" % (totUL)
+    print "Total DL retx: %f" % (totDL)
+    print "Total RRC state: %f" % (totState)
+    """
+    print "Total bytes on fly: %f" % (Bytes_on_fly)
+    print "Total Uplink bytes: %d" % (ULBytes_total)
+    print "Total Downlink bytes: %d" % (DLBytes_total)
+    """
+    print "Total Uplink RT bytes: %f" % (totULBytes)
+    print "Total Downlink RT bytes: %f" % (totDLBytes)
+    if totUL != 0.0:
+        print "UL -- FACH %f, DCH %f, PCH %f" % (ReTxUL[const.FACH_ID]/totUL, ReTxUL[const.DCH_ID]/totUL, ReTxUL[const.PCH_ID]/totUL)
+    if totDL != 0.0:
+        print "DL -- FACH %f, DCH %f, PCH %f" % (ReTxDL[const.FACH_ID]/totDL, ReTxDL[const.DCH_ID]/totDL, ReTxDL[const.PCH_ID]/totDL)
+    if totState != 0.0:
+        print "State dist -- FACH %f, DCH %f, PCH %f" % (rrc_state[const.FACH_ID]/totState, rrc_state[const.DCH_ID]/totState, rrc_state[const.PCH_ID]/totState)
+    if Bytes_on_fly != 0:
+        print "RT fraction : %f" % ((totULBytes+totDLBytes)/Bytes_on_fly)
+    if totULBytes != 0.0:
+        print "UL Retx bytes -- FACH %f, DCH %f, PCH %f" % (retxul_bytes[const.FACH_ID]/totULBytes, retxul_bytes[const.DCH_ID]/totULBytes, retxul_bytes[const.PCH_ID]/totULBytes)
+    if totDLBytes != 0.0:
+        print "DL Retx bytes -- FACH %f, DCH %f, PCH %f" % (retxdl_bytes[const.FACH_ID]/totDLBytes, retxdl_bytes[const.DCH_ID]/totDLBytes, retxdl_bytes[const.PCH_ID]/totDLBytes)
+    """
       

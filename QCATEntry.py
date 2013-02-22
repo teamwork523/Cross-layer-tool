@@ -32,6 +32,8 @@ class QCATEntry:
         self.logID = None
         # RRC id
         self.rrcID = None 
+        # ReTx count: RLC uplink, RLC downlink, Transport layer
+        self.retx = {"ul":0, "dl":0, "tp":0}
         # ip information
         self.ip = {"tlp_id": None, \
                    "seg_num": None, \
@@ -44,14 +46,16 @@ class QCATEntry:
         # TODO: add more tcp fields
         self.tcp = {"src_port": None, \
                     "dst_port": None, \
-                    "CWR": None, \
-                    "ECE": None, \
-                    "URG": None, \
-                    "ACK": None, \
-                    "PSH": None, \
-                    "RST": None, \
-                    "SYN": None, \
-                    "FIN": None}
+                    "CWR_FLAG": None, \
+                    "ECE_FLAG": None, \
+                    "URG_FLAG": None, \
+                    "ACK_FLAG": None, \
+                    "PSH_FLAG": None, \
+                    "RST_FLAG": None, \
+                    "SYN_FLAG": None, \
+                    "FIN_FLAG": None, \
+                    "ACK_NUM": None, \
+                    "SEQ_NUM": None}
         self.udp = {"src_port": None, \
                     "dst_port": None, \
                     "total_len": None}
@@ -71,6 +75,16 @@ class QCATEntry:
                     "t2p_ed": None, # mW
                     "sched_buffer": None, # bytes
                     "non_sched_buffer": None}
+        # RLC UL/DL PDU
+        # TODO: currently assume only one entities
+        self.ul_pdu = [{"chan": None,
+                        "sn": [],
+                        "numPDU": None,
+                        "size": None }] # bytes
+        self.dl_pdu = [{"chan": None,
+                        "sn": [],
+                        "numPDU": None,
+                        "size": None }] # bytes
         # order matters
         self.__procTitle()
         self.__procDetail()
@@ -141,7 +155,39 @@ class QCATEntry:
                     self.eul["t2p_ed"] = -1
                 self.eul["sched_buffer"] = float(self.detail[32].split()[-2])
                 self.eul["non_sched_buffer"] = float(self.detail[33].split()[-2])
-                
+            # Parse Uplink PDU state
+            # TODO: currently assume only one entities
+            elif self.logID == const.UL_PDU_ID:
+                # check for number of entities
+                if int(self.detail[0].split()[-1]) != 1:
+                    raise Exception("More than one entities in UL AM PDU")
+                for i in self.detail:
+                    if i.find("DATA PDU") != -1:
+                        info = i.split("::")[1].strip().split(", ")
+                        self.ul_pdu[0]["chan"] = int(info[0].split(":")[1])
+                        self.ul_pdu[0]["sn"].append(int(info[1].split(" ")[1], 16))
+                    elif i[:8] == "PDU Size":
+                        self.ul_pdu[0]["size"] = int(i.split()[-1])/8
+                    elif i[:14] == "Number of PDUs":
+                        self.ul_pdu[0]["numPDU"] = int(i.split()[-1])
+            # Parse Downlink PDU state
+            # TODO: currently assume only one entities
+            elif self.logID == const.DL_PDU_ID:
+                # check for number of entities
+                if int(self.detail[0].split()[-1]) != 1:
+                    raise Exception("More than one entities in DL AM PDU")
+                for i in self.detail:
+                    if i.find("DATA PDU") != -1:
+                        info = i.split("::")[1].strip().split(", ")
+                        self.dl_pdu[0]["chan"] = int(info[0].split(":")[0])
+                        self.dl_pdu[0]["sn"].append(int(info[1].split("=")[1], 16))
+                    elif i[:8] == "PDU Size":
+                        if self.dl_pdu[0]["size"] == None:
+                            self.dl_pdu[0]["size"] = int(i.split()[-1])/8
+                        else:
+                            self.dl_pdu[0]["size"] += int(i.split()[-1])/8
+                    elif i[:14] == "Number of PDUs":
+                        self.dl_pdu[0]["numPDU"] = int(i.split()[-1])
             # TODO: process other type of log entry
 
     def __procHexDump(self):
@@ -186,15 +232,19 @@ class QCATEntry:
                         start = Payload_Header_Len + self.ip["header_len"]
                         self.tcp["src_port"] = int("".join(self.hex_dump["payload"][start:start+2]), 16)
                         self.tcp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
+                        self.tcp["SEQ_NUM"] = int("".join(self.hex_dump["payload"][start+4:start+8]), 16)
+                        self.tcp["ACK_NUM"] = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
+                        print "SEQ number: %d" % (self.tcp["SEQ_NUM"])
+                        print "ACK_NUM: %d" % (self.tcp["ACK_NUM"])
                         flag = int(self.hex_dump["payload"][start+13], 16)
-                        self.tcp["CWR"] = bool((flag >> 7) & 0x1)
-                        self.tcp["ECE"] = bool((flag >> 6) & 0x1)
-                        self.tcp["URG"] = bool((flag >> 5) & 0x1)
-                        self.tcp["ACK"] = bool((flag >> 4) & 0x1)
-                        self.tcp["PSH"] = bool((flag >> 3) & 0x1)
-                        self.tcp["RST"] = bool((flag >> 2) & 0x1)
-                        self.tcp["SYN"] = bool((flag >> 1) & 0x1)
-                        self.tcp["FIN"] = bool(flag & 0x1)
+                        self.tcp["CWR_FLAG"] = bool((flag >> 7) & 0x1)
+                        self.tcp["ECE_FLAG"] = bool((flag >> 6) & 0x1)
+                        self.tcp["URG_FLAG"] = bool((flag >> 5) & 0x1)
+                        self.tcp["ACK_FLAG"] = bool((flag >> 4) & 0x1)
+                        self.tcp["PSH_FLAG"] = bool((flag >> 3) & 0x1)
+                        self.tcp["RST_FLAG"] = bool((flag >> 2) & 0x1)
+                        self.tcp["SYN_FLAG"] = bool((flag >> 1) & 0x1)
+                        self.tcp["FIN_FLAG"] = bool(flag & 0x1)
                         # self.__debugTCP()
                     
                     # Parse UDP Packet

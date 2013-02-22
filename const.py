@@ -10,8 +10,8 @@ MONTH_MAP = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, \
 PROTOCOL_ID = int("0x11EB", 16)
 RRC_ID = int("0x4125", 16)
 EUL_STATS_ID = int("0x4311", 16)
-UL_PDU_ID = int("0x4134", 16)   # ReTx info
-DL_PDU_ID = int("0x413B", 16)   # ReTx info
+UL_PDU_ID = int("0x413B", 16)   # UL on Link Layer info
+DL_PDU_ID = int("0x418B", 16)   # DL on Link Layer info
 LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                RRC_ID: "WCDMA RRC States",
                EUL_STATS_ID: "EUL Link Statistics", 

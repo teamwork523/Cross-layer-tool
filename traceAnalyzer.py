@@ -51,6 +51,8 @@ def main():
     QCATEntries = util.readQCATLog(options.inQCATLogFile)
     util.assignRRCState(QCATEntries)
     util.assignEULState(QCATEntries)
+    totalTpReTxCount = util.procTPReTx(QCATEntries)
+    print "Total Duplicate Transmission is %d" % (totalTpReTxCount)
     
     # validate ip address
     cond = {}
@@ -72,7 +74,9 @@ def main():
         cond["tlp_id"] = const.TLPtoID_MAP[options.protocolType.upper()]
     
     # TODO: add filter
+    # print "Before filter length is %d" % (len(QCATEntries))
     QCATEntries = util.packetFilter(QCATEntries, cond)
+    # print "After filter length is %d" % (len(QCATEntries))
     
     """
     for i in QCATEntries:
@@ -80,6 +84,7 @@ def main():
             print "RRC: %d, Protocol: %d" % (i.rrcID, i.ip["tlp_id"])
     """
     
+    util.procRLCReTx(QCATEntries)
     util.printResult(QCATEntries)
     
     # TODO: might consider not to use external traces
