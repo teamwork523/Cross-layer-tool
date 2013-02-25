@@ -10,6 +10,7 @@ import re, math
 import calendar
 from datetime import datetime
 import const
+import Util as util
 
 # define constant
 Payload_Header_Len = 8
@@ -41,7 +42,7 @@ class QCATEntry:
                    "src_ip": None, \
                    "dst_ip": None, \
                    "header_len": None, \
-                   "total_len": None}
+                   "total_len": 0}
         # TCP information
         # TODO: add more tcp fields
         self.tcp = {"src_port": None, \
@@ -80,11 +81,19 @@ class QCATEntry:
         self.ul_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
-                        "size": None }] # bytes
+                        "size": 0 }] # bytes
         self.dl_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
-                        "size": None }] # bytes
+                        "size": 0 }] # bytes
+        # AGC info, record all the Tx/Rx power info
+        self.agc = {"sample_num": None,
+                    "start_cfn": None,
+                    "RxAGC": [],
+                    "TxAGC": []}
+        # Either calculated from AGC or acquired from most recent value
+        self.rssi = {"Rx": None,
+                     "Tx": None}
         # order matters
         self.__procTitle()
         self.__procDetail()
@@ -188,6 +197,30 @@ class QCATEntry:
                             self.dl_pdu[0]["size"] += int(i.split()[-1])/8
                     elif i[:14] == "Number of PDUs":
                         self.dl_pdu[0]["numPDU"] = int(i.split()[-1])
+            # Parse AGC entries
+            # Collect Rx only for ch 0
+            elif self.logID == const.AGC_ID:
+                if len(self.detail) < 9:
+                    raise Exception("Less content than expected")
+                self.agc["sample_num"] = int(self.detail[1].split()[-1])
+                self.agc["start_cfn"] = int(self.detail[2].split()[-1])
+                # print "Sample Num is %d" % (self.agc["sample_num"])
+                # print "Start cfn is %d" % (self.agc["start_cfn"])
+                for i in self.detail[8:]:
+                    line = i.split("|")[1:-1]
+                    try:
+                        if line[1].strip():
+                            self.agc["RxAGC"].append(float(line[1]))
+                        if line[5].strip():
+                            self.agc["TxAGC"].append(float(line[5]))
+                    except ValueError as detail:
+                        pass
+                if self.agc["RxAGC"]:
+                    self.rssi["Rx"] = util.conv_dmb_to_rssi(meanValue(self.agc["RxAGC"]))
+                if self.agc["TxAGC"]:
+                    self.rssi["Tx"] = util.conv_dmb_to_rssi(meanValue(self.agc["TxAGC"]))
+                # print self.agc["RxAGC"]
+                # print self.agc["TxAGC"]
             # TODO: process other type of log entry
 
     def __procHexDump(self):
@@ -234,8 +267,6 @@ class QCATEntry:
                         self.tcp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                         self.tcp["SEQ_NUM"] = int("".join(self.hex_dump["payload"][start+4:start+8]), 16)
                         self.tcp["ACK_NUM"] = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
-                        print "SEQ number: %d" % (self.tcp["SEQ_NUM"])
-                        print "ACK_NUM: %d" % (self.tcp["ACK_NUM"])
                         flag = int(self.hex_dump["payload"][start+13], 16)
                         self.tcp["CWR_FLAG"] = bool((flag >> 7) & 0x1)
                         self.tcp["ECE_FLAG"] = bool((flag >> 6) & 0x1)
@@ -270,14 +301,16 @@ class QCATEntry:
     def __debugTCP(self):
         print "TCP src port is %d" % (self.tcp["src_port"])
         print "TCP dst prot is %d" % (self.tcp["dst_port"])
-        print "CWR is %d" % (self.tcp["CWR"])
-        print "ECE is %d" % (self.tcp["ECE"])
-        print "URG is %d" % (self.tcp["URG"])
-        print "ACK is %d" % (self.tcp["ACK"])
-        print "PSH is %d" % (self.tcp["PSH"])
-        print "RST is %d" % (self.tcp["RST"])
-        print "SYN is %d" % (self.tcp["SYN"])
-        print "FIN is %d" % (self.tcp["FIN"])
+        print "SEQ number: %d" % (self.tcp["SEQ_NUM"])
+        print "ACK_NUM: %d" % (self.tcp["ACK_NUM"])
+        print "CWR_FLAG is %d" % (self.tcp["CWR_FLAG"])
+        print "ECE_FLAG is %d" % (self.tcp["ECE_FLAG"])
+        print "URG_FLAG is %d" % (self.tcp["URG_FLAG"])
+        print "ACK_FLAG is %d" % (self.tcp["ACK_FLAG"])
+        print "PSH_FLAG is %d" % (self.tcp["PSH_FLAG"])
+        print "RST_FLAG is %d" % (self.tcp["RST_FLAG"])
+        print "SYN_FLAG is %d" % (self.tcp["SYN_FLAG"])
+        print "FIN_FLAG is %d" % (self.tcp["FIN_FLAG"])
         
     def __debugUDP(self):
         print "UDP src port is %d" % (self.udp["src_port"])

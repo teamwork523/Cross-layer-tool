@@ -12,11 +12,13 @@ RRC_ID = int("0x4125", 16)
 EUL_STATS_ID = int("0x4311", 16)
 UL_PDU_ID = int("0x413B", 16)   # UL on Link Layer info
 DL_PDU_ID = int("0x418B", 16)   # DL on Link Layer info
+AGC_ID = int("0x4176", 16)  # Tx/Rx power info
 LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                RRC_ID: "WCDMA RRC States",
                EUL_STATS_ID: "EUL Link Statistics", 
                UL_PDU_ID: "UL PDU information", 
-               DL_PDU_ID: "DL PDU information"}
+               DL_PDU_ID: "DL PDU information",
+               AGC_ID: "Automatic Gain Control information (related to RSSI)"}
 
 # map between RRC id and RRC state
 FACH_ID = 2

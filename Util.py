@@ -123,6 +123,28 @@ def assignEULState(entries):
                 entry.eul["raw_bit_rate"] = mostRecentSpeed
     entries.reverse()
 
+def assignRSSIValue(entries):
+    mostRecentTxRSSI = None
+    mostRecentRxRSSI = None
+    for entry in entries:
+        if entry.logID == const.AGC_ID:
+            if entry.rssi["Tx"]:
+                mostRecentTxRSSI = entry.rssi["Tx"]
+            else:
+                if mostRecentTxRSSI:
+                    entry.rssi["Tx"] = mostRecentTxRSSI
+            if entry.rssi["Rx"]:
+                mostRecentRxRSSI = entry.rssi["Rx"]
+            else:
+                if mostRecentRxRSSI:
+                    entry.rssi["Rx"] = mostRecentRxRSSI
+        else:  
+            if mostRecentTxRSSI != None:
+                entry.rssi["Tx"] = mostRecentTxRSSI
+            if mostRecentRxRSSI:
+                entry.rssi["Rx"] = mostRecentRxRSSI
+            
+
 # Use timestamp as key to create the map
 def createTSbasedMap(entries):
     entryMap = {}
@@ -203,11 +225,10 @@ def procRLCReTx(Entries):
                 else:
                     seqNumDLSet.add(i)
                     
-# assign retransmission of transport layer and return total amount
+# assign transport layer retransmission
 def procTPReTx (entries):
     if not entries:
         return
-    count = 0
     priv_ACK = None
     priv_SEQ = None
     for entry in entries:
@@ -221,9 +242,17 @@ def procTPReTx (entries):
                    entry.tcp["ACK_NUM"] == priv_ACK and \
                    entry.tcp["SEQ_NUM"] == priv_SEQ:
                     entry.retx["tp"] += 1
-                    count += 1
             priv_ACK = entry.tcp["ACK_NUM"]
             priv_SEQ = entry.tcp["SEQ_NUM"]
+
+# count the transport layer retransmission
+def countReTx (entries):
+    if not entries:
+        return
+    count = 0
+    for entry in entries:
+        if entry.ip["tlp_id"] == const.TCP_ID:
+            count += entry.retx["tp"]
     return count
 
 def mapPCAPwithQCAT(p, q):
@@ -268,69 +297,72 @@ def validateIP (ip_address):
     valid = re.compile("^([0-9]{1,3}.){3}[0-9]{1,3}")
     return valid.match(ip_address)
 
-def printResult (entries):
-    ULBytes_total = 0.0
-    DLBytes_total = 0.0
-    ReTxUL = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    ReTxDL = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    rrc_state = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    Bytes_on_fly = 0.0
-    retxul_bytes = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    retxdl_bytes =  {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    for i in entries:
-        ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
-        """
-        if i.eul["t2p_ec"] != None and i.eul["t2p_ed"] != None:
-            print "%f\t%f\t%f" % (ts, i.eul["t2p_ec"], i.eul["t2p_ed"])
-        if i.eul["raw_bit_rate"] != None:
-            print "%f\t%f" % (ts, i.eul["raw_bit_rate"])
-        """
-        if i.rrcID != None:
-            # print "%f\t%d\t%d\t%d" % (ts, i.rrcID, i.retx["ul"], i.retx["dl"])
-            rrc_state[i.rrcID] += 1
-            ReTxUL[i.rrcID] += i.retx["ul"]
-            ReTxDL[i.rrcID] += i.retx["dl"]
-            if i.logID == const.PROTOCOL_ID:
-                Bytes_on_fly += i.ip["total_len"]
-            if i.logID == const.UL_PDU_ID:
-                ULBytes_total += i.ul_pdu[0]["numPDU"]*i.ul_pdu[0]["size"]
-                if i.retx["ul"] != 0:
-                    retxul_bytes[i.rrcID] += i.retx["ul"]*i.ul_pdu[0]["size"]
-            if i.logID == const.DL_PDU_ID:
-                DLBytes_total += i.dl_pdu[0]["size"]
-                if i.retx["dl"] != 0:
-                    retxdl_bytes[i.rrcID] += i.retx["dl"]*i.dl_pdu[0]["size"]
-            
-    # print "***************"
-    totUL = float(ReTxUL[2]+ReTxUL[3]+ReTxUL[4])
-    totDL = float(ReTxDL[2]+ReTxDL[3]+ReTxDL[4])
-    totState = float(rrc_state[2]+rrc_state[3]+rrc_state[4])
-    totULBytes = float(retxul_bytes[2]+retxul_bytes[3]+retxul_bytes[4])
-    totDLBytes = float(retxdl_bytes[2]+retxdl_bytes[3]+retxdl_bytes[4])
-    # print "%d\t%d\t%d\t%d\t%d\t%d" % (ReTxUL[const.FACH_ID], ReTxUL[const.DCH_ID], ReTxUL[const.PCH_ID], ReTxDL[const.FACH_ID], ReTxDL[const.DCH_ID], ReTxDL[const.PCH_ID])
+
+#############################################################################
+############################ helper functions ###############################
+#############################################################################
+def meanValue(li):
+    return sum(li)/len(li)
+
+def conv_dmb_to_rssi(sig):
+    # Detail at http://m10.home.xs4all.nl/mac/downloads/3GPP-27007-630.pdf
+    MAX = -51
+    MIN = -113
+    rssi = 31
+    if sig < MIN:
+	    rssi = 0
+    else:
+	    rssi = (sig - MIN)/2
+    return rssi
     
-    """
-    print "Total UL retx: %f" % (totUL)
-    print "Total DL retx: %f" % (totDL)
-    print "Total RRC state: %f" % (totState)
-    """
-    print "Total bytes on fly: %f" % (Bytes_on_fly)
-    print "Total Uplink bytes: %d" % (ULBytes_total)
-    print "Total Downlink bytes: %d" % (DLBytes_total)
-    """
-    print "Total Uplink RT bytes: %f" % (totULBytes)
-    print "Total Downlink RT bytes: %f" % (totDLBytes)
-    if totUL != 0.0:
-        print "UL -- FACH %f, DCH %f, PCH %f" % (ReTxUL[const.FACH_ID]/totUL, ReTxUL[const.DCH_ID]/totUL, ReTxUL[const.PCH_ID]/totUL)
-    if totDL != 0.0:
-        print "DL -- FACH %f, DCH %f, PCH %f" % (ReTxDL[const.FACH_ID]/totDL, ReTxDL[const.DCH_ID]/totDL, ReTxDL[const.PCH_ID]/totDL)
-    if totState != 0.0:
-        print "State dist -- FACH %f, DCH %f, PCH %f" % (rrc_state[const.FACH_ID]/totState, rrc_state[const.DCH_ID]/totState, rrc_state[const.PCH_ID]/totState)
-    if Bytes_on_fly != 0:
-        print "RT fraction : %f" % ((totULBytes+totDLBytes)/Bytes_on_fly)
-    if totULBytes != 0.0:
-        print "UL Retx bytes -- FACH %f, DCH %f, PCH %f" % (retxul_bytes[const.FACH_ID]/totULBytes, retxul_bytes[const.DCH_ID]/totULBytes, retxul_bytes[const.PCH_ID]/totULBytes)
-    if totDLBytes != 0.0:
-        print "DL Retx bytes -- FACH %f, DCH %f, PCH %f" % (retxdl_bytes[const.FACH_ID]/totDLBytes, retxdl_bytes[const.DCH_ID]/totDLBytes, retxdl_bytes[const.PCH_ID]/totDLBytes)
-    """
-      
+#############################################################################
+############################ debug functions ################################
+#############################################################################
+def readFromSig(filename):
+    fp = open(filename, "r")
+    tsDict = {}
+    tzDiff = 5*3600*1000
+    while True:
+        line = fp.readline()
+        if not line: break
+        [ts, rssi] = line.strip().split("\t")
+        tsDict[int(ts)-tzDiff] = int(rssi)
+    fp.close()
+    return tsDict
+
+# use binary search to find the nearest value
+def binarySearch (target, sortedList):
+    if not sortedList:
+        return None
+    if len(sortedList) == 1:
+        return sortedList[0]
+    if len(sortedList) == 2:
+        if target-sortedList[0] > sortedList[1] - target:
+            return sortedList[1]
+        else:
+            return sortedList[0]
+    mid = sortedList[len(sortedList)/2]
+    if target == mid:
+        return mid
+    elif target > mid:
+        return binarySearch(target, sortedList[len(sortedList)/2:])
+    else:
+        return binarySearch(target, sortedList[:len(sortedList)/2+1])   
+        
+# check if AGC and real rssi value matches
+def sycTimeLine(entries, tsDict):
+    rssi_errSQR_dict = {}
+    for entry in entries:
+        if entry.logID == const.AGC_ID and entry.agc["RxAGC"]:
+            ts = entry.timestamp[0]*1000+entry.timestamp[1]
+            print "TS in QCAT is %d" % (ts)
+            mappedTS = binarySearch(ts, sorted(tsDict.keys()))
+            print entry.agc["RxAGC"]
+            print conv_dmb_to_rssi(meanValue(entry.agc["RxAGC"]))
+            print mappedTS
+            print tsDict[mappedTS]
+            rssi_errSQR_dict[mappedTS] = pow(float(conv_dmb_to_rssi(meanValue(entry.agc["RxAGC"])))
+                                           - float(tsDict[mappedTS]), 2)
+            print rssi_errSQR_dict[mappedTS]
+    return rssi_errSQR_dict
+

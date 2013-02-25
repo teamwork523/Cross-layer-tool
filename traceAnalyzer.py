@@ -13,6 +13,7 @@ import QCATEntry as qe
 import PCAPPacket as pp
 import Util as util
 from optparse import OptionParser
+import PrintWrapper as pw
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
@@ -28,6 +29,9 @@ def init_optParser():
                          help="PCAP trace file path")
     optParser.add_option("-t", "--type", dest="protocolType", default="TCP",
                          help="Protocol Type, i.e. TCP or UDP")
+    # TODO: delete after debugging
+    optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
+                         help="Signal strength file")
     optParser.add_option("--src_ip", dest="srcIP", default=None, \
                          help="Filter out entries with source ip")
     optParser.add_option("--dst_ip", dest="dstIP", default=None, \
@@ -47,12 +51,15 @@ def main():
         optParser.error("-l, --log: Empty QCAT log filepath")
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
-
+    
+    # Mapping process
     QCATEntries = util.readQCATLog(options.inQCATLogFile)
     util.assignRRCState(QCATEntries)
     util.assignEULState(QCATEntries)
-    totalTpReTxCount = util.procTPReTx(QCATEntries)
-    print "Total Duplicate Transmission is %d" % (totalTpReTxCount)
+    util.assignRSSIValue(QCATEntries)
+    util.procTPReTx(QCATEntries)
+    totalTpReTxCount = util.countReTx(QCATEntries)
+    # print "Total Duplicate Transmission is %d" % (totalTpReTxCount)
     
     # validate ip address
     cond = {}
@@ -73,19 +80,30 @@ def main():
     if options.protocolType != None:
         cond["tlp_id"] = const.TLPtoID_MAP[options.protocolType.upper()]
     
-    # TODO: add filter
-    # print "Before filter length is %d" % (len(QCATEntries))
     QCATEntries = util.packetFilter(QCATEntries, cond)
-    # print "After filter length is %d" % (len(QCATEntries))
-    
+    filteredReTxCount = util.countReTx(QCATEntries)
     """
+    if options.srcIP != None:
+        print "Sender retx count is %d" % (filteredReTxCount)
+    if options.dstIP != None:
+        print "Receiver retx count is %d" % (filteredReTxCount)
     for i in QCATEntries:
         if i.rrcID != None and i.ip["tlp_id"] != None:
             print "RRC: %d, Protocol: %d" % (i.rrcID, i.ip["tlp_id"])
     """
     
+    # create map between ts and rssi
+    if options.sigFile:
+        print "Reading from %s ..." % (options.sigFile)
+        tsDict = util.readFromSig(options.sigFile)
+        print "Finish Reading ..."
+        # TODO: sync signal with AGC value
+        errDict = util.sycTimeLine(QCATEntries, tsDict)
+        print "Mean squared error is %f" % (util.meanValue(errDict.values()))
+    
     util.procRLCReTx(QCATEntries)
-    util.printResult(QCATEntries)
+    # print result
+    pw.printResult(QCATEntries)
     
     # TODO: might consider not to use external traces
     if options.isMapping == True and options.inPCAPFile == "":
