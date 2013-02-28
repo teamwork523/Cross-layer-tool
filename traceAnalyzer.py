@@ -20,7 +20,11 @@ def init_optParser():
     optParser = OptionParser(usage="./%prog [-l, --log] QCAT_LOG_PATH [-m] [-p, --pcap] inPCAPFile\n" + \
                             " "*extraspace + "[-t, --type] protocolType, [--src_ip] srcIP\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
-                            " "*extraspace + "[--dst_port] destPort")
+                            " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion")
+    optParser.add_option("-b", dest="beginPercent", default=0, \
+                         help="Beginning point of the sampling")
+    optParser.add_option("-e", dest="endPercent", default=1, \
+                         help="Ending point of the sampling")
     optParser.add_option("-l", "--log", dest="inQCATLogFile", default="", \
                          help="QCAT log file path")
     optParser.add_option("-m", action="store_true", default=False, dest="isMapping", \
@@ -40,6 +44,7 @@ def init_optParser():
                          help="Filter out entries with source port number")
     optParser.add_option("--dst_port", dest="dstPort", default=None, \
                          help="Filter out entries with destination port number")
+                         
     return optParser
 
 def main():
@@ -51,9 +56,12 @@ def main():
         optParser.error("-l, --log: Empty QCAT log filepath")
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
-    
+ 
     # Mapping process
     QCATEntries = util.readQCATLog(options.inQCATLogFile)
+    begin = int(float(options.beginPercent)* len(QCATEntries))
+    end = int(float(options.endPercent) * len(QCATEntries)) 
+    QCATEntries = QCATEntries[begin:end]
     util.assignRRCState(QCATEntries)
     util.assignEULState(QCATEntries)
     util.assignRSSIValue(QCATEntries)
@@ -103,7 +111,10 @@ def main():
     
     util.procRLCReTx(QCATEntries)
     # print result
+    pw.printIPaddressPair(QCATEntries)
     pw.printResult(QCATEntries)
+    #pw.printRSSIvsTransReTx(QCATEntries)
+    #pw.printRSSIvsLinkReTx(QCATEntries)
     
     # TODO: might consider not to use external traces
     if options.isMapping == True and options.inPCAPFile == "":

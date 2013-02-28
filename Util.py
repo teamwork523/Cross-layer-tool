@@ -213,15 +213,16 @@ def procRLCReTx(Entries):
     seqNumDLSet = set()
     for entry in Entries:
         if entry.logID == const.UL_PDU_ID:
-            for i in entry.ul_pdu[0]["sn"]:
-                if i in seqNumULSet:
-                    entry.retx["ul"] += 1
+            for i in range(len(entry.ul_pdu[0]["sn"])):
+                if entry.ul_pdu[0]["sn"][i] in seqNumULSet:
+                    entry.retx["ul"].append(entry.ul_pdu[0]["size"][i])
                 else:
                     seqNumULSet.add(i)
         elif entry.logID == const.DL_PDU_ID:
-            for i in entry.dl_pdu[0]["sn"]:
-                if i in seqNumDLSet:
-                    entry.retx["dl"] += 1
+            for i in range(len(entry.dl_pdu[0]["sn"])):
+                if entry.dl_pdu[0]["sn"][i] in seqNumDLSet:
+                    # the order of PDU size and SN are the same
+                    entry.retx["dl"].append(entry.dl_pdu[0]["size"][i])
                 else:
                     seqNumDLSet.add(i)
                     
@@ -241,7 +242,7 @@ def procTPReTx (entries):
                 if entry.tcp["ACK_NUM"] and entry.tcp["SEQ_NUM"] and \
                    entry.tcp["ACK_NUM"] == priv_ACK and \
                    entry.tcp["SEQ_NUM"] == priv_SEQ:
-                    entry.retx["tp"] += 1
+                    entry.retx["tp"].append(entry.ip["total_len"])
             priv_ACK = entry.tcp["ACK_NUM"]
             priv_SEQ = entry.tcp["SEQ_NUM"]
 
@@ -252,7 +253,7 @@ def countReTx (entries):
     count = 0
     for entry in entries:
         if entry.ip["tlp_id"] == const.TCP_ID:
-            count += entry.retx["tp"]
+            count += len(entry.retx["tp"])
     return count
 
 def mapPCAPwithQCAT(p, q):
@@ -303,6 +304,14 @@ def validateIP (ip_address):
 #############################################################################
 def meanValue(li):
     return sum(li)/len(li)
+
+def medianValue(li):
+    if not li:
+        return None
+    if len(li) % 2 == 0:
+        return (li[len(li)/2-1] + li[len(li)/2])/2.0
+    if len(li) % 2 != 0:
+        return li[len(li)/2]
 
 def conv_dmb_to_rssi(sig):
     # Detail at http://m10.home.xs4all.nl/mac/downloads/3GPP-27007-630.pdf

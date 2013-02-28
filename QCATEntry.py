@@ -33,8 +33,8 @@ class QCATEntry:
         self.logID = None
         # RRC id
         self.rrcID = None 
-        # ReTx count: RLC uplink, RLC downlink, Transport layer
-        self.retx = {"ul":0, "dl":0, "tp":0}
+        # ReTx size list: RLC uplink, RLC downlink, Transport layer
+        self.retx = {"ul":[], "dl":[], "tp":[]}
         # ip information
         self.ip = {"tlp_id": None, \
                    "seg_num": None, \
@@ -81,11 +81,11 @@ class QCATEntry:
         self.ul_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
-                        "size": 0 }] # bytes
+                        "size": [] }] # bytes
         self.dl_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
-                        "size": 0 }] # bytes
+                        "size": [] }] # bytes
         # AGC info, record all the Tx/Rx power info
         self.agc = {"sample_num": None,
                     "start_cfn": None,
@@ -176,9 +176,11 @@ class QCATEntry:
                         self.ul_pdu[0]["chan"] = int(info[0].split(":")[1])
                         self.ul_pdu[0]["sn"].append(int(info[1].split(" ")[1], 16))
                     elif i[:8] == "PDU Size":
-                        self.ul_pdu[0]["size"] = int(i.split()[-1])/8
+                        self.ul_pdu[0]["size"].append(int(i.split()[-1])/8)
                     elif i[:14] == "Number of PDUs":
                         self.ul_pdu[0]["numPDU"] = int(i.split()[-1])
+                # Expand the PDU 
+                self.ul_pdu[0]["size"] *= self.ul_pdu[0]["numPDU"]
             # Parse Downlink PDU state
             # TODO: currently assume only one entities
             elif self.logID == const.DL_PDU_ID:
@@ -192,9 +194,9 @@ class QCATEntry:
                         self.dl_pdu[0]["sn"].append(int(info[1].split("=")[1], 16))
                     elif i[:8] == "PDU Size":
                         if self.dl_pdu[0]["size"] == None:
-                            self.dl_pdu[0]["size"] = int(i.split()[-1])/8
+                            self.dl_pdu[0]["size"] = [int(i.split()[-1])/8]
                         else:
-                            self.dl_pdu[0]["size"] += int(i.split()[-1])/8
+                            self.dl_pdu[0]["size"].append(int(i.split()[-1])/8)
                     elif i[:14] == "Number of PDUs":
                         self.dl_pdu[0]["numPDU"] = int(i.split()[-1])
             # Parse AGC entries
@@ -216,9 +218,9 @@ class QCATEntry:
                     except ValueError as detail:
                         pass
                 if self.agc["RxAGC"]:
-                    self.rssi["Rx"] = util.conv_dmb_to_rssi(meanValue(self.agc["RxAGC"]))
+                    self.rssi["Rx"] = util.conv_dmb_to_rssi(util.meanValue(self.agc["RxAGC"]))
                 if self.agc["TxAGC"]:
-                    self.rssi["Tx"] = util.conv_dmb_to_rssi(meanValue(self.agc["TxAGC"]))
+                    self.rssi["Tx"] = util.conv_dmb_to_rssi(util.meanValue(self.agc["TxAGC"]))
                 # print self.agc["RxAGC"]
                 # print self.agc["TxAGC"]
             # TODO: process other type of log entry
