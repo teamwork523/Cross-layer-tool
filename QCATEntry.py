@@ -12,10 +12,6 @@ from datetime import datetime
 import const
 import Util as util
 
-# define constant
-Payload_Header_Len = 8
-IP_Header_Len = 20
-
 class QCATEntry:
     """
     Each Entry should have three part:
@@ -34,7 +30,8 @@ class QCATEntry:
         # RRC id
         self.rrcID = None 
         # ReTx size list: RLC uplink, RLC downlink, Transport layer
-        self.retx = {"ul":[], "dl":[], "tp":[]}
+        # For RLC retransmission record {"SN":["PDU_size",...],...} info as the retransmission
+        self.retx = {"ul":{}, "dl":{}, "tp":[]}
         # ip information
         self.ip = {"tlp_id": None, \
                    "seg_num": None, \
@@ -42,7 +39,9 @@ class QCATEntry:
                    "src_ip": None, \
                    "dst_ip": None, \
                    "header_len": None, \
-                   "total_len": 0}
+                   "total_len": 0, \
+                   # Wrap header + Raw IP header + TCP header as signature
+                   "signature": None}
         # TCP information
         # TODO: add more tcp fields
         self.tcp = {"src_port": None, \
@@ -87,13 +86,20 @@ class QCATEntry:
                         "numPDU": None,
                         "size": [] }] # bytes
         # AGC info, record all the Tx/Rx power info
+        # Deprecated
         self.agc = {"sample_num": None,
                     "start_cfn": None,
                     "RxAGC": [],
                     "TxAGC": []}
         # Either calculated from AGC or acquired from most recent value
+        # Deprecated
         self.rssi = {"Rx": None,
                      "Tx": None}
+        # Record signal strength information
+        # Multiple Cell are considered
+        self.sig = {"num_cells": None,
+                    "ECIO": [],
+                    "RSCP": []}
         # order matters
         self.__procTitle()
         self.__procDetail()
@@ -199,30 +205,21 @@ class QCATEntry:
                             self.dl_pdu[0]["size"].append(int(i.split()[-1])/8)
                     elif i[:14] == "Number of PDUs":
                         self.dl_pdu[0]["numPDU"] = int(i.split()[-1])
-            # Parse AGC entries
-            # Collect Rx only for ch 0
-            elif self.logID == const.AGC_ID:
-                if len(self.detail) < 9:
-                    raise Exception("Less content than expected")
-                self.agc["sample_num"] = int(self.detail[1].split()[-1])
-                self.agc["start_cfn"] = int(self.detail[2].split()[-1])
-                # print "Sample Num is %d" % (self.agc["sample_num"])
-                # print "Start cfn is %d" % (self.agc["start_cfn"])
-                for i in self.detail[8:]:
-                    line = i.split("|")[1:-1]
-                    try:
-                        if line[1].strip():
-                            self.agc["RxAGC"].append(float(line[1]))
-                        if line[5].strip():
-                            self.agc["TxAGC"].append(float(line[5]))
-                    except ValueError as detail:
-                        pass
-                if self.agc["RxAGC"]:
-                    self.rssi["Rx"] = util.conv_dmb_to_rssi(util.meanValue(self.agc["RxAGC"]))
-                if self.agc["TxAGC"]:
-                    self.rssi["Tx"] = util.conv_dmb_to_rssi(util.meanValue(self.agc["TxAGC"]))
-                # print self.agc["RxAGC"]
-                # print self.agc["TxAGC"]
+            # Parse the Signal Strength state
+            # Assume the number of cell we get is always in WCDMA
+            elif self.logID == const.SIG_ID:
+                # check for number of
+                if self.detail[2].find("Num cells searched") != -1:
+                    self.sig["num_cells"] = int(self.detail[2].split()[4])
+                else:
+                    raise Exception("Fail to detect number of cells")
+                for i in self.detail[3:]:
+                    if i.find("ECIO") != -1:
+                        self.sig["ECIO"].append(float(i.split()[-1]))
+                    if i.find("RSCP") != -1:
+                        self.sig["RSCP"].append(float(i.split()[-1]))
+                print self.sig["ECIO"]
+                print self.sig["RSCP"]
             # TODO: process other type of log entry
 
     def __procHexDump(self):
@@ -244,27 +241,28 @@ class QCATEntry:
             # Extract segmentation information
             # Extract transport layer information
             # length must greater than wrapping header plus IP header
-            if len(self.hex_dump["payload"]) > Payload_Header_Len + 20 and \
+            if len(self.hex_dump["payload"]) > const.Payload_Header_Len + 20 and \
                int(self.hex_dump["payload"][1], 16) == const.IP_ID:
                 self.ip["seg_num"] = int(self.hex_dump["payload"][6], 16)
                 if self.hex_dump["payload"][7][0] == '0':
                     self.ip["final_seg"] = False
                 else:
                     self.ip["final_seg"] = True
-                
+
                 # IP packet parsing
-                self.ip["header_len"] = int(self.hex_dump["payload"][Payload_Header_Len][1], 16) * 4
-                if self.ip["header_len"] == IP_Header_Len:
-                    start = Payload_Header_Len
+                self.ip["header_len"] = int(self.hex_dump["payload"][const.Payload_Header_Len][1], 16) * 4
+                if self.ip["header_len"] == const.IP_Header_Len:
+                    start = const.Payload_Header_Len
                     self.ip["tlp_id"] = int(self.hex_dump["payload"][17], 16)
                     self.ip["total_len"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                     self.ip["src_ip"] = ".".join([str(int(x, 16)) for x in self.hex_dump["payload"][start+12:start+16]])
                     self.ip["dst_ip"] = ".".join([str(int(x, 16)) for x in self.hex_dump["payload"][start+16:start+20]])
+                    self.ip["signature"] = "".join(self.hex_dump["payload"][:start+const.IP_Header_Len+const.TCP_Header_Len])
                     # self.__debugIP()
                     
                     # Parse TCP Packet 
                     if self.ip["tlp_id"] == const.TCP_ID:
-                        start = Payload_Header_Len + self.ip["header_len"]
+                        start = const.Payload_Header_Len + self.ip["header_len"]
                         self.tcp["src_port"] = int("".join(self.hex_dump["payload"][start:start+2]), 16)
                         self.tcp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                         self.tcp["SEQ_NUM"] = int("".join(self.hex_dump["payload"][start+4:start+8]), 16)
@@ -282,7 +280,7 @@ class QCATEntry:
                     
                     # Parse UDP Packet
                     if self.ip["tlp_id"] == const.UDP_ID:
-                        start = Payload_Header_Len + self.ip["header_len"] 
+                        start = const.Payload_Header_Len + self.ip["header_len"] 
                         self.udp["src_port"] = int("".join(self.hex_dump["payload"][start:start+2]), 16)
                         self.udp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                         self.udp["total_len"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16)
@@ -299,6 +297,7 @@ class QCATEntry:
         print "Protocol type is %d" % (self.ip["tlp_id"])
         print "src ip %s" % (self.ip["src_ip"])
         print "dst ip %s" % (self.ip["dst_ip"])
+        print "Signature is %s" % (self.ip["signature"])
         
     def __debugTCP(self):
         print "TCP src port is %d" % (self.tcp["src_port"])

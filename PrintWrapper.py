@@ -76,12 +76,13 @@ def printResult (entries):
             print "%f\t%f" % (ts, i.eul["raw_bit_rate"])
         """
         if i.rrcID != None:
-            # print "%f\t%d\t%d\t%d" % (ts, i.rrcID, len(i.retx["ul"]), len(i.retx["dl"]))
+            # print "%f\t%d\t%d\t%d" % (ts, i.rrcID, sum([len(x) for x in i.retx["ul"].values()]), \
+            #                          sum([len(x) for x in i.retx["dl"].values()]))
             # Timestamp Trans_RT_BYTES UL_RT_BYTES DL_RT_BYTES rrc
             if i.logID == const.PROTOCOL_ID or i.logID == const.UL_PDU_ID or \
                i.logID == const.DL_PDU_ID:
-                print "%d\t%d\t%d\t%d\t%d\t%d" % (ts, sum(i.retx["tp"]), sum(i.retx["ul"]), \
-                                         sum(i.retx["dl"]), i.rrcID, i.ip["total_len"])
+                print "%d\t%d\t%d\t%d\t%d\t%d" % (ts, len(i.retx["tp"]), sum([len(x) for x in i.retx["ul"].values()]), \
+                      sum([len(x) for x in i.retx["dl"].values()]), i.rrcID, i.ip["total_len"])
                 pass
             rrc_state[i.rrcID] += 1
             ReTxUL[i.rrcID] += len(i.retx["ul"])
@@ -143,3 +144,42 @@ def printResult (entries):
     if totDLBytes != 0.0:
         print "DL Retx bytes -- FACH %f, DCH %f, PCH %f" % (retxdl_bytes[const.FACH_ID]/totDLBytes, retxdl_bytes[const.DCH_ID]/totDLBytes, retxdl_bytes[const.PCH_ID]/totDLBytes)
 """
+
+############################## Debug Printer #########################
+# print the result for UL RLC SN and retransmission count
+def printULCount(entries):
+    ulMap = {}
+    for entry in entries:
+        if entry.logID == const.UL_PDU_ID:
+            for sn in entry.retx["ul"]:
+                if sn in ulMap:
+                    ulMap[sn] += len(entry.retx["ul"][sn])
+                else:
+                    ulMap[sn] = len(entry.retx["ul"][sn])
+    
+    for u in sorted(ulMap):
+        if u >= 3851 and u <= 3886:
+            print "UL: %d\t%d" % (u, ulMap[u])
+                
+# print the result for DL RLC SN and retransmission count
+def printDLCount(entries):
+    dlMap = {}
+    for entry in entries:
+        if entry.logID == const.DL_PDU_ID:
+            for sn in entry.retx["dl"]:
+                if sn in dlMap:
+                    dlMap[sn] += len(entry.retx["dl"][sn])
+                else:
+                    dlMap[sn] = len(entry.retx["dl"][sn])
+    
+    for u in sorted(dlMap):
+        if u >= 3851 and u <= 3886:
+            print "DL: %d\t%d" % (u, dlMap[u])
+                
+
+
+
+
+
+
+

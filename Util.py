@@ -44,7 +44,7 @@ def readQCATLog(inQCATLogFile):
                 # hexdump
                 hexDump.append(line.strip())
         """
-        if line.strip().split()[0] == "2013":
+        if re.match("^[0-9]{4}", line.strip().split()[0]):
             isHex = False
             if titleAndDetail != [] and hexDump != []:
                 entry = qe.QCATEntry(titleAndDetail[0], titleAndDetail[1:], hexDump)
@@ -123,7 +123,10 @@ def assignEULState(entries):
                 entry.eul["raw_bit_rate"] = mostRecentSpeed
     entries.reverse()
 
+# TODO: change using 0x4005
 def assignRSSIValue(entries):
+    pass
+"""
     mostRecentTxRSSI = None
     mostRecentRxRSSI = None
     for entry in entries:
@@ -143,8 +146,46 @@ def assignRSSIValue(entries):
                 entry.rssi["Tx"] = mostRecentTxRSSI
             if mostRecentRxRSSI:
                 entry.rssi["Rx"] = mostRecentRxRSSI
-            
+"""
 
+# Remove duplicated IP packets generated from QXDM
+def removeQXDMDupIP(entries):
+    dupIndex = []
+    privEntryIndex = None
+    privSignature = None
+    # filter all the potential deleted entries
+    for i in range(len(entries)):
+        if entries[i].logID == const.PROTOCOL_ID:
+            if entries[i].ip["tlp_id"] == const.TCP_ID:
+                # We need to times 2 here, since two hex is a byte
+                if privSignature != None and \
+                   entries[i].ip["signature"][const.Payload_Header_Len*2:] == privSignature[const.Payload_Header_Len*2:] and \
+                   entries[i].ip["signature"][:const.Payload_Header_Len*2] != privSignature[:const.Payload_Header_Len*2]:
+                    """
+                    t1 = datetime.fromtimestamp(entries[i].timestamp[0] + \
+                         float(entries[i].timestamp[1])/1000.0).strftime('%Y-%m-%d %H:%M:%S.%f')
+                    t2 = datetime.fromtimestamp(entries[privEntryIndex].timestamp[0] + \
+                         float(entries[privEntryIndex].timestamp[1])/1000.0).strftime('%Y-%m-%d %H:%M:%S.%f')
+                    # print "Dup: %s VS %s" % (t1, t2)
+                    """
+                    # Delete the smaller one
+                    if entries[privEntryIndex].hex_dump["length"] > entries[i].hex_dump["length"]:
+                        dupIndex.append(i)
+                    else:
+                        dupIndex.append(privEntryIndex)
+                    privEntryIndex = None
+                    privSignature = None
+                else:
+                    privSignature = entries[i].ip["signature"]
+                    privEntryIndex = i
+    
+    # Actuall elimination
+    rtEntries = []
+    for i in range(len(entries)):
+        if i not in dupIndex:
+            rtEntries.append(entries[i])
+    return rtEntries
+    
 # Use timestamp as key to create the map
 def createTSbasedMap(entries):
     entryMap = {}
@@ -208,23 +249,80 @@ def packetFilter(entries, cond):
     return selectedEntries
 
 # process link layer retransmission
-def procRLCReTx(Entries):
-    seqNumULSet = set()
-    seqNumDLSet = set()
-    for entry in Entries:
+# IMPORTANT ASSUMPTION:
+# 1. SN starts from 0 to a NUM (fixed in UL, not fixed in DL)
+# 2. SN always increase
+# ALGORITHM:
+# 1. Compare the identical PDU's position difference in the whole UL/DL chain
+#    if their difference is less than previous UL's period, then ReTx detected
+# 2. ASSUME the packet drop happens less than half of the period
+def procRLCReTx(entries):
+    ULCounter = 0
+    DLCounter = 0
+    ULPrivIndex = 0  # track for the period of index
+    DLPrivIndex = 0  # track for the period of index
+    ULPrivSN = None
+    DLPrivSN = None
+    ULLastPeriod = -1
+    DLLastPeriod = -1
+    # map between UL/DL SN and its index
+    ULSNMap = {}
+    DLSNMap = {}
+    
+    for entry in entries:
         if entry.logID == const.UL_PDU_ID:
             for i in range(len(entry.ul_pdu[0]["sn"])):
-                if entry.ul_pdu[0]["sn"][i] in seqNumULSet:
-                    entry.retx["ul"].append(entry.ul_pdu[0]["size"][i])
+                curSN_UL = entry.ul_pdu[0]["sn"][i]
+                #print "UL: %d" % (curSN_UL)
+                # check if duplication exist
+                if (curSN_UL in ULSNMap) and (ULLastPeriod == -1 or ULCounter - ULSNMap[curSN_UL] < ULLastPeriod/2):
+                    # duplication detected
+                    ts = datetime.fromtimestamp(entry.timestamp[0] + \
+                         float(entry.timestamp[1])/1000.0).strftime('%Y-%m-%d %H:%M:%S.%f')
+                    #print "UL: %s\t%d\t%d\t%d" % (ts, curSN_UL, ULCounter - ULSNMap[curSN_UL], ULLastPeriod)
+                    if curSN_UL not in entry.retx["ul"]:
+                        entry.retx["ul"][curSN_UL] = [entry.ul_pdu[0]["size"][i]]
+                    else:
+                        entry.retx["ul"][curSN_UL].append(entry.ul_pdu[0]["size"][i])
                 else:
-                    seqNumULSet.add(i)
+                    if curSN_UL == 0:
+                        # update the period
+                        ULLastPeriod = ULPrivIndex
+                        ULPrivIndex = 0
+                        #print "UL: Update Period for previous period %d" % (ULLastPeriod)
+                    # update the Map
+                    ULSNMap[curSN_UL] = ULCounter
+                    # We exclude the duplication one
+                    incr = 1
+                    if ULPrivSN:
+                        incr = curSN_UL - ULPrivSN
+                    ULCounter += 1
+                    ULPrivIndex += 1
         elif entry.logID == const.DL_PDU_ID:
             for i in range(len(entry.dl_pdu[0]["sn"])):
-                if entry.dl_pdu[0]["sn"][i] in seqNumDLSet:
-                    # the order of PDU size and SN are the same
-                    entry.retx["dl"].append(entry.dl_pdu[0]["size"][i])
+                curSN_DL = entry.dl_pdu[0]["sn"][i]
+                #print "DL: %d" % (curSN_DL)
+                # check if duplication exist
+                if (curSN_DL in DLSNMap) and (DLLastPeriod == -1 or DLCounter - DLSNMap[curSN_DL] < DLLastPeriod/2):
+                    # duplication detected
+                    ts_dl = datetime.fromtimestamp(entry.timestamp[0] + \
+                         float(entry.timestamp[1])/1000.0).strftime('%Y-%m-%d %H:%M:%S.%f')
+                    #print "DL: %s\t%d\t%d\t%d" % (ts_dl, curSN_DL, DLCounter - DLSNMap[curSN_DL], DLLastPeriod)
+                    if curSN_DL not in entry.retx["dl"]:
+                        entry.retx["dl"][curSN_DL] = [entry.dl_pdu[0]["size"][i]]
+                    else:
+                        entry.retx["dl"][curSN_DL].append(entry.dl_pdu[0]["size"][i])
                 else:
-                    seqNumDLSet.add(i)
+                    if curSN_DL == 0:
+                        # update the period
+                        DLLastPeriod = DLPrivIndex
+                        DLPrivIndex = 0
+                        #print "DL: Update Period for previous period %d" % (DLLastPeriod)
+                    # update the Map
+                    DLSNMap[curSN_DL] = DLCounter
+                    # We exclude the duplication one
+                    DLCounter += 1
+                    DLPrivIndex += 1 
                     
 # assign transport layer retransmission
 def procTPReTx (entries):
@@ -359,6 +457,8 @@ def binarySearch (target, sortedList):
         return binarySearch(target, sortedList[:len(sortedList)/2+1])   
         
 # check if AGC and real rssi value matches
+# Deprecated
+"""
 def sycTimeLine(entries, tsDict):
     rssi_errSQR_dict = {}
     for entry in entries:
@@ -374,4 +474,4 @@ def sycTimeLine(entries, tsDict):
                                            - float(tsDict[mappedTS]), 2)
             print rssi_errSQR_dict[mappedTS]
     return rssi_errSQR_dict
-
+"""

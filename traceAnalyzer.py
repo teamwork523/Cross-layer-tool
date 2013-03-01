@@ -34,8 +34,8 @@ def init_optParser():
     optParser.add_option("-t", "--type", dest="protocolType", default="TCP",
                          help="Protocol Type, i.e. TCP or UDP")
     # TODO: delete after debugging
-    optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
-                         help="Signal strength file")
+    # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
+    #                     help="Signal strength file")
     optParser.add_option("--src_ip", dest="srcIP", default=None, \
                          help="Filter out entries with source ip")
     optParser.add_option("--dst_ip", dest="dstIP", default=None, \
@@ -62,12 +62,16 @@ def main():
     begin = int(float(options.beginPercent)* len(QCATEntries))
     end = int(float(options.endPercent) * len(QCATEntries)) 
     QCATEntries = QCATEntries[begin:end]
+    print "Length of Entries is %d" % (len(QCATEntries))
     util.assignRRCState(QCATEntries)
     util.assignEULState(QCATEntries)
-    util.assignRSSIValue(QCATEntries)
-    util.procTPReTx(QCATEntries)
-    totalTpReTxCount = util.countReTx(QCATEntries)
-    # print "Total Duplicate Transmission is %d" % (totalTpReTxCount)
+    tempLen = len(QCATEntries)
+    print "Before remove dup: %d entries" % (tempLen)
+    QCATEntries = util.removeQXDMDupIP(QCATEntries)
+    print "After remove dup: %d entries" % (len(QCATEntries))
+    # TODO: use 0x4005
+    # util.assignRSSIValue(QCATEntries)
+    util.procTPReTx(QCATEntries)    
     
     # validate ip address
     cond = {}
@@ -90,7 +94,9 @@ def main():
     
     QCATEntries = util.packetFilter(QCATEntries, cond)
     filteredReTxCount = util.countReTx(QCATEntries)
+    print "Total Duplicate Transmission is %d" % (filteredReTxCount)
     """
+    print "TCP ReTx is %d" % (filteredReTxCount)
     if options.srcIP != None:
         print "Sender retx count is %d" % (filteredReTxCount)
     if options.dstIP != None:
@@ -99,8 +105,9 @@ def main():
         if i.rrcID != None and i.ip["tlp_id"] != None:
             print "RRC: %d, Protocol: %d" % (i.rrcID, i.ip["tlp_id"])
     """
-    
+
     # create map between ts and rssi
+    """
     if options.sigFile:
         print "Reading from %s ..." % (options.sigFile)
         tsDict = util.readFromSig(options.sigFile)
@@ -108,11 +115,14 @@ def main():
         # TODO: sync signal with AGC value
         errDict = util.sycTimeLine(QCATEntries, tsDict)
         print "Mean squared error is %f" % (util.meanValue(errDict.values()))
+    """
     
     util.procRLCReTx(QCATEntries)
     # print result
-    pw.printIPaddressPair(QCATEntries)
-    pw.printResult(QCATEntries)
+    #pw.printIPaddressPair(QCATEntries)
+    #pw.printULCount(QCATEntries)
+    #pw.printDLCount(QCATEntries)
+    #pw.printResult(QCATEntries)
     #pw.printRSSIvsTransReTx(QCATEntries)
     #pw.printRSSIvsLinkReTx(QCATEntries)
     
