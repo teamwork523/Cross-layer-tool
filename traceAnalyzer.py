@@ -20,9 +20,14 @@ def init_optParser():
     optParser = OptionParser(usage="./%prog [-l, --log] QCAT_LOG_PATH [-m] [-p, --pcap] inPCAPFile\n" + \
                             " "*extraspace + "[-t, --type] protocolType, [--src_ip] srcIP\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
-                            " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion")
+                            " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
+                            " "*extraspace + "[-a] Threshold, [-d] direction")
+    optParser.add_option("-a", "--addr", dest="printAddr", default=None, \
+                         help="Print IP address")
     optParser.add_option("-b", dest="beginPercent", default=0, \
                          help="Beginning point of the sampling")
+    optParser.add_option("-d", dest="direction", default=None, \
+                         help="Up or down, none specify will ignore throughput")
     optParser.add_option("-e", dest="endPercent", default=1, \
                          help="Ending point of the sampling")
     optParser.add_option("-l", "--log", dest="inQCATLogFile", default="", \
@@ -31,7 +36,7 @@ def init_optParser():
                          help="Add this option when try to map PCAP trace with QCAT log file")
     optParser.add_option("-p", "--pcap", dest="inPCAPFile", default="", \
                          help="PCAP trace file path")
-    optParser.add_option("-t", "--type", dest="protocolType", default="TCP",
+    optParser.add_option("-t", "--type", dest="protocolType", default="TCP", \
                          help="Protocol Type, i.e. TCP or UDP")
     # TODO: delete after debugging
     # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
@@ -62,17 +67,23 @@ def main():
     begin = int(float(options.beginPercent)* len(QCATEntries))
     end = int(float(options.endPercent) * len(QCATEntries)) 
     QCATEntries = QCATEntries[begin:end]
-    print "Length of Entries is %d" % (len(QCATEntries))
+    
+    # check if just want to print IP
+    if options.printAddr:
+        pw.printIPaddressPair(QCATEntries, options.printAddr)
+        sys.exit(0)
+    
+    #print "Length of Entries is %d" % (len(QCATEntries))
     util.assignRRCState(QCATEntries)
     util.assignEULState(QCATEntries)
+    # assign flow information
+    util.assignFlowInfo(QCATEntries)
     tempLen = len(QCATEntries)
-    print "Before remove dup: %d entries" % (tempLen)
+    #print "Before remove dup: %d entries" % (tempLen)
     QCATEntries = util.removeQXDMDupIP(QCATEntries)
-    print "After remove dup: %d entries" % (len(QCATEntries))
-    # TODO: use 0x4005
-    # util.assignRSSIValue(QCATEntries)
-    util.procTPReTx(QCATEntries)    
-    
+    #print "After remove dup: %d entries" % (len(QCATEntries))
+    util.assignSignalStrengthValue(QCATEntries)
+
     # validate ip address
     cond = {}
     if options.srcIP != None:
@@ -92,9 +103,11 @@ def main():
     if options.protocolType != None:
         cond["tlp_id"] = const.TLPtoID_MAP[options.protocolType.upper()]
     
+    # TCP retransmission process
     QCATEntries = util.packetFilter(QCATEntries, cond)
-    filteredReTxCount = util.countReTx(QCATEntries)
-    print "Total Duplicate Transmission is %d" % (filteredReTxCount)
+    util.procTPReTx(QCATEntries)
+    filteredReTxCount = util.countTCPReTx(QCATEntries)
+    # print "Total Duplicate Transmission is %d" % (filteredReTxCount)
     """
     print "TCP ReTx is %d" % (filteredReTxCount)
     if options.srcIP != None:
@@ -117,12 +130,23 @@ def main():
         print "Mean squared error is %f" % (util.meanValue(errDict.values()))
     """
     
-    util.procRLCReTx(QCATEntries)
+    # Compute throughput
+    if options.direction:
+        util.calThrouhgput(QCATEntries, options.direction)
+    else:
+        print >> sys.stderr, "Ignore throughput calculation!!!"
+    
+    [ULReTxCountMap, DLReTxCountMap] = util.procRLCReTx(QCATEntries)
+    #pw.printRetxCountMapList(ULReTxCountMap)
+    #print "#"*50
+    #pw.printRetxCountMapList(DLReTxCountMap)
+    #pw.printRetxSummaryInfo(QCATEntries, ULReTxCountMap, DLReTxCountMap)
+    # pw.printRSCP(QCATEntries)
     # print result
-    #pw.printIPaddressPair(QCATEntries)
     #pw.printULCount(QCATEntries)
     #pw.printDLCount(QCATEntries)
-    #pw.printResult(QCATEntries)
+    # pw.printReTxVSRRCResult(QCATEntries)
+    pw.printThroughput(QCATEntries)
     #pw.printRSSIvsTransReTx(QCATEntries)
     #pw.printRSSIvsLinkReTx(QCATEntries)
     

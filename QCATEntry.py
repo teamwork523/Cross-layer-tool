@@ -6,7 +6,7 @@
 Define QCAT log entry class
 """
 
-import re, math
+import re, math, struct
 import calendar
 from datetime import datetime
 import const
@@ -32,6 +32,9 @@ class QCATEntry:
         # ReTx size list: RLC uplink, RLC downlink, Transport layer
         # For RLC retransmission record {"SN":["PDU_size",...],...} info as the retransmission
         self.retx = {"ul":{}, "dl":{}, "tp":[]}
+        # flow information, Five tuple start in SYN packet (src/dst)(ip/port) + protocol type
+        # Also record the start sequence number and ACK number
+        self.flow = {}
         # ip information
         self.ip = {"tlp_id": None, \
                    "seg_num": None, \
@@ -54,8 +57,10 @@ class QCATEntry:
                     "RST_FLAG": None, \
                     "SYN_FLAG": None, \
                     "FIN_FLAG": None, \
-                    "ACK_NUM": None, \
-                    "SEQ_NUM": None}
+                    "ack_num": None, \
+                    "seq_num": None, \
+                    "flags": None, \
+                    "payload": None}
         self.udp = {"src_port": None, \
                     "dst_port": None, \
                     "total_len": None}
@@ -85,6 +90,7 @@ class QCATEntry:
                         "sn": [],
                         "numPDU": None,
                         "size": [] }] # bytes
+        self.dl_RLC_ACK = True  # a boolean determine if last ACK exist in RLC DL AM
         # AGC info, record all the Tx/Rx power info
         # Deprecated
         self.agc = {"sample_num": None,
@@ -95,11 +101,16 @@ class QCATEntry:
         # Deprecated
         self.rssi = {"Rx": None,
                      "Tx": None}
+        ########################################################################
+        ############################ Context information #######################
+        ########################################################################
         # Record signal strength information
         # Multiple Cell are considered
         self.sig = {"num_cells": None,
                     "ECIO": [],
                     "RSCP": []}
+        # Throughput information based on ACK calculation
+        self.throughput = -1
         # order matters
         self.__procTitle()
         self.__procDetail()
@@ -218,8 +229,6 @@ class QCATEntry:
                         self.sig["ECIO"].append(float(i.split()[-1]))
                     if i.find("RSCP") != -1:
                         self.sig["RSCP"].append(float(i.split()[-1]))
-                print self.sig["ECIO"]
-                print self.sig["RSCP"]
             # TODO: process other type of log entry
 
     def __procHexDump(self):
@@ -265,8 +274,12 @@ class QCATEntry:
                         start = const.Payload_Header_Len + self.ip["header_len"]
                         self.tcp["src_port"] = int("".join(self.hex_dump["payload"][start:start+2]), 16)
                         self.tcp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
-                        self.tcp["SEQ_NUM"] = int("".join(self.hex_dump["payload"][start+4:start+8]), 16)
-                        self.tcp["ACK_NUM"] = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
+                        self.tcp["seq_num"] = int("".join(self.hex_dump["payload"][start+4:start+8]), 16)
+                        #seq_hex = "".join(self.hex_dump["payload"][start+4:start+8])
+                        #self.tcp["seq_num"] = struct.unpack('!f', seq_hex.decode('hex'))[0]
+                        self.tcp["ack_num"] = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
+                        #ack_hex = "".join(self.hex_dump["payload"][start+8:start+12])
+                        #self.tcp["ack_num"] = struct.unpack('!f', ack_hex.decode('hex'))[0]
                         flag = int(self.hex_dump["payload"][start+13], 16)
                         self.tcp["CWR_FLAG"] = bool((flag >> 7) & 0x1)
                         self.tcp["ECE_FLAG"] = bool((flag >> 6) & 0x1)
@@ -276,6 +289,18 @@ class QCATEntry:
                         self.tcp["RST_FLAG"] = bool((flag >> 2) & 0x1)
                         self.tcp["SYN_FLAG"] = bool((flag >> 1) & 0x1)
                         self.tcp["FIN_FLAG"] = bool(flag & 0x1)
+                        self.tcp["flags"] = flag
+                        self.tcp["payload"] = self.hex_dump["payload"][start+const.TCP_Header_Len:]
+                        # Assign flow information if it is a SYN packet
+                        if self.tcp["SYN_FLAG"] and not self.tcp["ACK_FLAG"]:
+                            self.flow["src_port"] = self.tcp["src_port"]
+                            self.flow["dst_port"] = self.tcp["dst_port"]
+                            self.flow["tlp_id"] = self.ip["tlp_id"]
+                            self.flow["src_ip"] = self.ip["src_ip"]
+                            self.flow["dst_ip"] = self.ip["dst_ip"]
+                            self.flow["seq_num"] = self.tcp["seq_num"]
+                            self.flow["ack_num"] = self.tcp["ack_num"]
+                            self.flow["timestamp"] = self.timestamp[0] + float(self.timestamp[1])/1000.0
                         # self.__debugTCP()
                     
                     # Parse UDP Packet
@@ -302,8 +327,8 @@ class QCATEntry:
     def __debugTCP(self):
         print "TCP src port is %d" % (self.tcp["src_port"])
         print "TCP dst prot is %d" % (self.tcp["dst_port"])
-        print "SEQ number: %d" % (self.tcp["SEQ_NUM"])
-        print "ACK_NUM: %d" % (self.tcp["ACK_NUM"])
+        print "SEQ number: %d" % (self.tcp["seq_num"])
+        print "ack_num: %d" % (self.tcp["ack_num"])
         print "CWR_FLAG is %d" % (self.tcp["CWR_FLAG"])
         print "ECE_FLAG is %d" % (self.tcp["ECE_FLAG"])
         print "URG_FLAG is %d" % (self.tcp["URG_FLAG"])

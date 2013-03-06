@@ -5,7 +5,10 @@ TS_DELTA = 1
 MONTH_MAP = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, \
              "may": 5, "jun": 6, "jul": 7, "aug": 8, \
              "sep": 9, "oct": 10, "nov": 11, "dec": 12}
-
+             
+############################################################################
+################################# QCAT Related #############################
+############################################################################
 # Map between log id with log entry
 PROTOCOL_ID = int("0x11EB", 16)
 RRC_ID = int("0x4125", 16)
@@ -40,4 +43,8 @@ TLPtoID_MAP = {"TCP": TCP_ID,
 # QCAT Entry constant
 Payload_Header_Len = 8
 IP_Header_Len = 20
-TCP_Header_Len = 20
+TCP_Header_Len = 20 + 12 # include option
+
+# RLC DL retransmission
+RETX_PERIOD_THRESHOLD = 5
+MIN_SN_PERIOD = 20
