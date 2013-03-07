@@ -1,6 +1,4 @@
 //
-////  
-//  Copyright (c) 2013 Ashkan Nikravesh. All rights reserved.
 //
 
 #include<iostream>
