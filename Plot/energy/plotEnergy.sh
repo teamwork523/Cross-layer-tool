@@ -1,0 +1,26 @@
+#!/bin/bash
+
+name=$1
+file=$2
+grep "	2$" $name.txt > $name-2.txt
+grep "	3$" $name.txt > $name-3.txt
+grep "	4$" $name.txt > $name-4.txt
+gnuplot -p <<EOF
+# scalable
+#set terminal jpeg
+#set output "$name.jpeg"
+set xdata time
+set timefmt "%s"
+set format x "%M:%S"     # or anything else
+set autoscale
+set xtic auto                          # set xtics automatically
+set ytic auto                          # set ytics automatically
+set title 'RSCP vs RRC state ($file)'
+set xlabel "Time (s)"
+set ylabel "RSCP (dbm)"
+
+# P82 (x, y, xdelta, ydelta)
+plot "$name-2.txt" u 1:2:3 w linespoints lt 3 title "FACH" ,\
+     "$name-3.txt" u 1:2:3 w linespoints lt 4 title "DCH" ,\
+     "$name-4.txt" u 1:2:3 w linespoints lt 2 title "PCH" 
+EOF
