@@ -145,7 +145,16 @@ def tcp_flag_bit(packet_data, i, link_len, index):
 	return not not (flag >> index & 0x1)
 
 def tcp_flag(packet_data, i, link_len):
-	return  ord(packet_data[i][1][link_len + 32]) * 256 + ord(packet_data[i][1][link_len + 33])
+	return ord(packet_data[i][1][link_len + 32]) * 256 + ord(packet_data[i][1][link_len + 33])
+	
+def ip_length(packet_data, i, link_len):
+	return ord(packet_data[i][1][link_len + 2]) * 256 + ord(packet_data[i][1][link_len + 3])
+	
+def tcp_header_size(packet_data, i, link_len):
+	return (ord(packet_data[i][1][link_len + 32]) >> 4) * 4
+
+def tcp_seg_size(packet_data, i, link_len):
+	return ip_length(packet_data, i, link_len) - tcp_header_size(packet_data, i, link_len) - 20
 
 def str_to_hex(strs):
     hex_data =''
@@ -212,6 +221,7 @@ def display_hexdata(frame_data):
 def main():
 	header, data = read_Pcap(sys.argv[1])
 	print len(data)
+	"""
 	print packet_time(data, 0)
 	print src_port(data, 0, 14)
 	print dst_port(data, 0, 14)
@@ -220,6 +230,11 @@ def main():
 	print window_size_server(data, 1, 14)
 	for i in range(5000, 5079):
 		print tcp_flag_bit(data, i, 14, 4)
+	"""
+	for i in range(5000, 5079):
+		#print ip_length(data, i, 14)
+		#print tcp_header_size(data, i, 14)
+		print tcp_seg_size(data, i, 14)
 	
 if __name__ == "__main__":
     main()

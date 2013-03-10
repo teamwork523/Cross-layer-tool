@@ -287,7 +287,7 @@ def mapPCAPwithQCAT(p, q):
 # 1. Compare the identical PDU's position difference in the whole UL/DL chain
 #    if their difference is less than previous UL's period, then ReTx detected
 # 2. ASSUME the packet drop happens less than half of the period for UL
-#    Due flexibility of downlink period, we hard set a minimum period for DL
+#    Due flexibility of downlink SN period, we hard set a minimum period for DL
 #
 # RETURN:
 # Function will return two list of maps (UL an DL) that count the 

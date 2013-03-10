@@ -1,3 +1,5 @@
+import math
+
 # Timestamp accuracy, in terms of milliseconds
 TS_DELTA = 1
 
@@ -14,7 +16,20 @@ LINKTYPE_ETHERNET = 1
 LINKTYPE_RLC = 12
 
 # Common byte length
-ETHERNET_HEADER = 14
+LINK_HEADER_LEN = {LINKTYPE_ETHERNET:14,\
+			   	   LINKTYPE_RLC:0}
+
+# Upper bound for throughput
+UPPER_BOUND_TP = math.pow(2, 30)
+
+# Number of ACKs that triggers Fast retransmission
+FAST_RETX_COUNT = 3
+
+# Retx packet gap based on wireshark's implementation (in secs)
+RETX_GAP = 0.003
+
+# Fast Retx packet's gap between current packet and last ACK
+LAST_ACK_GAP = 0.02
 
 ############################################################################
 ################################# QCAT Related #############################
