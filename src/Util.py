@@ -643,7 +643,7 @@ def countTCPReTx_old (entries):
             count += len(entry.retx["tp"])
     return count
 
-# log the RLC retransmission over time
+# record the RLC retransmission over time
 # @return a sampling map, where each peirod 
 def mapRLCReTxOverTime (entries, interval):
 	total_duration = entries[-1].timestamp - entries[0].timestamp
@@ -655,15 +655,15 @@ def mapRLCReTxOverTime (entries, interval):
 	for entry in entries:
 		if entry.rrcID and (entry.logID == const.UL_PDU_ID or entry.logID == const.DL_PDU_ID):
 			if entry.timestamp >= cur_seg_start_time + interval:
-				ul_map[cur_seg_start_time] = (cur_ul_retx)
-				dl_map[cur_seg_start_time] = cur_dl_retx
+				ul_map[cur_seg_start_time] = (cur_ul_retx, entry.rrcID)
+				dl_map[cur_seg_start_time] = (cur_dl_retx, entry.rrcID)
 				cur_seg_start_time += interval
 				cur_ul_retx = 0
 				cur_dl_retx = 0
 			else:
-				if i.logID == const.UL_PDU_ID:
+				if entry.logID == const.UL_PDU_ID:
 					cur_ul_retx += sum([len(x) for x in entry.retx["ul"].values()])
-				if i.logID == const.DL_PDU_ID:
+				if entry.logID == const.DL_PDU_ID:
 					cur_dl_retx += sum([len(x) for x in entry.retx["dl"].values()])
 	return (ul_map, dl_map)
 
@@ -714,7 +714,9 @@ def calThrouhgput(entries, direction):
 ############################ helper functions ###############################
 #############################################################################    
 def meanValue(li):
-    return sum(li)/len(li)
+	if not li:
+		return 0.0
+	return sum(li)/len(li)
 
 def medianValue(li):
     if not li:

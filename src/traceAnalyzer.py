@@ -22,7 +22,7 @@ def init_optParser():
                             " "*extraspace + "[--src_ip] source_ip, [--dst_ip] destination_ip\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
-                            " "*extraspace + "[-a] Threshold, [-d] direction, [--srv_ip] server_ip")
+                            " "*extraspace + "[-a] Threshold, [-d] direction, [-i] interval [--srv_ip] server_ip")
     optParser.add_option("-a", "--addr", dest="printAddr", default=None, \
                          help="Print IP address")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -31,6 +31,8 @@ def init_optParser():
                          help="Up or down, none specify will ignore throughput")
     optParser.add_option("-e", dest="endPercent", default=1, \
                          help="Ending point of the sampling")
+    optParser.add_option("-i", dest="interval_period", default=1, \
+                         help="Used for collect statistics information on RLC")
     optParser.add_option("-l", "--log", dest="inQCATLogFile", default="", \
                          help="QCAT log file path")
     optParser.add_option("-m", action="store_true", default=False, dest="isMapping", \
@@ -185,14 +187,15 @@ def main():
     #pw.printRetxCountMapList(DLReTxCountMap)
     # pw.printRetxSummaryInfo(QCATEntries, ULReTxCountMap, DLReTxCountMap, tcpReTxMap)
     
-    # TODO: assume interval 2s 
-    interval = 2
+    interval = float(options.interval_period)
     ULRLCOTMap, DLRLCOTMap = util.mapRLCReTxOverTime(QCATEntries, interval)
     
     if options.direction:
     	if options.direction.lower() == "up":
+	    	pw.printRLCReTxMapStats(ULRLCOTMap)
 	     	pw.printMapRLCtoTCPRetx(tcpReTxMap, ULReTxCountMap)
         else:
+        	pw.printRLCReTxMapStats(DLRLCOTMap)
 	    	pw.printMapRLCtoTCPRetx(tcpReTxMap, DLReTxCountMap)
     else:
         print >> sys.stderr, "ooops, no compare between TCP and RLC retx"
@@ -201,7 +204,7 @@ def main():
     # print result
     #pw.printULCount(QCATEntries)
     #pw.printDLCount(QCATEntries)
-    #pw.printReTxVSRRCResult(QCATEntries, None)
+    pw.printReTxVSRRCResult(QCATEntries, None)
     #pw.printThroughput(QCATEntries)
     #pw.printRSSIvsTransReTx(QCATEntries)
     #pw.printRSSIvsLinkReTx(QCATEntries)
