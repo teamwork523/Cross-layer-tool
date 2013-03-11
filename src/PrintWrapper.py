@@ -34,7 +34,7 @@ def printRSSIvsLinkReTx (entries):
     rssi_list_all = []
     rssi_list_retx = []
     for i in entries:
-        ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
+        ts = i.timestamp
         # Consider only downlink
         if i.logID == const.DL_PDU_ID:
             if i.rssi["Rx"]:
@@ -53,7 +53,7 @@ def printRSSIvsTransReTx (entries):
     rssi_list_all = []
     rssi_list_retx = []
     for i in entries:
-        ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
+        ts = i.timestamp
         if i.logID == const.PROTOCOL_ID:
             if i.rssi["Rx"]:
                 rssi_list_all.append(i.rssi["Rx"])
@@ -65,14 +65,28 @@ def printRSSIvsTransReTx (entries):
     print "Trans: Median Total rssi is %f" % (util.medianValue(rssi_list_all))
     print "Trans: Median ReTx rssi is %f" % (util.medianValue(rssi_list_retx))
 
-# Print retransmission information
+# Print RLC retransmission Map
 def printRetxCountMapList (countMap):
     for k in sorted(countMap.keys()):
-        ts = datetime.fromtimestamp(k).strftime('%M:%S.%f')
-        print "%s\t%d\t%d   " % (ts, countMap[k][1], countMap[k][0])
+    	for sn, v in countMap[k].items():
+        	print "%s\t%d\t%d\t%d" % (util.convert_ts_in_human(k), sn, v[0], v[1])
+        	print v[2]
+
+# Given TCP retransmission find the nearest retransmission
+def printTwoRetx (tcpRetxMap, RLCRetxMap):
+	# TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry), (another)]}
+	# RLC map format: {ts: {sn1:(count1,duration1, entry), sn2:(count2, duration2, entry), ...}
+	link_ts_sorted = sorted(RLCRetxMap.keys())
+	for a in sorted(tcpRetxMap.keys()):
+		# TODO: currently use the first one, since retx usually happen not within 1ms
+		tcp_delay = tcpRetxMap[a][0][1].timestamp - a
+		link_ts = util.binarySearch(a, link_ts_sorted)
+		# rlc_delay = max([i[1] for i in RLCRetxMap[link_ts].values()])
+		rlc_delay = RLCRetxMap[link_ts].values()[0][1]
+		print "%f\t%f\t%f\t%f\t%d\t%f" % (a, tcp_delay, rlc_delay, abs(link_ts - a), tcpRetxMap[a][0][0].rrcID, util.meanValue(tcpRetxMap[a][0][0].sig["RSCP"]))
 
 # Retransmission summary information
-def printRetxSummaryInfo (entries, uplinkMap, downlinkMap):
+def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
     startTS = None
     ts = None
     totalTCPReTx = 0.0
@@ -85,7 +99,7 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap):
         if i.rrcID != None:
             if i.logID == const.PROTOCOL_ID or i.logID == const.UL_PDU_ID or \
                i.logID == const.DL_PDU_ID:
-                ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
+                ts = i.timestamp
                 if not startTS:
                     startTS = ts      
                 RLC_UL_retx_count = 0
@@ -96,16 +110,18 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap):
                     totalUL += len(i.ul_pdu[0]["sn"])
                     if ts in uplinkMap.keys():
                         for sn in i.ul_pdu[0]["sn"]:
-                            if sn in uplinkMap[ts]:
-                                RLC_UL_retx_count = uplinkMap[ts][uplinkMap[ts].index(sn)+1]
+                            if uplinkMap[ts].has_key(sn):
+                            	#RLC_UL_retx_count = uplinkMap[ts][uplinkMap[ts].index(sn)+1]
+                            	RLC_UL_retx_count = uplinkMap[ts][sn][0]
                 if i.logID == const.DL_PDU_ID:
                     totalDL += len(i.dl_pdu[0]["sn"])
                     if ts in downlinkMap.keys():
                         #RLC_DL_retx_count = downlinkMap[ts][1]
                         for sn in i.dl_pdu[0]["sn"]:
-                            if sn in downlinkMap[ts]:
-                                RLC_DL_retx_count = downlinkMap[ts][downlinkMap[ts].index(sn)+1]
-                totalTCPReTx += len(i.retx["tp"])
+                            if downlinkMap[ts].has_key(sn):
+                                #RLC_DL_retx_count = downlinkMap[ts][downlinkMap[ts].index(sn)+1]
+                            	RLC_DL_retx_count = downlinkMap[ts][sn][0]
+                totalTCPReTx += int(tcpMap.has_key(ts))
                 totalULReTx += RLC_UL_retx_count
                 totalDLReTx += RLC_DL_retx_count
                 #print "%d\t%d\t%d\t%d\t%d" % (ts, len(i.retx["tp"]), \
@@ -128,7 +144,7 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap):
     print >> sys.stderr, "UL frequency %f" % (totalULReTx/(ts - startTS))
     print >> sys.stderr, "DL frequency %f" % (totalDLReTx/(ts - startTS))
     """
-    #print "Total TCP %d, UL %d, DL %d" % (totalTCP, totalUL, totalDL)
+    print "Total TCP %d, UL %d, DL %d" % (totalTCP, totalUL, totalDL)
     if totalDL:
         print >> sys.stderr, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f" % (totalTCPReTx, totalULReTx, totalDLReTx, totalTCPReTx/totalTCP, totalULReTx/totalUL, totalDLReTx/totalDL, totalTCPReTx/(ts - startTS), totalULReTx/(ts - startTS), totalDLReTx/(ts - startTS))
     else:
@@ -138,7 +154,7 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap):
 def printRSCP (entries):
     for i in entries:
         if i.rrcID and i.sig["RSCP"]:
-            ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
+            ts = i.timestamp
             print "%f\t%d\t%d" % (ts, util.meanValue(i.sig["RSCP"]), i.rrcID)
 
 # Throughput Information
@@ -150,7 +166,7 @@ def printThroughput (entries):
     curFlow = None
     for i in entries:
         if i.rrcID and i.throughput > 0:
-            ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
+            ts = i.timestamp
             if not curFlow:
                 curFlow = i.flow
                 if maxFlowSpeed[i.rrcID][0] < i.throughput:
@@ -191,7 +207,7 @@ def printReTxVSRRCResult (entries):
     retxul_bytes = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
     retxdl_bytes =  {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
     for i in entries:
-        ts = i.timestamp[0] + float(i.timestamp[1])/1000.0
+        ts = i.timestamp
         """
         if i.eul["t2p_ec"] != None and i.eul["t2p_ed"] != None:
             print "%f\t%f\t%f" % (ts, i.eul["t2p_ec"], i.eul["t2p_ed"])
@@ -302,4 +318,9 @@ def printDLCount(entries):
     for u in sorted(dlMap):
         if u >= 3851 and u <= 3886:
             print "DL: %d\t%d" % (u, dlMap[u])
-                
+
+# print a entry information
+def printEntry(entry):
+	print "%s\t%s\t%s\t%s\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp),\
+	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
+	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"])

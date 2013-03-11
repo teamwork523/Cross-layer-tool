@@ -10,6 +10,7 @@ import sys, struct
 from datetime import datetime
 import DecodePcapFunc as dp
 import const
+import Util as util
 
 class PCAPParser:
 	def __init__(self, filename, direction):
@@ -95,9 +96,11 @@ class PCAPParser:
 			# find the beginning of the trace
 			for index in range(len(flow)):
 				# Ignore 3-way handshake by start analysis after SYN/SYN-ACK/ACK
-				if flow[index]["seg_len"] == 0 and flow[index]["seq_num"] == base_num + 1:
-					flow_start_index = index + 1
-					break
+				if flow[index]["seg_len"] == 0:
+					if (self.is_uplink and flow[index]["seq_num"] == base_num + 1) or \
+					   (not self.is_uplink and flow[index]["seq_num"] == base_num):
+						flow_start_index = index + 1
+						break
 			
 			# real flow analysis
 			for i in range(flow_start_index, len(flow)):
@@ -150,7 +153,7 @@ class PCAPParser:
 						packet["throughput"] = self.__calThroughput(packet["seq_num"] - base_num, packet["ts"] - start_ts)
 				if packet["throughput"] > const.UPPER_BOUND_TP:
 					raise Exception("TP result %f larger than %f at %s" % (packet["throughput"], const.UPPER_BOUND_TP, \
-									 self.__cvt_ts_in_humanreadable(packet["ts"])))
+									 util.convert_ts_in_human(packet["ts"])))
 
 						
 	def debug(self):
@@ -235,10 +238,6 @@ class PCAPParser:
 				return True
 		return False
 	
-	# convert time into human readable
-	def __cvt_ts_in_humanreadable(self, ts):
-		return datetime.fromtimestamp(ts).strftime('%H:%M:%S.%f')
-	
 	def printFlowsWithTime(self, flows):
 		for flow in flows:
 			print "#" * 50
@@ -246,11 +245,11 @@ class PCAPParser:
 				self.printPkt(i)
 			
 	def printPkt(self, i):
-		print "%s\t%s\t%s\t%s\t%s\t%d" % (self.__cvt_ts_in_humanreadable(i["ts"]), i["src_ip"], i["dst_ip"], hex(i["seq_num"]), hex(i["ack_num"]), i["seg_len"])
+		print "%s\t%s\t%s\t%s\t%s\t%d" % (util.convert_ts_in_human(i["ts"]), i["src_ip"], i["dst_ip"], hex(i["seq_num"]), hex(i["ack_num"]), i["seg_len"])
 				
 # Sample of usage			
 def main():
-	pcap = PCAPParser(sys.argv[1], "up")
+	pcap = PCAPParser(sys.argv[1], "down")
 	pcap.read_pcap()
 	pcap.parse_pcap()
 	# pcap.throughput_analysis()

@@ -3,7 +3,7 @@
 """
 @Author Haokun Luo
 @Date   02/02/2013
-Define QCAT log entry class
+Define and parse QCAT log entry class
 """
 
 import re, math, struct
@@ -23,8 +23,8 @@ class QCATEntry:
         self.title = title
         self.detail = detail
         self.hex_dump = hex_dump
-        # timestamp: [unix_timestamp, milliseconds]
-        self.timestamp = []
+        # timestamp: unix_timestamp_secs.millisec
+        self.timestamp = 0.0
         # log id in integer
         self.logID = None
         # RRC id
@@ -60,7 +60,9 @@ class QCATEntry:
                     "ack_num": None, \
                     "seq_num": None, \
                     "flags": None, \
-                    "payload": None}
+                    "payload": None, \
+                    "header_len": None,\
+                    "seg_size": None}
         self.udp = {"src_port": None, \
                     "dst_port": None, \
                     "total_len": None}
@@ -115,7 +117,8 @@ class QCATEntry:
         self.__procTitle()
         self.__procDetail()
         self.__procHexDump()
-        self.__extractProtocolInfo()
+        # Extract IP/TCP info
+        self.__parseProtocol()
 
     def __procTitle(self):
         # print "Process Titile"
@@ -130,7 +133,7 @@ class QCATEntry:
             [hour, minutes, sec] = secsList.split(':')
             dt = datetime(year, month, day, (int)(hour), (int)(minutes), (int)(sec))
             unixTime = calendar.timegm(dt.utctimetuple())
-            self.timestamp = [unixTime, (int)(millisec)]
+            self.timestamp = unixTime + float(millisec) / 1000.0
             # print self.timestamp
             # Parse the log id, convert hex into integer
             self.logID = int(tList[5], 16)
@@ -150,18 +153,6 @@ class QCATEntry:
                 # print "Id:%s, RRC_state:%s" % (self.rrcID, const.RRC_MAP[self.rrcID])
             # Parse Uplink state entry
             elif self.logID == const.EUL_STATS_ID:
-                """
-                {"sample_len": None,
-                    "tti": None, # ms
-                    "retx_rate": None, 
-                    "raw_bit_rate": None, # kbps
-                    "sched_bit_rate": None, # kbps
-                    "power_bit_rate": None, # kbps
-                    "SG_bit_rate": None, # kbps
-                    "hs_power": None, # mW
-                    "sched_buffer": None, # bytes
-                    "non_sched_buffer": None}
-                """
                 self.eul["sample_len"] = float(self.detail[0].split()[-1])
                 self.eul["tti"] = float(re.findall(r"[\d.-]+", self.detail[1].split()[-1])[0])
                 # self.eul["retx_rate"] = float(self.detail[9].split()[-1].split(":")[1])/self.eul["sample_len"]
@@ -219,7 +210,7 @@ class QCATEntry:
             # Parse the Signal Strength state
             # Assume the number of cell we get is always in WCDMA
             elif self.logID == const.SIG_ID:
-                # check for number of
+                # check for number of cell reached
                 if self.detail[2].find("Num cells searched") != -1:
                     self.sig["num_cells"] = int(self.detail[2].split()[4])
                 else:
@@ -242,7 +233,7 @@ class QCATEntry:
         self.hex_dump = tempHex
         # print self.hex_dump
     
-    def __extractProtocolInfo(self):
+    def __parseProtocol(self):
         # print "Parse protocol type"
         # Structure:
         # Pyaload = Its own header + IP header
@@ -260,13 +251,13 @@ class QCATEntry:
 
                 # IP packet parsing
                 self.ip["header_len"] = int(self.hex_dump["payload"][const.Payload_Header_Len][1], 16) * 4
+                # Avoid fragmented logging packets
                 if self.ip["header_len"] == const.IP_Header_Len:
                     start = const.Payload_Header_Len
                     self.ip["tlp_id"] = int(self.hex_dump["payload"][17], 16)
                     self.ip["total_len"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                     self.ip["src_ip"] = ".".join([str(int(x, 16)) for x in self.hex_dump["payload"][start+12:start+16]])
                     self.ip["dst_ip"] = ".".join([str(int(x, 16)) for x in self.hex_dump["payload"][start+16:start+20]])
-                    self.ip["signature"] = "".join(self.hex_dump["payload"][:start+const.IP_Header_Len+const.TCP_Header_Len])
                     # self.__debugIP()
                     
                     # Parse TCP Packet 
@@ -290,7 +281,9 @@ class QCATEntry:
                         self.tcp["SYN_FLAG"] = bool((flag >> 1) & 0x1)
                         self.tcp["FIN_FLAG"] = bool(flag & 0x1)
                         self.tcp["flags"] = flag
-                        self.tcp["payload"] = self.hex_dump["payload"][start+const.TCP_Header_Len:]
+                        self.tcp["header_len"] = ((int(self.hex_dump["payload"][start+12], 16)) >> 4) * 4
+                        self.tcp["seg_size"] = self.ip["total_len"] - self.ip["header_len"] - self.tcp["header_len"]
+                        self.tcp["payload"] = self.hex_dump["payload"][start+self.tcp["header_len"]:]
                         # Assign flow information if it is a SYN packet
                         if self.tcp["SYN_FLAG"] and not self.tcp["ACK_FLAG"]:
                             self.flow["src_port"] = self.tcp["src_port"]
@@ -300,9 +293,9 @@ class QCATEntry:
                             self.flow["dst_ip"] = self.ip["dst_ip"]
                             self.flow["seq_num"] = self.tcp["seq_num"]
                             self.flow["ack_num"] = self.tcp["ack_num"]
-                            self.flow["timestamp"] = self.timestamp[0] + float(self.timestamp[1])/1000.0
+                            self.flow["timestamp"] = self.timestamp
                         # self.__debugTCP()
-                    
+                    	self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+self.tcp["header_len"]])
                     # Parse UDP Packet
                     if self.ip["tlp_id"] == const.UDP_ID:
                         start = const.Payload_Header_Len + self.ip["header_len"] 
@@ -337,6 +330,7 @@ class QCATEntry:
         print "RST_FLAG is %d" % (self.tcp["RST_FLAG"])
         print "SYN_FLAG is %d" % (self.tcp["SYN_FLAG"])
         print "FIN_FLAG is %d" % (self.tcp["FIN_FLAG"])
+        print "TCP header length is %d" % (self.tcp["header_len"])
         
     def __debugUDP(self):
         print "UDP src port is %d" % (self.udp["src_port"])

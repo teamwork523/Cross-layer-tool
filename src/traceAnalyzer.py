@@ -19,9 +19,10 @@ def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
     optParser = OptionParser(usage="./%prog [-l, --log] QCAT_LOG_PATH [-m] [-p, --pcap] inPCAPFile\n" + \
                             " "*extraspace + "[-t, --type] protocolType, [--src_ip] srcIP\n" + \
+                            " "*extraspace + "[--src_ip] source_ip, [--dst_ip] destination_ip\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
-                            " "*extraspace + "[-a] Threshold, [-d] direction")
+                            " "*extraspace + "[-a] Threshold, [-d] direction, [--srv_ip] server_ip")
     optParser.add_option("-a", "--addr", dest="printAddr", default=None, \
                          help="Print IP address")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -41,6 +42,8 @@ def init_optParser():
     # TODO: delete after debugging
     # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
     #                     help="Signal strength file")
+    optParser.add_option("--srv_ip", dest="server_ip", default=None, \
+    					  help="Used combined with direction option to filter useful retransmission packets")
     optParser.add_option("--src_ip", dest="srcIP", default=None, \
                          help="Filter out entries with source ip")
     optParser.add_option("--dst_ip", dest="dstIP", default=None, \
@@ -72,20 +75,28 @@ def main():
     if options.printAddr:
         pw.printIPaddressPair(QCATEntries, options.printAddr)
         sys.exit(0)
-    
+       
+    #################################################################
+    ###################### Mapping Context Info #####################
+    #################################################################
     #print "Length of Entries is %d" % (len(QCATEntries))
     util.assignRRCState(QCATEntries)
     util.assignEULState(QCATEntries)
-    # assign flow information
-    util.assignFlowInfo(QCATEntries)
     tempLen = len(QCATEntries)
     #print "Before remove dup: %d entries" % (tempLen)
     QCATEntries = util.removeQXDMDupIP(QCATEntries)
     #print "After remove dup: %d entries" % (len(QCATEntries))
     util.assignSignalStrengthValue(QCATEntries)
-
+    # assign flow information
+    # util.assignFlowInfo(QCATEntries)
+	
+	#################################################################
+    ######################## Protocol Filter ########################
+    #################################################################
     # validate ip address
     cond = {}
+    # this used for filter based on Union or Intersection of all relationships
+    cond["ip_relation"] = "and"
     if options.srcIP != None:
         if util.validateIP(options.srcIP) == None:
             optParser.error("Invalid source IP")
@@ -102,14 +113,42 @@ def main():
         cond["dst_port"] = options.dst_port
     if options.protocolType != None:
         cond["tlp_id"] = const.TLPtoID_MAP[options.protocolType.upper()]
+    if options.server_ip != None:
+    	if not options.direction:
+    		print >> sys.stderr, "Must specify direction information if you want to filter based on server ip"
+    		sys.exit(1)
+    	else:
+    		cond["ip_relation"] = "or"
+    		cond["srv_ip"] = options.server_ip
+    filteredQCATEntries = util.packetFilter(QCATEntries, cond)
     
+    #################################################################
+    #################### Retransmission Process #####################
+    #################################################################
     # TCP retransmission process
-    QCATEntries = util.packetFilter(QCATEntries, cond)
-    util.procTPReTx(QCATEntries)
-    filteredReTxCount = util.countTCPReTx(QCATEntries)
-    # print "Total Duplicate Transmission is %d" % (filteredReTxCount)
+    # TODO: current retransmission is required to filter one direction of traffic
+    # 		Improve this by flow analysis  
+    if options.direction and options.server_ip:
+		tcpflows = util.extractFlows(filteredQCATEntries)
+		tcpReTxMap, tcpFastReTxMap = util.procTCPReTx(tcpflows, options.direction, options.server_ip)
+		tcpReTxCount = util.countTCPReTx(tcpReTxMap)
+		tcpFastReTxCount = util.countTCPReTx(tcpFastReTxMap)
+		#print "TCP ReTx happens %d times" % (tcpReTxCount)
+		#print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
+    else:
+		print >> sys.stderr, "Must specify direction and server ip to analysis retransmission"
     """
-    print "TCP ReTx is %d" % (filteredReTxCount)
+    if options.srcIP or options.dstIP:
+    	tcpReTxMap = util.procTCPReTx(tcpflows)
+        tcpReTxCount = util.countTCPReTx(tcpReTxMap)
+        print "TCP ReTx is %d" % (tcpReTxCount)
+    else:
+		print >> sys.stderr, "Must use filter to apply retransmission count"
+	"""
+    # print "Total Duplicate Transmission is %d" % (filteredReTxCount)
+    
+    
+    """
     if options.srcIP != None:
         print "Sender retx count is %d" % (filteredReTxCount)
     if options.dstIP != None:
@@ -130,9 +169,12 @@ def main():
         print "Mean squared error is %f" % (util.meanValue(errDict.values()))
     """
     
+    #################################################################
+    ######################## Result Display #########################
+    #################################################################
     # Compute throughput
     if options.direction:
-        util.calThrouhgput(QCATEntries, options.direction)
+        util.calThrouhgput(filteredQCATEntries, options.direction)
     else:
         print >> sys.stderr, "Ignore throughput calculation!!!"
     
@@ -140,17 +182,29 @@ def main():
     #pw.printRetxCountMapList(ULReTxCountMap)
     #print "#"*50
     #pw.printRetxCountMapList(DLReTxCountMap)
-    #pw.printRetxSummaryInfo(QCATEntries, ULReTxCountMap, DLReTxCountMap)
+    # pw.printRetxSummaryInfo(QCATEntries, ULReTxCountMap, DLReTxCountMap, tcpReTxMap)
+    if options.direction:
+    	if options.direction.lower() == "up":
+	     	pw.printTwoRetx(tcpReTxMap, ULReTxCountMap)
+        else:
+	    	pw.printTwoRetx(tcpReTxMap, DLReTxCountMap)
+    else:
+        print >> sys.stderr, "ooops, no compare between TCP and RLC retx"
+    
     # pw.printRSCP(QCATEntries)
     # print result
     #pw.printULCount(QCATEntries)
     #pw.printDLCount(QCATEntries)
     # pw.printReTxVSRRCResult(QCATEntries)
-    pw.printThroughput(QCATEntries)
+    #pw.printThroughput(QCATEntries)
     #pw.printRSSIvsTransReTx(QCATEntries)
     #pw.printRSSIvsLinkReTx(QCATEntries)
     
-    # TODO: might consider not to use external traces
+    
+    #################################################################
+    ################ Verify QXDM and PCAP timing ####################
+    #################################################################
+    # Not useful at this point
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
     elif options.isMapping == True:
