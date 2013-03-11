@@ -332,7 +332,7 @@ def procRLCReTx(entries):
     ULSNMap = {}
     DLSNMap = {}
     # list Retransmission count for each period
-    # i.e. [{SN1: [SN1_ReTxCount, 1st_ReTx_ts, duration, entry], SN2: [SN2_ReTxCount, 1st_ReTx_ts, duration, entry], ...} #period1,..., {...} #periodN]
+    # i.e. [{SN1: [SN1_ReTxCount, 1st_ReTx_ts, duration, [entry1, entry2...]], SN2: [SN2_ReTxCount, 1st_ReTx_ts, duration, [entry1, entry2...]], ...} #period1,..., {...} #periodN]
     ULReTxCountMapList = []
     DLReTxCountMapList = []
     ULReTxCountMapLocal = {}
@@ -345,7 +345,7 @@ def procRLCReTx(entries):
                 ts_ul = entry.timestamp
                 #print "UL: %d" % (curSN_UL)
                 # check if duplication exist
-                if (curSN_UL in ULSNMap) and (ULLastPeriod == -1 or ULCounter - ULSNMap[curSN_UL][0] < ULLastPeriod/2):
+                if (curSN_UL in ULSNMap) and (ULLastPeriod == -1 or ULCounter - ULSNMap[curSN_UL][0] < ULLastPeriod/5):
                     # duplication detected
                     ts_ul_formatted = datetime.fromtimestamp(ts_ul).strftime('%Y-%m-%d %H:%M:%S.%f')
                     #print "UL: %s\t%d\t%d\t%d" % (ts_ul_formatted, curSN_UL, ULCounter - ULSNMap[curSN_UL][0], ULLastPeriod)
@@ -356,10 +356,11 @@ def procRLCReTx(entries):
                     # update retx count map
                     if curSN_UL not in ULReTxCountMapLocal:
                     	# [tx_count, timestamp, duration]
-                        ULReTxCountMapLocal[curSN_UL] = [1, ts_ul, ts_ul - ULSNMap[curSN_UL][1], ULSNMap[curSN_UL][2]]
+                        ULReTxCountMapLocal[curSN_UL] = [1, ts_ul, ts_ul - ULSNMap[curSN_UL][1], [ULSNMap[curSN_UL][2], entry]]
                     else:
                         ULReTxCountMapLocal[curSN_UL][0] += 1
                         ULReTxCountMapLocal[curSN_UL][2] = ts_ul - ULReTxCountMapLocal[curSN_UL][1]
+                        ULReTxCountMapLocal[curSN_UL][3].append(entry)
                 else:
                     if curSN_UL == 0 and ULPrivIndex > const.MIN_SN_PERIOD:
                         # update the period and retx count map
@@ -420,10 +421,11 @@ def procRLCReTx(entries):
                     # update retx count map
                     if curSN_DL not in DLReTxCountMapLocal:
                     	# [tx_count, timestamp, duration]
-                        DLReTxCountMapLocal[curSN_DL] = [1, ts_dl, ts_dl - DLSNMap[curSN_DL][1], DLSNMap[curSN_DL][2]]
+                        DLReTxCountMapLocal[curSN_DL] = [1, ts_dl, ts_dl - DLSNMap[curSN_DL][1], [DLSNMap[curSN_DL][2], entry]]
                     else:
                         DLReTxCountMapLocal[curSN_DL][0] += 1
                         DLReTxCountMapLocal[curSN_DL][2] = ts_dl - DLReTxCountMapLocal[curSN_DL][1]
+                        DLReTxCountMapLocal[curSN_DL][3].append(entry)
                 else:
                     # update the Map
                     DLSNMap[curSN_DL] = (DLCounter, ts_dl, entry)
@@ -442,7 +444,7 @@ def procRLCReTx(entries):
             
 # Transform the ReTx Count map into Timestamp key base
 # Old format: {sn: [count, ts, duration, entry]}
-# New format: {ts: {sn1:(count1,duration1, entry), sn2:(count2, duration2, entry), ...}
+# New format: {ts: {sn1:(count1,duration1, [entry1, entry2,...]), sn2:(count2, duration2, [entry1, entry2, ...]), ...}
 def retxCountMapTransform (retxCountMapList):
     tsMap = {}
     for retxCountMap in retxCountMapList:
@@ -478,9 +480,9 @@ def detectFastReTx (entry, entryHist, is_up, srv_ip):
         	# TODO: debug
 			print "Detect fast retransmission"
 			print "Ongoing pkt:"
-			pw.printEntry(entry)
+			pw.printTCPEntry(entry)
 			print "Checking pkt:"
-			pw.printEntry(i)
+			pw.printTCPEntry(i)
 			if entry.ip["src_ip"] == i.ip["src_ip"] and \
 			   entry.ip["dst_ip"] == i.ip["dst_ip"] and \
 			   entry.tcp["seq_num"] >= i.tcp["seq_num"]:
@@ -588,17 +590,42 @@ def procTCPReTx (flows, direction, srv_ip):
 def countTCPReTx(tcpRetxMap):
 	return sum([len(i) for i in tcpRetxMap.values()])
 
-"""
-# Apply TCP layer retransmission
-# TODO: use flow analysis here
-def procTCPReTx_old (entries):
+# Deprecate:
+# check if an entry's header and body in the retransmission part
+def checkEntryExistInList (entry, entryHist):            
+    for i in entryHist[::-1]:
+        # Exceptional case:
+        # 1. The sender's last ACK in three way handshake has same header as first packets (check the packet size)
+        # 2. TSL vs TCP exactly the same header, need to exam the TSL header (TODO)
+        # 3. Duplicate ACK -> check payload and flow destination
+        #    Special case DUP ACK of SYN-ACK -> (len > 64, TODO: make this better)
+        # 4. Duplicate FIN_ACK vs. ACK -> check flags
+        # 5. Duplicate SYN -> Enable ACK
+        if entry.tcp["ACK_FLAG"] and \
+           entry.ip["total_len"] > 64 and \
+           entry.tcp["seq_num"] == i.tcp["seq_num"] and \
+           entry.tcp["flags"] == i.tcp["flags"] and \
+           entry.ip["total_len"] == i.ip["total_len"] and \
+           entry.tcp["payload"] == i.tcp["payload"]:
+            """
+            privTS = i.timestamp[0] + float(i.timestamp[1])/1000.0
+            ts = entry.timestamp[0] + float(entry.timestamp[1])/1000.0
+            print "#" * 50
+            print "Priv TS is %s" % (datetime.fromtimestamp(privTS).strftime('%H:%M:%S.%f'))
+            print "Current TS is %s" % (datetime.fromtimestamp(ts).strftime('%H:%M:%S.%f'))
+            """
+            return True
+    return False
+
+# assign transport layer retransmission
+def procTPReTx_old (entries):
     if not entries:
         return
     privEntryHist = []
     threshold = 30
     for entry in entries:
         if entry.logID == const.PROTOCOL_ID and entry.ip["tlp_id"] == const.TCP_ID:            
-            if detectReTx(entry, privEntryHist):
+            if checkEntryExistInList(entry, privEntryHist):
                entry.retx["tp"].append(entry.ip["total_len"])
             if len(privEntryHist) < threshold:
                 privEntryHist.append(entry)
@@ -615,7 +642,32 @@ def countTCPReTx_old (entries):
         if entry.ip["tlp_id"] == const.TCP_ID:
             count += len(entry.retx["tp"])
     return count
-"""
+
+# log the RLC retransmission over time
+# @return a new retransmission
+def mapRLCReTxOverTime (entries, interval):
+	total_duration = entries[-1].timestamp - entries[0].timestamp
+	cur_seg_start_time = entries[0].timestamp
+	ul_map = {}
+	dl_map = {}
+	cur_ul_retx = 0
+	cur_dl_retx = 0
+	for entry in entries:
+		if entry.rrcID and (i.logID == const.UL_PDU_ID or i.logID == const.DL_PDU_ID):
+			if entry.timestamp >= cur_seg_start_time + interval:
+				ul_map[cur_seg_start_time] = cur_ul_retx
+				dl_map[cur_seg_start_time] = cur_dl_retx
+				cur_seg_start_time += interval
+				cur_ul_retx = 0
+				cur_dl_retx = 0
+			else:
+				if i.logID == const.UL_PDU_ID:
+					cur_ul_retx += sum([len(x) for x in i.retx["ul"].values()])
+				if i.logID == const.DL_PDU_ID:
+					cur_dl_retx += sum([len(x) for x in i.retx["dl"].values()])
+	return (ul_map, dl_map)
+
+# Count how many RLC uplink is lost
 
 ########################################################################################
 ##################################### Context Related ##################################

@@ -73,17 +73,31 @@ def printRetxCountMapList (countMap):
         	print v[2]
 
 # Given TCP retransmission find the nearest retransmission
-def printTwoRetx (tcpRetxMap, RLCRetxMap):
+def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
 	# TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry), (another)]}
-	# RLC map format: {ts: {sn1:(count1,duration1, entry), sn2:(count2, duration2, entry), ...}
+	# RLC map format: {ts: {sn1:(count1,duration1, [entries]), sn2:(count2, duration2, [entries]), ...}
+	# RLC could 
+	ahead_th = 3
 	link_ts_sorted = sorted(RLCRetxMap.keys())
 	for a in sorted(tcpRetxMap.keys()):
 		# TODO: currently use the first one, since retx usually happen not within 1ms
 		tcp_delay = tcpRetxMap[a][0][1].timestamp - a
-		link_ts = util.binarySearch(a, link_ts_sorted)
-		# rlc_delay = max([i[1] for i in RLCRetxMap[link_ts].values()])
-		rlc_delay = RLCRetxMap[link_ts].values()[0][1]
-		print "%f\t%f\t%f\t%f\t%d\t%f" % (a, tcp_delay, rlc_delay, abs(link_ts - a), tcpRetxMap[a][0][0].rrcID, util.meanValue(tcpRetxMap[a][0][0].sig["RSCP"]))
+		# TODO: change binary search
+		link_ts = 0
+		for link_ts in link_ts_sorted:
+			if link_ts > a and min([i[1] for i in RLCRetxMap[link_ts].values()]) < tcp_delay:# and link_ts - a < ahead_th:
+				break
+		rlc_delay = 0
+		min_count = 0
+		entries = []
+		for i in RLCRetxMap[link_ts].values():
+			if i[1] > rlc_delay:
+				rlc_delay = i[1]
+				min_count = i[0]
+				entries = i[2]
+		#rlc_delay = RLCRetxMap[link_ts].values()[0][1]
+		print "%f\t%f\t%f\t%f\t%d\t%d\t%f" % (a, tcp_delay, rlc_delay, abs(link_ts - a), min_count, tcpRetxMap[a][0][0].rrcID, util.meanValue(tcpRetxMap[a][0][0].sig["RSCP"]))
+	
 
 # Retransmission summary information
 def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
@@ -194,7 +208,7 @@ def printThroughput (entries):
                                          util.meanValue(throughputSummary[const.PCH_ID]),)
 
 # Print Retransmission vs RRC state
-def printReTxVSRRCResult (entries):
+def printReTxVSRRCResult (entries, tcpMap):
     ULBytes_total = 0.0
     DLBytes_total = 0.0
     ReTxUL = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
@@ -229,7 +243,7 @@ def printReTxVSRRCResult (entries):
             if i.logID == const.PROTOCOL_ID:
                 Bytes_on_fly += i.ip["total_len"]
                 TCP_total_count += 1
-                if i.retx["tp"]:
+                if tcpMap and tcpMap.has_key(ts):
                     Trans_retx_bytes += i.ip["total_len"] 
                     TCP_retx_count += 1               
             if i.logID == const.UL_PDU_ID:
@@ -250,7 +264,11 @@ def printReTxVSRRCResult (entries):
     # Retransmission number
     #print "%d\t%d" % (totUL, totDL)
     # Retransmission break down
-    print "%d\t%d\t%d\t%d\t%d\t%d" % (ReTxUL[const.FACH_ID], ReTxUL[const.DCH_ID], ReTxUL[const.PCH_ID], ReTxDL[const.FACH_ID], ReTxDL[const.DCH_ID], ReTxDL[const.PCH_ID])
+    # print "%d\t%d\t%d\t%d\t%d\t%d" % (ReTxUL[const.FACH_ID], ReTxUL[const.DCH_ID], ReTxUL[const.PCH_ID], ReTxDL[const.FACH_ID], ReTxDL[const.DCH_ID], ReTxDL[const.PCH_ID])
+    if totDL != 0:
+	    print "%f\t%f\t%f\t%f\t%f\t%f" % (ReTxUL[const.FACH_ID] / totUL, ReTxUL[const.DCH_ID] / totUL, ReTxUL[const.PCH_ID] / totUL, ReTxDL[const.FACH_ID] / totDL, ReTxDL[const.DCH_ID] / totDL, ReTxDL[const.PCH_ID] / totDL)
+    else:
+		print "%f\t%f\t%f\t0\t0\t0" % (ReTxUL[const.FACH_ID] / totUL, ReTxUL[const.DCH_ID] / totUL, ReTxUL[const.PCH_ID] / totUL)
     # Retransmission fraction IP
     #if Bytes_on_fly != 0:
         #print "%f" % (Trans_retx_bytes)
@@ -319,8 +337,9 @@ def printDLCount(entries):
         if u >= 3851 and u <= 3886:
             print "DL: %d\t%d" % (u, dlMap[u])
 
-# print a entry information
-def printEntry(entry):
+# print a TCP entry information
+def printTCPEntry(entry):
 	print "%s\t%s\t%s\t%s\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp),\
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
 	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"])
+	 

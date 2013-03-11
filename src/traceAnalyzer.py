@@ -179,15 +179,21 @@ def main():
         print >> sys.stderr, "Ignore throughput calculation!!!"
     
     [ULReTxCountMap, DLReTxCountMap] = util.procRLCReTx(QCATEntries)
+    #util.procTPReTx_old(QCATEntries)
     #pw.printRetxCountMapList(ULReTxCountMap)
     #print "#"*50
     #pw.printRetxCountMapList(DLReTxCountMap)
     # pw.printRetxSummaryInfo(QCATEntries, ULReTxCountMap, DLReTxCountMap, tcpReTxMap)
+    
+    # TODO: assume interval 2s 
+    interval = 2
+    ULRLCOTMap, DLRLCOTMap = util.mapRLCReTxOverTime(QCATEntries, interval)
+    
     if options.direction:
     	if options.direction.lower() == "up":
-	     	pw.printTwoRetx(tcpReTxMap, ULReTxCountMap)
+	     	pw.printMapRLCtoTCPRetx(tcpReTxMap, ULReTxCountMap)
         else:
-	    	pw.printTwoRetx(tcpReTxMap, DLReTxCountMap)
+	    	pw.printMapRLCtoTCPRetx(tcpReTxMap, DLReTxCountMap)
     else:
         print >> sys.stderr, "ooops, no compare between TCP and RLC retx"
     
@@ -195,7 +201,7 @@ def main():
     # print result
     #pw.printULCount(QCATEntries)
     #pw.printDLCount(QCATEntries)
-    # pw.printReTxVSRRCResult(QCATEntries)
+    #pw.printReTxVSRRCResult(QCATEntries, None)
     #pw.printThroughput(QCATEntries)
     #pw.printRSSIvsTransReTx(QCATEntries)
     #pw.printRSSIvsLinkReTx(QCATEntries)
