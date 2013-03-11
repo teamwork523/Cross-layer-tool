@@ -217,9 +217,10 @@ class QCATEntry:
                     raise Exception("Fail to detect number of cells")
                 for i in self.detail[3:]:
                     if i.find("ECIO") != -1:
-                        self.sig["ECIO"].append(float(i.split()[-1]))
+                        self.sig["ECIO"].append(float(i.split()[2]))
+                    # May encounter end of statement with pending string case
                     if i.find("RSCP") != -1:
-                        self.sig["RSCP"].append(float(i.split()[-1]))
+                        self.sig["RSCP"].append(float(i.split()[2]))
             # TODO: process other type of log entry
 
     def __procHexDump(self):

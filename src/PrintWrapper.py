@@ -207,6 +207,12 @@ def printThroughput (entries):
                                          util.meanValue(throughputSummary[const.DCH_ID]), \
                                          util.meanValue(throughputSummary[const.PCH_ID]),)
 
+# compute the percentage of sampling period that contains retransmission
+# and average retransmission rate
+def printRLCReTxMapStats (rlcMap):
+	# TODO:
+	
+	
 # Print Retransmission vs RRC state
 def printReTxVSRRCResult (entries, tcpMap):
     ULBytes_total = 0.0

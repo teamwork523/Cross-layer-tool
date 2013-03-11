@@ -644,7 +644,7 @@ def countTCPReTx_old (entries):
     return count
 
 # log the RLC retransmission over time
-# @return a new retransmission
+# @return a sampling map, where each peirod 
 def mapRLCReTxOverTime (entries, interval):
 	total_duration = entries[-1].timestamp - entries[0].timestamp
 	cur_seg_start_time = entries[0].timestamp
@@ -653,22 +653,21 @@ def mapRLCReTxOverTime (entries, interval):
 	cur_ul_retx = 0
 	cur_dl_retx = 0
 	for entry in entries:
-		if entry.rrcID and (i.logID == const.UL_PDU_ID or i.logID == const.DL_PDU_ID):
+		if entry.rrcID and (entry.logID == const.UL_PDU_ID or entry.logID == const.DL_PDU_ID):
 			if entry.timestamp >= cur_seg_start_time + interval:
-				ul_map[cur_seg_start_time] = cur_ul_retx
+				ul_map[cur_seg_start_time] = (cur_ul_retx)
 				dl_map[cur_seg_start_time] = cur_dl_retx
 				cur_seg_start_time += interval
 				cur_ul_retx = 0
 				cur_dl_retx = 0
 			else:
 				if i.logID == const.UL_PDU_ID:
-					cur_ul_retx += sum([len(x) for x in i.retx["ul"].values()])
+					cur_ul_retx += sum([len(x) for x in entry.retx["ul"].values()])
 				if i.logID == const.DL_PDU_ID:
-					cur_dl_retx += sum([len(x) for x in i.retx["dl"].values()])
+					cur_dl_retx += sum([len(x) for x in entry.retx["dl"].values()])
 	return (ul_map, dl_map)
 
-# Count how many RLC uplink is lost
-
+	
 ########################################################################################
 ##################################### Context Related ##################################
 ########################################################################################
