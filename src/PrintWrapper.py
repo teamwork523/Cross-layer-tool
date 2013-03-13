@@ -28,43 +28,6 @@ def printIPaddressPair(entries, threshold):
                 srcIPCount[i.ip["src_ip"]] = 1
     print "Not finding proper source ip. Please figure out manually"
 
-# Signal strength vs. Link layer ReTx 
-def printRSSIvsLinkReTx (entries):
-    # assume assign AGC already
-    rssi_list_all = []
-    rssi_list_retx = []
-    for i in entries:
-        ts = i.timestamp
-        # Consider only downlink
-        if i.logID == const.DL_PDU_ID:
-            if i.rssi["Rx"]:
-                rssi_list_all.append(i.rssi["Rx"])
-                if i.retx["dl"] != 0:
-                    # print "%f\t%f" % (ts, i.rssi["Rx"])
-                    rssi_list_retx.append(i.rssi["Rx"])
-    print "Link: Avg Total rssi is %f" % (util.meanValue(rssi_list_all))
-    print "Link: Avg ReTx rssi is %f" % (util.meanValue(rssi_list_retx))
-    print "Link: Median Total rssi is %f" % (util.medianValue(rssi_list_all))
-    print "Link: Median ReTx rssi is %f" % (util.medianValue(rssi_list_retx))
-
-# Signal strength vs. Transport layer ReTx
-def printRSSIvsTransReTx (entries):
-    # assume assigne AGC already
-    rssi_list_all = []
-    rssi_list_retx = []
-    for i in entries:
-        ts = i.timestamp
-        if i.logID == const.PROTOCOL_ID:
-            if i.rssi["Rx"]:
-                rssi_list_all.append(i.rssi["Rx"])
-                if i.retx["tp"] != 0:
-                    # print "%f\t%f" % (ts, i.rssi["Rx"])
-                    rssi_list_retx.append(i.rssi["Rx"])
-    print "Trans: Avg Total rssi is %f" % (util.meanValue(rssi_list_all))
-    print "Trans: Avg ReTx rssi is %f" % (util.meanValue(rssi_list_retx))
-    print "Trans: Median Total rssi is %f" % (util.medianValue(rssi_list_all))
-    print "Trans: Median ReTx rssi is %f" % (util.medianValue(rssi_list_retx))
-
 # Print RLC retransmission Map
 def printRetxCountMapList (countMap):
     for k in sorted(countMap.keys()):
@@ -372,7 +335,7 @@ def printDLCount(entries):
 
 # print a TCP entry information
 def printTCPEntry(entry):
-	print "%s\t%s\t%s\t%s\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp),\
+	print "%s\t%s\t%s\t%s\t%s\t%d\t%d" % (util.convert_ts_in_human(entry.timestamp),\
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
-	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"])
+	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"])
 	 

@@ -28,9 +28,6 @@ FAST_RETX_COUNT = 3
 # Retx packet gap based on wireshark's implementation (in secs)
 RETX_GAP = 0.003
 
-# Fast Retx packet's gap between current packet and last ACK
-LAST_ACK_GAP = 0.02
-
 ############################################################################
 ################################# QCAT Related #############################
 ############################################################################

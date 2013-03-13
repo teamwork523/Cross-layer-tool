@@ -3,7 +3,8 @@
 """
 @Author Haokun Luo
 @Date   02/02/2013
-Define and parse QCAT log entry class
+Aggregate all the QCAT log information into this class. Part of the fields requires
+context mapping functions to fill in.
 """
 
 import re, math, struct

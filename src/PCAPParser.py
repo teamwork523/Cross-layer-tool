@@ -249,7 +249,7 @@ class PCAPParser:
 				
 # Sample of usage			
 def main():
-	pcap = PCAPParser(sys.argv[1], "down")
+	pcap = PCAPParser(sys.argv[1], "up")
 	pcap.read_pcap()
 	pcap.parse_pcap()
 	# pcap.throughput_analysis()
