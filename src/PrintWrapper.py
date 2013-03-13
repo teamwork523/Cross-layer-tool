@@ -60,8 +60,39 @@ def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
 				entries = i[2]
 		#rlc_delay = RLCRetxMap[link_ts].values()[0][1]
 		print "%f\t%f\t%f\t%f\t%d\t%d\t%f" % (a, tcp_delay, rlc_delay, abs(link_ts - a), min_count, tcpRetxMap[a][0][0].rrcID, util.meanValue(tcpRetxMap[a][0][0].sig["RSCP"]))
-	
 
+
+# Print ratio stats of retransmission for each state
+# In forms of:
+#      ({"tcp_rto": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...}, 
+#        "tcp_fast": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
+#        "rlc_ul": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
+#        "rlc_dl": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...} ... }, 
+#       {"tcp": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
+#        "rlc_ul": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
+#        "rlc_dl": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...}})
+def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
+    result = ""
+    totKey = ""
+    # track through all the key name in totalMap, if find a string match, then
+    # print the whole state ratio of that entry
+    for totKey in totalStatsMap:
+        if retxType.lower().find(totKey) != -1:
+            break
+    if retxStatsMap.has_key(retxType.lower()):
+        total_count = sum(totalStatsMap[totKey].values())
+        if not total_count:
+            print "0\t" * len(retxStatsMap[retxType.lower()])
+            return
+        for k, v in retxStatsMap[retxType.lower()].items():
+            ratio = v / total_count
+            result += str(ratio) + "\t"
+    else:
+        print >> sys.stderr, "ERROR: Invalid retransmission type"
+        return
+    print result
+
+# Deprecated
 # Retransmission summary information
 def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
     startTS = None
@@ -126,7 +157,10 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
         print >> sys.stderr, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f" % (totalTCPReTx, totalULReTx, totalDLReTx, totalTCPReTx/totalTCP, totalULReTx/totalUL, totalDLReTx/totalDL, totalTCPReTx/(ts - startTS), totalULReTx/(ts - startTS), totalDLReTx/(ts - startTS))
     else:
         print >> sys.stderr, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f" % (totalTCPReTx, totalULReTx, totalDLReTx, totalTCPReTx/totalTCP, totalULReTx/totalUL, 0, totalTCPReTx/(ts - startTS), totalULReTx/(ts - startTS), totalDLReTx/(ts - startTS))
-    
+
+#######################################################################
+######################## Context Info #################################
+#######################################################################
 # energy information
 def printRSCP (entries):
     for i in entries:
@@ -169,9 +203,10 @@ def printThroughput (entries):
     print >> sys.stderr, "%f\t%f\t%f" % (util.meanValue(throughputSummary[const.FACH_ID]),\
                                          util.meanValue(throughputSummary[const.DCH_ID]), \
                                          util.meanValue(throughputSummary[const.PCH_ID]),)
-
+### Deprecated
 # compute the percentage of sampling period that contains retransmission
 # and average retransmission rate
+# 
 def printRLCReTxMapStats (rlcMap):
 	ts_sorted = sorted(rlcMap.keys())
 	interval = ts_sorted[1] - ts_sorted[0]
@@ -192,117 +227,10 @@ def printRLCReTxMapStats (rlcMap):
 							  retx_counter[const.PCH_ID] / total_num_period, \
 							  total_retx_sample_count / total_num_period)
 	print "Average retx rate: %d" % util.meanValue(retx_rate_list)
-		
-	
-# Print Retransmission vs RRC state
-def printReTxVSRRCResult (entries, tcpMap):
-    ULBytes_total = 0.0
-    DLBytes_total = 0.0
-    ReTxUL = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    ReTxDL = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    rrc_state = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    Bytes_on_fly = 0.0
-    TCP_retx_count = 0
-    TCP_total_count = 0
-    Trans_retx_bytes = 0.0
-    retxul_bytes = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    retxdl_bytes =  {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    RLC_UL_tot_pkts = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    RLC_DL_tot_pkts = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
     
-    for i in entries:
-        ts = i.timestamp
-        """
-        if i.eul["t2p_ec"] != None and i.eul["t2p_ed"] != None:
-            print "%f\t%f\t%f" % (ts, i.eul["t2p_ec"], i.eul["t2p_ed"])
-        if i.eul["raw_bit_rate"] != None:
-            print "%f\t%f" % (ts, i.eul["raw_bit_rate"])
-        """
-        if i.rrcID != None:
-            # print "%f\t%d\t%d\t%d" % (ts, i.rrcID, sum([len(x) for x in i.retx["ul"].values()]), \
-            #                          sum([len(x) for x in i.retx["dl"].values()]))
-            # Timestamp Trans_RT_BYTES UL_RT_BYTES DL_RT_BYTES rrc
-            if i.logID == const.PROTOCOL_ID or i.logID == const.UL_PDU_ID or \
-               i.logID == const.DL_PDU_ID:
-                #print "%f\t%d\t%d\t%d\t%d" % (ts, len(i.retx["tp"]), sum([len(x) for x in i.retx["ul"].values()]), \
-                      # sum([len(x) for x in i.retx["dl"].values()]), i.rrcID)
-                pass
-            rrc_state[i.rrcID] += 1
-            ReTxUL[i.rrcID] += sum([len(x) for x in i.retx["ul"].values()])
-            ReTxDL[i.rrcID] += sum([len(x) for x in i.retx["dl"].values()])
-            if i.logID == const.PROTOCOL_ID:
-                Bytes_on_fly += i.ip["total_len"]
-                TCP_total_count += 1
-                if tcpMap and tcpMap.has_key(ts):
-                    Trans_retx_bytes += i.ip["total_len"] 
-                    TCP_retx_count += 1               
-            if i.logID == const.UL_PDU_ID:
-                ULBytes_total += sum(i.ul_pdu[0]["size"])
-                RLC_UL_tot_pkts[i.rrcID] += i.ul_pdu[0]["numPDU"]
-                if i.retx["ul"]:
-                    retxul_bytes[i.rrcID] += sum([sum(x) for x in i.retx["ul"].values()])
-            if i.logID == const.DL_PDU_ID:
-                DLBytes_total += sum(i.dl_pdu[0]["size"])
-                RLC_DL_tot_pkts[i.rrcID] += i.dl_pdu[0]["numPDU"]
-                if i.retx["dl"]:
-                    retxdl_bytes[i.rrcID] += sum([sum(x) for x in i.retx["dl"].values()])
-            
-    # print "***************"
-    totUL = float(ReTxUL[2]+ReTxUL[3]+ReTxUL[4])
-    totDL = float(ReTxDL[2]+ReTxDL[3]+ReTxDL[4])
-    totState = float(rrc_state[2]+rrc_state[3]+rrc_state[4])
-    totULBytes = float(retxul_bytes[2]+retxul_bytes[3]+retxul_bytes[4])
-    totDLBytes = float(retxdl_bytes[2]+retxdl_bytes[3]+retxdl_bytes[4])
-    totRLCUL = float(sum(RLC_UL_tot_pkts.values()))
-    totRLCDL = float(sum(RLC_DL_tot_pkts.values()))
-    # Retransmission number
-    #print "%d\t%d" % (totUL, totDL)
-    # Retransmission break down
-    # print "%d\t%d\t%d\t%d\t%d\t%d" % (ReTxUL[const.FACH_ID], ReTxUL[const.DCH_ID], ReTxUL[const.PCH_ID], ReTxDL[const.FACH_ID], ReTxDL[const.DCH_ID], ReTxDL[const.PCH_ID])
-    #if totDL != 0:
-	    #print "%f\t%f\t%f\t%f\t%f\t%f" % (ReTxUL[const.FACH_ID] / totUL, ReTxUL[const.DCH_ID] / totUL, ReTxUL[const.PCH_ID] / totUL, ReTxDL[const.FACH_ID] / totDL, ReTxDL[const.DCH_ID] / totDL, ReTxDL[const.PCH_ID] / totDL)
-    #else:
-		#print "%f\t%f\t%f\t0\t0\t0" % (ReTxUL[const.FACH_ID] / totUL, ReTxUL[const.DCH_ID] / totUL, ReTxUL[const.PCH_ID] / totUL)
-    # Retransmission fraction IP
-    #if Bytes_on_fly != 0:
-        #print "%f" % (Trans_retx_bytes)
-        #print "%f" % (TCP_retx_count)
-        #print "%f" % (Trans_retx_bytes/Bytes_on_fly)
-    # Retransmission on link layer (UL \t DL)
-    #if ULBytes_total + DLBytes_total != 0:
-        #print "%f\t%f" % (totULBytes, totDLBytes)
-        # print "%f\t%f" % (totULBytes/(ULBytes_total + DLBytes_total), totDLBytes/(ULBytes_total + DLBytes_total))
-    # Total RLC packets break down
-    print "%f\t%f\t%f\t%f\t%f\t%f" % (RLC_UL_tot_pkts[const.FACH_ID] / totRLCUL, RLC_UL_tot_pkts[const.DCH_ID] / totRLCUL, RLC_UL_tot_pkts[const.PCH_ID] / totRLCUL, RLC_DL_tot_pkts[const.FACH_ID] / totRLCDL, RLC_DL_tot_pkts[const.DCH_ID] / totRLCDL, RLC_DL_tot_pkts[const.PCH_ID] / totRLCDL)
-    print "%f\t%f\t%f\t%f\t%f\t%f" % (RLC_UL_tot_pkts[const.FACH_ID], RLC_UL_tot_pkts[const.DCH_ID], RLC_UL_tot_pkts[const.PCH_ID], RLC_DL_tot_pkts[const.FACH_ID], RLC_DL_tot_pkts[const.DCH_ID], RLC_DL_tot_pkts[const.PCH_ID])
-    
-"""
-    print "Total UL retx: %f" % (totUL)
-    print "Total DL retx: %f" % (totDL)
-    print "Total RRC state: %f" % (totState)
-
-    print "Total bytes on fly: %f" % (Bytes_on_fly)
-    print "Total retx bytes on IP: %f" % (Trans_retx_bytes)
-    print "Total Uplink bytes: %d" % (ULBytes_total)
-    print "Total Downlink bytes: %d" % (DLBytes_total)
-    print "Total Uplink RT bytes: %f" % (totULBytes)
-    print "Total Downlink RT bytes: %f" % (totDLBytes)
-
-    if totUL != 0.0:
-        print "UL -- FACH %f, DCH %f, PCH %f" % (ReTxUL[const.FACH_ID]/totUL, ReTxUL[const.DCH_ID]/totUL, ReTxUL[const.PCH_ID]/totUL)
-    if totDL != 0.0:
-        print "DL -- FACH %f, DCH %f, PCH %f" % (ReTxDL[const.FACH_ID]/totDL, ReTxDL[const.DCH_ID]/totDL, ReTxDL[const.PCH_ID]/totDL)
-    if totState != 0.0:
-        print "State dist -- FACH %f, DCH %f, PCH %f" % (rrc_state[const.FACH_ID]/totState, rrc_state[const.DCH_ID]/totState, rrc_state[const.PCH_ID]/totState)
-    if Bytes_on_fly != 0:
-        print "RT fraction : %f" % ((totULBytes+totDLBytes)/Bytes_on_fly)
-    if totULBytes != 0.0:
-        print "UL Retx bytes -- FACH %f, DCH %f, PCH %f" % (retxul_bytes[const.FACH_ID]/totULBytes, retxul_bytes[const.DCH_ID]/totULBytes, retxul_bytes[const.PCH_ID]/totULBytes)
-    if totDLBytes != 0.0:
-        print "DL Retx bytes -- FACH %f, DCH %f, PCH %f" % (retxdl_bytes[const.FACH_ID]/totDLBytes, retxdl_bytes[const.DCH_ID]/totDLBytes, retxdl_bytes[const.PCH_ID]/totDLBytes)
-"""
-
-############################## Debug Printer #########################
+#######################################################################
+############################## Debug Printer ##########################
+#######################################################################
 # print the result for UL RLC SN and retransmission count
 def printULCount(entries):
     ulMap = {}

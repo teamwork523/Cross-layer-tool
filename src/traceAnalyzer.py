@@ -27,7 +27,8 @@ def init_optParser():
                             " "*extraspace + "[--src_ip] source_ip, [--dst_ip] destination_ip\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
-                            " "*extraspace + "[-a] Threshold, [-d] direction, [--srv_ip] server_ip")
+                            " "*extraspace + "[-a] Threshold, [-d] direction, [--srv_ip] server_ip\n" +\
+                            " "*extraspace + "[--retx_type] retransmission_type, [--is_cross_map]")
     optParser.add_option("-a", "--addr", dest="printAddr", default=None, \
                          help="Print IP address")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -44,9 +45,10 @@ def init_optParser():
                          help="PCAP trace file path")
     optParser.add_option("-t", "--type", dest="protocolType", default="TCP", \
                          help="Protocol Type, i.e. TCP or UDP")
-    # TODO: delete after debugging
-    # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
-    #                     help="Signal strength file")
+    optParser.add_option("--retx_type", dest="retxType", default=None, \
+                         help="Useful tag to print retx ratio against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
+    optParser.add_option("--is_cross_map", action="store_true", dest="isCrossMap", default=False, \
+                         help="Set this option if you want to map the RLC retransmission with TCP retransmission")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
     					  help="Used combined with direction option to filter useful retransmission packets")
     optParser.add_option("--src_ip", dest="srcIP", default=None, \
@@ -57,7 +59,9 @@ def init_optParser():
                          help="Filter out entries with source port number")
     optParser.add_option("--dst_port", dest="dstPort", default=None, \
                          help="Filter out entries with destination port number")
-                         
+    # TODO: delete after debugging
+    # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
+    #                     help="Signal strength file")                     
     return optParser
 
 def main():
@@ -135,6 +139,7 @@ def main():
     #################################################################
     #################### Retransmission Process #####################
     #################################################################
+    tcpReTxMap = tcpFastReTxMap = None
     # TCP retransmission process 
     if options.direction and options.server_ip:
 		tcpflows = rw.extractFlows(filteredQCATEntries)
@@ -149,6 +154,9 @@ def main():
     # RLC retransmission process
     [ULReTxCountMap, DLReTxCountMap] = rw.procRLCReTx(QCATEntries)
     
+    # collect statistic information
+    retxStatsMap, totCountStatsMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
+
     #################################################################
     ######################## Result Display #########################
     #################################################################
@@ -156,26 +164,28 @@ def main():
     if options.direction:
         cw.calThrouhgput(filteredQCATEntries, options.direction)
     else:
-        print >> sys.stderr, "Ignore throughput calculation!!!"
+        # print >> sys.stderr, "Ignore throughput calculation!!!"
+        pass
     
+    # TODO: add to option
+    if options.isCrossMap:
+        if options.direction:
+            if options.direction.lower() == "up":
+                pw.printMapRLCtoTCPRetx(tcpReTxMap, ULReTxCountMap)
+            else:
+                pw.printMapRLCtoTCPRetx(tcpReTxMap, DLReTxCountMap)
+        else:
+            print >> sys.stderr, "Direction is required to print the TCP and RLC mapping"
+    
+    # print the retx ratio for each state
+    if options.retxType:
+        pw.printRetxRatio(retxStatsMap, totCountStatsMap, option.retxType)
+
     #util.procTPReTx_old(QCATEntries)
     #pw.printRetxCountMapList(ULReTxCountMap)
     #print "#"*50
     #pw.printRetxCountMapList(DLReTxCountMap)
     #pw.printRetxSummaryInfo(QCATEntries, ULReTxCountMap, DLReTxCountMap, tcpReTxMap)
-    
-    # TODO: add to option
-    """
-    if options.direction:
-    	if options.direction.lower() == "up":
-	    	pw.printRLCReTxMapStats(ULRLCOTMap)
-	     	pw.printMapRLCtoTCPRetx(tcpReTxMap, ULReTxCountMap)
-        else:
-        	pw.printRLCReTxMapStats(DLRLCOTMap)
-	    	pw.printMapRLCtoTCPRetx(tcpReTxMap, DLReTxCountMap)
-    else:
-        print >> sys.stderr, "ooops, no compare between TCP and RLC retx"
-    """
 
     # print result
     #pw.printReTxVSRRCResult(QCATEntries, None)
@@ -221,6 +231,8 @@ def main():
     """
     # Deprecated:
     # ULRLCOTMap, DLRLCOTMap = cw.mapRLCReTxOverTime(QCATEntries, interval)
+    # pw.printRLCReTxMapStats(ULRLCOTMap)
+    # pw.printRLCReTxMapStats(DLRLCOTMap)
 
 if __name__ == "__main__":
     main()
