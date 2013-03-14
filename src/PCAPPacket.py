@@ -11,7 +11,7 @@ import sys
 class PCAPPacket:
     def __init__(self, unix_ts_sec, millisec, payload):
         # TODO: may consider to directly overwrite this part with pcap parse library
-        self.timestamp = [int(unix_ts_sec), int(millisec)]
+        self.timestamp = float(unix_ts_sec) + float(millisec)/1000.0
         self.payload = payload.split()
         self.tlp_id = None
         self.__parsePayload()

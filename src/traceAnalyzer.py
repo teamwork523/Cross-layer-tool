@@ -20,6 +20,8 @@ import PrintWrapper as pw
 import contextWorker as cw
 import retxWorker as rw
 
+DEBUG = False
+
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
     optParser = OptionParser(usage="./%prog [-l, --log] QCAT_LOG_PATH [-m] [-p, --pcap] inPCAPFile\n" + \
@@ -27,10 +29,11 @@ def init_optParser():
                             " "*extraspace + "[--src_ip] source_ip, [--dst_ip] destination_ip\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
-                            " "*extraspace + "[-a] Threshold, [-d] direction, [--srv_ip] server_ip\n" +\
-                            " "*extraspace + "[--retx_type] retransmission_type, [--is_cross_map]")
-    optParser.add_option("-a", "--addr", dest="printAddr", default=None, \
-                         help="Print IP address")
+                            " "*extraspace + "[-a] num_packets, [-d] direction, [--srv_ip] server_ip, [--cross_map]\n" + \
+                            " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
+                            " "*extraspace + "[--retx_test]")
+    optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
+                         help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
                          help="Beginning point of the sampling")
     optParser.add_option("-d", dest="direction", default=None, \
@@ -45,9 +48,13 @@ def init_optParser():
                          help="PCAP trace file path")
     optParser.add_option("-t", "--type", dest="protocolType", default="TCP", \
                          help="Protocol Type, i.e. TCP or UDP")
-    optParser.add_option("--retx_type", dest="retxType", default=None, \
+    optParser.add_option("--print_retx", dest="retxType", default=None, \
                          help="Useful tag to print retx ratio against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
-    optParser.add_option("--is_cross_map", action="store_true", dest="isCrossMap", default=False, \
+    optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
+                         help="Flag to enable printing throughput information based on TCP trace analysis")
+    optParser.add_option("--retx_test", action="store_true", dest="enable_retx_test", default=False, \
+                         help="Protocol Type, i.e. TCP or UDP")
+    optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
                          help="Set this option if you want to map the RLC retransmission with TCP retransmission")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
     					  help="Used combined with direction option to filter useful retransmission packets")
@@ -81,8 +88,8 @@ def main():
     QCATEntries = QCATEntries[begin:end]
     
     # check if just want to print IP
-    if options.printAddr:
-        pw.printIPaddressPair(QCATEntries, options.printAddr)
+    if options.pkts_examined:
+        pw.printIPaddressPair(QCATEntries, options.pkts_examined)
         sys.exit(0)
     
     #################################################################
@@ -140,16 +147,19 @@ def main():
     #################### Retransmission Process #####################
     #################################################################
     tcpReTxMap = tcpFastReTxMap = None
-    # TCP retransmission process 
-    if options.direction and options.server_ip:
-		tcpflows = rw.extractFlows(filteredQCATEntries)
-		tcpReTxMap, tcpFastReTxMap = rw.procTCPReTx(tcpflows, options.direction, options.server_ip)
-		tcpReTxCount = rw.countTCPReTx(tcpReTxMap)
-		tcpFastReTxCount = rw.countTCPReTx(tcpFastReTxMap)
-		print "TCP ReTx happens %d times" % (tcpReTxCount)
-		print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
-    else:
-		print >> sys.stderr, "Must specify direction and server ip to analysis retransmission"
+    # TCP retransmission process
+    if options.enable_retx_test:
+        if options.direction and options.server_ip:
+            tcpflows = rw.extractFlows(filteredQCATEntries)
+            tcpReTxMap, tcpFastReTxMap = rw.procTCPReTx(tcpflows, options.direction, options.server_ip)
+            tcpReTxCount = rw.countTCPReTx(tcpReTxMap)
+            tcpFastReTxCount = rw.countTCPReTx(tcpFastReTxMap)
+            if DEBUG:
+                print "TCP ReTx happens %d times" % (tcpReTxCount)
+                print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
+        else:
+            print >> sys.stderr, "Please specify direction and server ip to apply retransmission analysis"
+            sys.exit(1)
     
     # RLC retransmission process
     [ULReTxCountMap, DLReTxCountMap] = rw.procRLCReTx(QCATEntries)
@@ -160,12 +170,12 @@ def main():
     #################################################################
     ######################## Result Display #########################
     #################################################################
-    # Compute throughput
-    if options.direction:
-        cw.calThrouhgput(filteredQCATEntries, options.direction)
-    else:
-        # print >> sys.stderr, "Ignore throughput calculation!!!"
-        pass
+    # Print throughput for each TCP packets based on sequence number
+    if options.is_print_throughput:
+        if options.direction:
+            cw.calThrouhgput(filteredQCATEntries, options.direction)
+        else:
+            print >> sys.stderr, "Must specifiy trace direction!!!"
     
     # TODO: add to option
     if options.isCrossMap:
@@ -179,7 +189,7 @@ def main():
     
     # print the retx ratio for each state
     if options.retxType:
-        pw.printRetxRatio(retxStatsMap, totCountStatsMap, option.retxType)
+        pw.printRetxRatio(retxStatsMap, totCountStatsMap, options.retxType)
 
     #util.procTPReTx_old(QCATEntries)
     #pw.printRetxCountMapList(ULReTxCountMap)
@@ -200,7 +210,10 @@ def main():
         optParser.error("-p, --pcap: Empty PCAP filepath")
     elif options.isMapping == True:
         outFile = "pcapResult.txt"
-        os.system("pcap/main " + options.inPCAPFile + " > " + outFile)
+        # Assume pcapTSVerifier is in the same folder as the current program
+        folder = "/".join(sys.argv[0].split("/")[:-1]) + "/"
+        print folder
+        os.system(folder+"pcapTSVerifier " + options.inPCAPFile + " > " + outFile)
 
         PCAPPackets = util.readPCAPResultFile(outFile)
         PCAPMaps = util.createTSbasedMap(PCAPPackets)

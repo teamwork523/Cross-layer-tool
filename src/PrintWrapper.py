@@ -13,10 +13,14 @@ import PCAPPacket as pp
 from datetime import datetime
 import Util as util
 
+DEBUG = False
+
 def printIPaddressPair(entries, threshold):
     #{ip_addr:count,...}
     srcIPCount = {}
     for i in entries:
+        if DEBUG:
+            print i
         if i.logID == const.PROTOCOL_ID and i.ip["src_ip"] and i.ip["dst_ip"] and i.ip["total_len"] > 60:
             if i.ip["src_ip"] in srcIPCount:
                 srcIPCount[i.ip["src_ip"]] += 1

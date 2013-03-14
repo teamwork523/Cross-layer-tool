@@ -55,6 +55,7 @@ def readQCATLog(inQCATLogFile):
 
     return QCATEntries
 
+# read PCAP file for timestamp verification
 def readPCAPResultFile(pcapResultFile):
     infile = open(pcapResultFile, "r")
     
@@ -142,7 +143,7 @@ def packetFilter(entries, cond):
 					selectedEntries.append(i)
     return selectedEntries
 
-# No longer useful
+# Not that useful
 def mapPCAPwithQCAT(p, q):
     countMap = {}
     QCATFast = 0
@@ -206,43 +207,6 @@ def mapRLCReTxOverTime (entries, interval):
 					cur_dl_retx += sum([len(x) for x in entry.retx["dl"].values()])
 	return (ul_map, dl_map)        
 
-#############################################################################
-############################ helper functions ###############################
-#############################################################################    
-def meanValue(li):
-	if not li:
-		return 0.0
-	return sum(li)/len(li)
-
-def medianValue(li):
-    if not li:
-        return None
-    if len(li) % 2 == 0:
-        return (li[len(li)/2-1] + li[len(li)/2])/2.0
-    if len(li) % 2 != 0:
-        return li[len(li)/2]
-
-def conv_dmb_to_rssi(sig):
-    # Detail at http://m10.home.xs4all.nl/mac/downloads/3GPP-27007-630.pdf
-    MAX = -51
-    MIN = -113
-    rssi = 31
-    if sig < MIN:
-	    rssi = 0
-    else:
-	    rssi = (sig - MIN)/2
-    return rssi
-
-def validateIP (ip_address):
-    valid = re.compile("^([0-9]{1,3}.){3}[0-9]{1,3}")
-    return valid.match(ip_address)
-
-def computeThroughput (payload, time):
-    if time <= 0:
-        return 0
-    else:
-        return float(payload)/time
-
 # Remove duplicated IP packets generated from QXDM
 def removeQXDMDupIP(entries):
     dupIndex = []
@@ -279,6 +243,43 @@ def removeQXDMDupIP(entries):
         if i not in dupIndex:
             rtEntries.append(entries[i])
     return rtEntries    
+
+#############################################################################
+############################ helper functions ###############################
+#############################################################################    
+def meanValue(li):
+	if not li:
+		return 0.0
+	return sum(li)/len(li)
+
+def medianValue(li):
+    if not li:
+        return None
+    if len(li) % 2 == 0:
+        return (li[len(li)/2-1] + li[len(li)/2])/2.0
+    if len(li) % 2 != 0:
+        return li[len(li)/2]
+
+def conv_dmb_to_rssi(sig):
+    # Detail at http://m10.home.xs4all.nl/mac/downloads/3GPP-27007-630.pdf
+    MAX = -51
+    MIN = -113
+    rssi = 31
+    if sig < MIN:
+	    rssi = 0
+    else:
+	    rssi = (sig - MIN)/2
+    return rssi
+
+def validateIP (ip_address):
+    valid = re.compile("^([0-9]{1,3}.){3}[0-9]{1,3}")
+    return valid.match(ip_address)
+
+def computeThroughput (payload, time):
+    if time <= 0:
+        return 0
+    else:
+        return float(payload)/time
 
 def readFromSig(filename):
     fp = open(filename, "r")
