@@ -19,8 +19,6 @@ def printIPaddressPair(entries, threshold):
     #{ip_addr:count,...}
     srcIPCount = {}
     for i in entries:
-        if DEBUG:
-            print i
         if i.logID == const.PROTOCOL_ID and i.ip["src_ip"] and i.ip["dst_ip"] and i.ip["total_len"] > 60:
             if i.ip["src_ip"] in srcIPCount:
                 srcIPCount[i.ip["src_ip"]] += 1
@@ -77,6 +75,7 @@ def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
 #        "rlc_dl": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...}})
 def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
     result = ""
+    tot_result = ""
     totKey = ""
     # track through all the key name in totalMap, if find a string match, then
     # print the whole state ratio of that entry
@@ -88,13 +87,17 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
         if not total_count:
             print "0\t" * len(retxStatsMap[retxType.lower()])
             return
-        for k, v in retxStatsMap[retxType.lower()].items():
+        for k, v in sorted(retxStatsMap[retxType.lower()].items()):
             ratio = v / total_count
             result += str(ratio) + "\t"
+            tot_result += str(total_count) + "\t"
     else:
         print >> sys.stderr, "ERROR: Invalid retransmission type"
         return
     print result
+    if DEBUG:
+        print tot_result
+        print "*"*40
 
 # Deprecated
 # Retransmission summary information
@@ -267,7 +270,12 @@ def printDLCount(entries):
 
 # print a TCP entry information
 def printTCPEntry(entry):
-	print "%s\t%s\t%s\t%s\t%s\t%d\t%d" % (util.convert_ts_in_human(entry.timestamp),\
+	print "%s\t%s\t%s\t%s\t%s\t%d\t%s" % (util.convert_ts_in_human(entry.timestamp),\
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
-	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"])
+	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"], \
+                        const.RRC_MAP[entry.rrcID])
+
+# print a general entry
+def printEntry(entry):
+    print "%s\t%s" % (util.convert_ts_in_human(entry.timestamp), const.RRC_MAP[entry.rrcID])
 	 

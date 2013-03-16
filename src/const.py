@@ -45,13 +45,24 @@ LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                DL_PDU_ID: "DL PDU information",
                SIG_ID: "Signal Strength related"}
 
+############ RRC State
 # map between RRC id and RRC state
 FACH_ID = 2
 DCH_ID = 3
 PCH_ID = 4
-RRC_MAP = {FACH_ID: "CELL_FACH",
-           DCH_ID: "CELL_DCH",
-           PCH_ID: "CELL_PCH"}
+FACH_TO_DCH_ID = 5
+PCH_TO_FACH_ID = 6
+# TODO: Assign the DCH later
+# DCH_LATER_ID = 7
+
+RRC_MAP = {FACH_ID: "CELL_FACH", \
+           DCH_ID: "CELL_DCH", \
+           PCH_ID: "CELL_PCH", \
+           FACH_TO_DCH_ID: "PROMOTE_TO_DCH", \
+           PCH_TO_FACH_ID: "PROMOTE_TO_FACH"}
+
+TIMER = { FACH_TO_DCH_ID: 0.05, \
+          PCH_TO_FACH_ID: 0.05}
 
 # transport layer protocol map
 IP_ID = int("0x01", 16) # QCAT protocol id

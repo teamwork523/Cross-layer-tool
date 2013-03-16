@@ -66,9 +66,13 @@ def init_optParser():
                          help="Filter out entries with source port number")
     optParser.add_option("--dst_port", dest="dstPort", default=None, \
                          help="Filter out entries with destination port number")
-    # TODO: delete after debugging
+    # Debugging options
     # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
-    #                     help="Signal strength file")                     
+    #                     help="Signal strength file")
+    optParser.add_option("--ptof_timer", dest="ptof_timer", default=None,\
+                         help="Help to Tunning PCH promotion timer")
+    optParser.add_option("--ftod_timer", dest="ftod_timer", default=None,\
+                         help="Help to Tunning FACH promotion timer")
     return optParser
 
 def main():
@@ -80,7 +84,13 @@ def main():
         optParser.error("-l, --log: Empty QCAT log filepath")
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
- 
+    
+    # TODO: debug
+    if options.ptof_timer:
+        const.TIMER["PCH_TO_FACH_ID"] = float(options.ptof_timer)
+    if options.ftod_timer:
+        const.TIMER["FACH_TO_DCH_ID"] = float(options.ftod_timer)
+
     # Mapping process
     QCATEntries = util.readQCATLog(options.inQCATLogFile)
     begin = int(float(options.beginPercent)* len(QCATEntries))
@@ -104,7 +114,9 @@ def main():
     ###################### Mapping Context Info #####################
     #################################################################
     #print "Length of Entries is %d" % (len(QCATEntries))
-    cw.assignRRCState(QCATEntries)
+    #TODO: delete the parameters
+    cw.assignRRCState(QCATEntries, float(options.ptof_timer), float(options.ftod_timer))
+    #cw.assignRRCState(QCATEntries)
     cw.assignEULState(QCATEntries)
     cw.assignSignalStrengthValue(QCATEntries)
     # assign flow information

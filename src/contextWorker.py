@@ -9,17 +9,61 @@ This file contains all the functions related to context information
 import os, sys, re
 import const
 import QCATEntry as qe
+import PrintWrapper as pw
+
+DEBUG = False
+CUR_DEBUG = False
 
 ########## RRC ##########
 # Map RRC state to each entries
-def assignRRCState(entries):
+# Also include other special ID for state promotion
+def assignRRCState(entries, ptof, ftod):
     mostRecentRRCID = None
+    privEntries = []
     for entry in entries:
         if entry.logID == const.RRC_ID:
+            # Trace back and assign special ID
+            if entry.rrcID == const.DCH_ID and mostRecentRRCID == const.FACH_ID \
+               and privEntries:
+                # assignPrivEntryRRC(privEntries, const.FACH_TO_DCH_ID, entry.timestamp)
+                # TODO: delete after tunning                
+                assignPrivEntryRRC(privEntries, const.FACH_TO_DCH_ID, entry.timestamp, ftod)
+            if entry.rrcID == const.FACH_ID and mostRecentRRCID == const.PCH_ID \
+               and privEntries:
+                # assignPrivEntryRRC(privEntries, const.PCH_TO_FACH_ID, entry.timestamp)
+                # TODO: delete after tunning
+                assignPrivEntryRRC(privEntries, const.PCH_TO_FACH_ID, entry.timestamp, ptof)
             mostRecentRRCID = entry.rrcID
+            privEntries = []
         else:
             if entry.rrcID == None and mostRecentRRCID != None:
                 entry.rrcID = mostRecentRRCID
+                privEntries.append(entry)
+            
+# Helper function to assign special RRC state
+def assignPrivEntryRRC(privEntries, rrc_state_id, rrc_state_timestamp, timer):
+    # Make sure you have the timer in the constant field
+    # timer = const.TIMER[rrc_state_id]
+    # TODO: delete after tunning
+    if CUR_DEBUG:
+        print timer
+    if not timer:
+        timer = const.TIMER[rrc_state_id]
+    # assign new id
+    if DEBUG:
+        print "#" * 40
+    for entry in privEntries[::-1]:
+        if entry.logID == const.PROTOCOL_ID or \
+           entry.logID == const.UL_PDU_ID or \
+           entry.logID == const.DL_PDU_ID:
+            if entry.timestamp + timer >= rrc_state_timestamp:
+                if DEBUG:
+                    print "Prvious RRC:"
+                    print pw.printEntry(entry)
+                entry.rrcID = rrc_state_id
+                if DEBUG:
+                    print "Current RRC:"
+                    print pw.printEntry(entry)
 
 ########## EUL ##########
 # assign EUL entry information, i.e. bit rate, buffer size

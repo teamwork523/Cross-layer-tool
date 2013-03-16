@@ -377,22 +377,22 @@ def procRLCReTx(entries):
 def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     ######
     ## Occurance count
-    RLC_UL_retx = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    RLC_DL_retx = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    RLC_UL_tot_pkts = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    RLC_DL_tot_pkts = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    TCP_rto_retx = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    TCP_fast_retx = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    TCP_total_count = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
+    RLC_UL_retx = initFullRRCMap()
+    RLC_DL_retx = initFullRRCMap()
+    RLC_UL_tot_pkts = initFullRRCMap()
+    RLC_DL_tot_pkts = initFullRRCMap()
+    TCP_rto_retx = initFullRRCMap()
+    TCP_fast_retx = initFullRRCMap()
+    TCP_total_count = initFullRRCMap()
 
-    rrc_state = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
+    rrc_state = initFullRRCMap()
 
     ######
     ## Bytes Count
-    TCP_rto_retx_bytes = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    TCP_fast_retx_bytes = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    RLC_UL_bytes = {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
-    RLC_DL_bytes =  {const.FACH_ID: 0.0, const.DCH_ID: 0.0, const.PCH_ID: 0.0}
+    TCP_rto_retx_bytes = initFullRRCMap()
+    TCP_fast_retx_bytes = initFullRRCMap()
+    RLC_UL_bytes = initFullRRCMap()
+    RLC_DL_bytes =  initFullRRCMap()
     ULBytes_total = 0.0
     DLBytes_total = 0.0
     Bytes_on_fly = 0.0
@@ -446,11 +446,11 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     return (retx_count_map, total_count_map)
 
     # print "***************"
-    totUL = float(RLC_UL_retx[2]+RLC_UL_retx[3]+RLC_UL_retx[4])
-    totDL = float(RLC_DL_retx[2]+RLC_DL_retx[3]+RLC_DL_retx[4])
-    totState = float(rrc_state[2]+rrc_state[3]+rrc_state[4])
-    totULBytes = float(RLC_UL_bytes[2]+RLC_UL_bytes[3]+RLC_UL_bytes[4])
-    totDLBytes = float(RLC_DL_bytes[2]+RLC_DL_bytes[3]+RLC_DL_bytes[4])
+    totUL = float(sum(RLC_UL_retx))
+    totDL = float(sum(RLC_DL_retx))
+    totState = float(sum(rrc_state))
+    totULBytes = float(sum(RLC_UL_bytes))
+    totDLBytes = float(sum(RLC_DL_bytes))
     totRLCUL = float(sum(RLC_UL_tot_pkts.values()))
     totRLCDL = float(sum(RLC_DL_tot_pkts.values()))
     # Retransmission number
@@ -477,6 +477,13 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
 ############################################################################
 ###################### Helper Functions ####################################
 ############################################################################
+# return a dict with all existing RRC state as keys, with value 0.0
+def initFullRRCMap():
+    initMap = {}
+    for i in const.RRC_MAP.keys():
+        initMap[i] = 0.0
+    return initMap
+
 # basic idea is to find the first ACK that 
 def findDataFlowStartIndex(flow):
 	for i in range(len(flow)):
