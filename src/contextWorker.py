@@ -10,6 +10,7 @@ import os, sys, re
 import const
 import QCATEntry as qe
 import PrintWrapper as pw
+import Util as util
 
 DEBUG = False
 CUR_DEBUG = False
@@ -17,7 +18,8 @@ CUR_DEBUG = False
 ########## RRC ##########
 # Map RRC state to each entries
 # Also include other special ID for state promotion
-def assignRRCState(entries, ptof, ftod):
+#def assignRRCState(entries, ptof, ftod):
+def assignRRCState(entries):
     mostRecentRRCID = None
     privEntries = []
     for entry in entries:
@@ -25,14 +27,14 @@ def assignRRCState(entries, ptof, ftod):
             # Trace back and assign special ID
             if entry.rrcID == const.DCH_ID and mostRecentRRCID == const.FACH_ID \
                and privEntries:
-                # assignPrivEntryRRC(privEntries, const.FACH_TO_DCH_ID, entry.timestamp)
+                assignPrivEntryRRC(privEntries, const.FACH_TO_DCH_ID, entry.timestamp)
                 # TODO: delete after tunning                
-                assignPrivEntryRRC(privEntries, const.FACH_TO_DCH_ID, entry.timestamp, ftod)
+                #assignPrivEntryRRC(privEntries, const.FACH_TO_DCH_ID, entry.timestamp, ftod)
             if entry.rrcID == const.FACH_ID and mostRecentRRCID == const.PCH_ID \
                and privEntries:
-                # assignPrivEntryRRC(privEntries, const.PCH_TO_FACH_ID, entry.timestamp)
+                assignPrivEntryRRC(privEntries, const.PCH_TO_FACH_ID, entry.timestamp)
                 # TODO: delete after tunning
-                assignPrivEntryRRC(privEntries, const.PCH_TO_FACH_ID, entry.timestamp, ptof)
+                #assignPrivEntryRRC(privEntries, const.PCH_TO_FACH_ID, entry.timestamp, ptof)
             mostRecentRRCID = entry.rrcID
             privEntries = []
         else:
@@ -41,14 +43,15 @@ def assignRRCState(entries, ptof, ftod):
                 privEntries.append(entry)
             
 # Helper function to assign special RRC state
-def assignPrivEntryRRC(privEntries, rrc_state_id, rrc_state_timestamp, timer):
+#def assignPrivEntryRRC(privEntries, rrc_state_id, rrc_state_timestamp, timer):
+def assignPrivEntryRRC(privEntries, rrc_state_id, rrc_state_timestamp):
     # Make sure you have the timer in the constant field
     # timer = const.TIMER[rrc_state_id]
     # TODO: delete after tunning
-    if CUR_DEBUG:
-        print timer
-    if not timer:
-        timer = const.TIMER[rrc_state_id]
+    #if CUR_DEBUG:
+        #print timer
+    #if not timer:
+    timer = const.TIMER[rrc_state_id]
     # assign new id
     if DEBUG:
         print "#" * 40
@@ -131,6 +134,35 @@ def assignSignalStrengthValue(entries):
             if mostRecentRSCP:
                 entry.sig["RSCP"] = mostRecentRSCP
 
+# Build a map between timeseries and retransmission count for a specific time
+# Notice that it counts the retransmission based on timestamp instead of TS
+# @input: burstDuration means once there is a RLC retransmission
+#         then group the following burstDuration seconds retx count together
+# @return: {ts1:(RSCP, retxCount), ts2:(RSCP, retxCount), ...}
+def buildRetxCountvsRSCP_timebased(entries, burstDuration, logID):
+    preTS = None
+    tsMap = {}
+    for entry in entries:
+        if entry.sig["RSCP"]:
+            retxMap = None
+            if entry.logID == logID == const.UL_PDU_ID:
+                retxMap = entry.retx["ul"]
+            elif entry.logID == logID == const.DL_PDU_ID:
+                retxMap = entry.retx["dl"]
+            else:
+                continue
+            retxCount = sum([len(i) for i in retxMap.values()])
+            if retxCount > 0:
+                if not preTS or \
+                   (preTS and preTS + burstDuration < entry.timestamp):
+                    # either haven't been 
+                    preTS = entry.timestamp
+                    tsMap[preTS] = [retxCount, util.medianValue(entry.sig["RSCP"]), util.medianValue(entry.sig["ECIO"])]
+                else:
+                    tsMap[preTS][0] += retxCount
+
+    return tsMap
+
 ########## Throughput ##########
 def calThrouhgput(entries, direction):
     # TODO: use the sequence number to compute the throughput
@@ -169,3 +201,15 @@ def calThrouhgput(entries, direction):
             print "Time diff is %f" % (cur_ts - i.flow["timestamp"])
             print "Throught is : %d" % (i.throughput) 
             """
+
+#####################################
+########## Helper ###################
+#####################################
+# filter entries based on input id list
+def extractEntriesOfInterest(entries, ids_of_interest):
+    new_entries = []
+    for entry in entries:
+        if entry.logID in ids_of_interest:
+            new_entries.append(entry)
+    return new_entries
+            

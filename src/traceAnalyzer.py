@@ -19,6 +19,7 @@ from optparse import OptionParser
 import PrintWrapper as pw
 import contextWorker as cw
 import retxWorker as rw
+import delayWorker as dw
 
 DEBUG = False
 
@@ -31,7 +32,7 @@ def init_optParser():
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
                             " "*extraspace + "[-a] num_packets, [-d] direction, [--srv_ip] server_ip, [--cross_map]\n" + \
                             " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
-                            " "*extraspace + "[--retx_test]")
+                            " "*extraspace + "[--retx_test], [--retx_count_sig]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -52,10 +53,12 @@ def init_optParser():
                          help="Useful tag to print retx ratio against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
     optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
                          help="Flag to enable printing throughput information based on TCP trace analysis")
-    optParser.add_option("--retx_test", action="store_true", dest="enable_retx_test", default=False, \
-                         help="Protocol Type, i.e. TCP or UDP")
+    optParser.add_option("--retx_test", action="store_true", dest="enable_tcp_retx_test", default=False, \
+                         help="Enable TCP retransmission analysis")
     optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
                          help="Set this option if you want to map the RLC retransmission with TCP retransmission")
+    optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
+                         help="Relate retransmission signal strength with retransmission count")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
     					  help="Used combined with direction option to filter useful retransmission packets")
     optParser.add_option("--src_ip", dest="srcIP", default=None, \
@@ -115,12 +118,19 @@ def main():
     #################################################################
     #print "Length of Entries is %d" % (len(QCATEntries))
     #TODO: delete the parameters
-    cw.assignRRCState(QCATEntries, float(options.ptof_timer), float(options.ftod_timer))
-    #cw.assignRRCState(QCATEntries)
+    #cw.assignRRCState(QCATEntries, float(options.ptof_timer), float(options.ftod_timer))
+    cw.assignRRCState(QCATEntries)
     cw.assignEULState(QCATEntries)
     cw.assignSignalStrengthValue(QCATEntries)
     # assign flow information
     # cw.assignFlowInfo(QCATEntries)
+    # use to calculate the buffer range in between two packets
+    # TODO: only use for studying FACH state transition delays
+    FACH_delay_analysis_entries = cw.extractEntriesOfInterest(QCATEntries, \
+                  set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID)))
+    # Optimize by exclude context fields
+    QCATEntries = cw.extractEntriesOfInterest(QCATEntries, \
+                  set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID)))
 
 	#################################################################
     ######################## Protocol Filter ########################
@@ -156,11 +166,17 @@ def main():
     filteredQCATEntries = util.packetFilter(QCATEntries, cond)
     
     #################################################################
+    #################### FACH State delay Process ###################
+    #################################################################
+    #if options.direction:
+        #dw.extractFACHStatePktDelayInfo(FACH_delay_analysis_entries, options.direction)
+    
+    #################################################################
     #################### Retransmission Process #####################
     #################################################################
     tcpReTxMap = tcpFastReTxMap = None
     # TCP retransmission process
-    if options.enable_retx_test:
+    if options.enable_tcp_retx_test:
         if options.direction and options.server_ip:
             tcpflows = rw.extractFlows(filteredQCATEntries)
             tcpReTxMap, tcpFastReTxMap = rw.procTCPReTx(tcpflows, options.direction, options.server_ip)
@@ -182,6 +198,11 @@ def main():
     #################################################################
     ######################## Result Display #########################
     #################################################################
+    # A map between Retx count and RSCP based on timestamp
+    # TODO: add direction
+    #retxRSCPTSbasedMap = cw.buildRetxCountvsRSCP_timebased(QCATEntries, 0.01, const.UL_PDU_ID)
+    #pw.printRetxCountvsRSCPbasedOnTS(retxRSCPTSbasedMap)
+
     # Print throughput for each TCP packets based on sequence number
     if options.is_print_throughput:
         if options.direction:
@@ -189,7 +210,7 @@ def main():
         else:
             print >> sys.stderr, "Must specifiy trace direction!!!"
     
-    # TODO: add to option
+    # Print RLC mapping to RRC
     if options.isCrossMap:
         if options.direction:
             if options.direction.lower() == "up":
@@ -202,7 +223,26 @@ def main():
     # print the retx ratio for each state
     if options.retxType:
         pw.printRetxRatio(retxStatsMap, totCountStatsMap, options.retxType)
-
+        
+    
+    # Correlate the retransmission Count with signal strength
+    if options.isRetxCountVSSig:
+        if options.direction:
+            if options.direction.lower() == "up":
+                pw.printRLCRetxCountAndRSCP(ULReTxCountMap) 
+            else:
+                pw.printRLCRetxCountAndRSCP(DLReTxCountMap)
+        else:
+            print >> sys.stderr, "Direction is required to print retransmission count vs signal strength"
+    
+    # print the signal strength for all specific entries
+    """
+    if options.direction.lower() == "up":
+        pw.printRSCP(QCATEntries, const.UL_PDU_ID)
+    else:
+        pw.printRSCP(QCATEntries, const.DL_PDU_ID)
+    """
+    
     #util.procTPReTx_old(QCATEntries)
     #pw.printRetxCountMapList(ULReTxCountMap)
     #print "#"*50

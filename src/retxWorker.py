@@ -14,6 +14,7 @@ import PrintWrapper as pw
 from datetime import datetime
 
 DEBUG = False
+CUR_DEBUG = True
 ############################################################################
 ############################# TCP Retx #####################################
 ############################################################################
@@ -397,6 +398,11 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     DLBytes_total = 0.0
     Bytes_on_fly = 0.0
     
+    count_total_fach_promote = 0.0
+    count_total_fach = 0.0
+    count_fach_promote_retx = 0.0
+    count_fach_retx = 0.0
+
     for i in entries:
         ts = i.timestamp
         """
@@ -405,7 +411,7 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
         if i.eul["raw_bit_rate"] != None:
             print "%f\t%f" % (ts, i.eul["raw_bit_rate"])
         """
-        if i.rrcID != None:
+        if i.rrcID != None and i.rrcID in const.RRC_MAP.keys():
             # print "%f\t%d\t%d\t%d" % (ts, i.rrcID, sum([len(x) for x in i.retx["ul"].values()]), \
             #                          sum([len(x) for x in i.retx["dl"].values()]))
             # Timestamp Trans_RT_BYTES UL_RT_BYTES DL_RT_BYTES rrc
@@ -416,6 +422,11 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
                           sum([len(x) for x in i.retx["dl"].values()]), i.rrcID)
                 else:
                     pass
+            if CUR_DEBUG:
+                if i.rrcID == const.FACH_TO_DCH_ID: 
+                    count_total_fach_promote += 1
+                if i.rrcID == const.FACH_ID:
+                    count_total_fach += 1
             rrc_state[i.rrcID] += 1
             RLC_UL_retx[i.rrcID] += sum([len(x) for x in i.retx["ul"].values()])
             RLC_DL_retx[i.rrcID] += sum([len(x) for x in i.retx["dl"].values()])
@@ -433,6 +444,11 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
                 RLC_UL_tot_pkts[i.rrcID] += i.ul_pdu[0]["numPDU"]
                 if i.retx["ul"]:
                     RLC_UL_bytes[i.rrcID] += sum([sum(x) for x in i.retx["ul"].values()])
+                    if CUR_DEBUG:
+                        if i.rrcID == const.FACH_TO_DCH_ID: 
+                            count_fach_promote_retx += 1
+                        if i.rrcID == const.FACH_ID:
+                            count_fach_retx += 1
             if i.logID == const.DL_PDU_ID:
                 DLBytes_total += sum(i.dl_pdu[0]["size"])
                 RLC_DL_tot_pkts[i.rrcID] += i.dl_pdu[0]["numPDU"]
@@ -443,6 +459,9 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     retx_count_map = {"tcp_rto": TCP_rto_retx, "tcp_fast": TCP_fast_retx, "rlc_ul": RLC_UL_retx, "rlc_dl":RLC_DL_retx}
     total_count_map = {"tcp": TCP_total_count, "rlc_ul": RLC_UL_tot_pkts, "rlc_dl": RLC_DL_tot_pkts}
     
+    if CUR_DEBUG:
+        print "FACH promote ratio %f" % (count_fach_promote_retx/(count_total_fach_promote+count_total_fach_promote))
+        print "Stable FACH retransmission ratio %f " % (count_fach_retx / (count_total_fach_promote+count_total_fach_promote))
     return (retx_count_map, total_count_map)
 
     # print "***************"

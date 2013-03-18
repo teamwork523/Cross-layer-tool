@@ -61,8 +61,8 @@ RRC_MAP = {FACH_ID: "CELL_FACH", \
            FACH_TO_DCH_ID: "PROMOTE_TO_DCH", \
            PCH_TO_FACH_ID: "PROMOTE_TO_FACH"}
 
-TIMER = { FACH_TO_DCH_ID: 0.05, \
-          PCH_TO_FACH_ID: 0.05}
+TIMER = { FACH_TO_DCH_ID: 2, \
+          PCH_TO_FACH_ID: 0.5}
 
 # transport layer protocol map
 IP_ID = int("0x01", 16) # QCAT protocol id

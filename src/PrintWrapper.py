@@ -13,7 +13,7 @@ import PCAPPacket as pp
 from datetime import datetime
 import Util as util
 
-DEBUG = False
+DEBUG = True
 
 def printIPaddressPair(entries, threshold):
     #{ip_addr:count,...}
@@ -39,29 +39,38 @@ def printRetxCountMapList (countMap):
 
 # Given TCP retransmission find the nearest retransmission
 def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
-	# TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry), (another)]}
-	# RLC map format: {ts: {sn1:(count1,duration1, [entries]), sn2:(count2, duration2, [entries]), ...}
-	# RLC could 
-	ahead_th = 3
-	link_ts_sorted = sorted(RLCRetxMap.keys())
-	for a in sorted(tcpRetxMap.keys()):
-		# TODO: currently use the first one, since retx usually happen not within 1ms
-		tcp_delay = tcpRetxMap[a][0][1].timestamp - a
-		# TODO: change binary search
-		link_ts = 0
-		for link_ts in link_ts_sorted:
-			if link_ts > a and min([i[1] for i in RLCRetxMap[link_ts].values()]) < tcp_delay:# and link_ts - a < ahead_th:
-				break
-		rlc_delay = 0
-		min_count = 0
-		entries = []
-		for i in RLCRetxMap[link_ts].values():
-			if i[1] > rlc_delay:
-				rlc_delay = i[1]
-				min_count = i[0]
-				entries = i[2]
-		#rlc_delay = RLCRetxMap[link_ts].values()[0][1]
-		print "%f\t%f\t%f\t%f\t%d\t%d\t%f" % (a, tcp_delay, rlc_delay, abs(link_ts - a), min_count, tcpRetxMap[a][0][0].rrcID, util.meanValue(tcpRetxMap[a][0][0].sig["RSCP"]))
+    # TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry), (another)]}
+    # RLC map format: {ts: {sn1:(count1,duration1, [entries]), sn2:(count2, duration2, [entries]), ...}
+    # RLC could 
+    ahead_th = 3
+    link_ts_sorted = sorted(RLCRetxMap.keys())
+    for a in sorted(tcpRetxMap.keys()):
+        # TODO: currently use the first one, since retx usually happen not within 1ms
+        tcp_delay = tcpRetxMap[a][0][1].timestamp - a
+        # TODO: change binary search
+        link_ts = 0
+        for link_ts in link_ts_sorted:
+            if link_ts > a and min([i[1] for i in RLCRetxMap[link_ts].values()]) < tcp_delay:# and link_ts - a < ahead_th:
+                break
+        rlc_delay = 0
+        min_count = 0
+        entries = []
+        for i in RLCRetxMap[link_ts].values():
+            if i[1] > rlc_delay:
+                rlc_delay = i[1]
+                min_count = i[0]
+                entries = i[2]
+        #rlc_delay = RLCRetxMap[link_ts].values()[0][1]
+        print "%f\t%f\t%f\t%f\t%d\t%d\t%f" % (a, tcp_delay, rlc_delay, abs(link_ts - a), min_count, tcpRetxMap[a][0][0].rrcID, util.medianValue(tcpRetxMap[a][0][0].sig["RSCP"]))
+
+    if DEBUG:
+        totalCount = 0.0
+        totalDuration = 0.0
+        for dic in RLCRetxMap.values():
+            for v in dic.values():
+                totalCount += 1
+                totalDuration += v[1]
+        print "Retrans duration: %f\n" % (totalDuration / totalCount) 
 
 
 # Print ratio stats of retransmission for each state
@@ -98,6 +107,21 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
     if DEBUG:
         print tot_result
         print "*"*40
+
+# RLC retransmission count vs signal strength
+def rlcRetxCountVSSignalStrength(rlcCountMap):
+    # TODO: Print Timeseries vs. retx count vs. avg signal strength.
+    for i in rlcCountMap:
+        pass
+
+# Print map between retx count and signal strength
+def printRLCRetxCountAndRSCP(rlcCountMap):
+    for ts, snEntries in sorted(rlcCountMap.items()):
+        for sn, detail in sorted(snEntries.items()):
+            # exclude the first original RLC
+            for i in range(1,len(detail[2])):
+                # Retx count, RSCP, RRC state
+                print "%d\t%f\t%d" % (i, util.meanValue(detail[2][i].sig["RSCP"]), detail[2][i].rrcID)
 
 # Deprecated
 # Retransmission summary information
@@ -168,12 +192,18 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
 #######################################################################
 ######################## Context Info #################################
 #######################################################################
-# energy information
-def printRSCP (entries):
+# signal strength information
+# NOTICE: the retransmission number refer to the number of 
+def printRSCP (entries, entryID):
     for i in entries:
-        if i.rrcID and i.sig["RSCP"]:
+        if i.rrcID and i.sig["RSCP"] and i.logID == entryID:
             ts = i.timestamp
-            print "%f\t%d\t%d" % (ts, util.meanValue(i.sig["RSCP"]), i.rrcID)
+            print "%f\t%f\t%d" % (ts, util.meanValue(i.sig["RSCP"]), i.rrcID )
+
+# Print a timestamp based retx count map vs RSCP
+def printRetxCountvsRSCPbasedOnTS(retxMap):
+    for ts, detail in sorted(retxMap.items()):
+        print "%f\t%d\t%f\t%f" % (ts, detail[0], detail[1], detail[2])
 
 # Throughput Information
 def printThroughput (entries):
@@ -210,6 +240,7 @@ def printThroughput (entries):
     print >> sys.stderr, "%f\t%f\t%f" % (util.meanValue(throughputSummary[const.FACH_ID]),\
                                          util.meanValue(throughputSummary[const.DCH_ID]), \
                                          util.meanValue(throughputSummary[const.PCH_ID]),)
+
 ### Deprecated
 # compute the percentage of sampling period that contains retransmission
 # and average retransmission rate
