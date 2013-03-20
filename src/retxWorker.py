@@ -14,7 +14,7 @@ import PrintWrapper as pw
 from datetime import datetime
 
 DEBUG = False
-CUR_DEBUG = True
+CUR_DEBUG = False
 ############################################################################
 ############################# TCP Retx #####################################
 ############################################################################
@@ -460,8 +460,11 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     total_count_map = {"tcp": TCP_total_count, "rlc_ul": RLC_UL_tot_pkts, "rlc_dl": RLC_DL_tot_pkts}
     
     if CUR_DEBUG:
-        print "FACH promote ratio %f" % (count_fach_promote_retx/(count_total_fach_promote+count_total_fach_promote))
-        print "Stable FACH retransmission ratio %f " % (count_fach_retx / (count_total_fach_promote+count_total_fach_promote))
+        if count_total_fach_promote:
+            print "FACH promote ratio %f" % (count_fach_promote_retx/(count_total_fach_promote))
+            # print "Stable FACH retransmission ratio %f " % (count_fach_retx / (count_total_fach_promote))
+        else:
+            print "FACH promote ratio %f" % (0)
     return (retx_count_map, total_count_map)
 
     # print "***************"

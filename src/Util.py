@@ -345,4 +345,4 @@ def sycTimeLine(entries, tsDict):
 """
 
 def convert_ts_in_human(ts):
-	return datetime.fromtimestamp(ts).strftime('%H:%M:%S.%f')
+	return datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")

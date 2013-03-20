@@ -32,7 +32,7 @@ def init_optParser():
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
                             " "*extraspace + "[-a] num_packets, [-d] direction, [--srv_ip] server_ip, [--cross_map]\n" + \
                             " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
-                            " "*extraspace + "[--retx_test], [--retx_count_sig]")
+                            " "*extraspace + "[--retx_analysis], [--retx_count_sig]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -53,7 +53,7 @@ def init_optParser():
                          help="Useful tag to print retx ratio against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
     optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
                          help="Flag to enable printing throughput information based on TCP trace analysis")
-    optParser.add_option("--retx_test", action="store_true", dest="enable_tcp_retx_test", default=False, \
+    optParser.add_option("--retx_analysis", action="store_true", dest="enable_tcp_retx_test", default=False, \
                          help="Enable TCP retransmission analysis")
     optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
                          help="Set this option if you want to map the RLC retransmission with TCP retransmission")
@@ -111,7 +111,7 @@ def main():
     tempLen = len(QCATEntries)
     #print "Before remove dup: %d entries" % (tempLen)
     QCATEntries = util.removeQXDMDupIP(QCATEntries)
-    #print "After remove dup: %d entries" % (len(QCATEntries))
+    #sprint "After remove dup: %d entries" % (len(QCATEntries))
 
     #################################################################
     ###################### Mapping Context Info #####################
@@ -131,7 +131,6 @@ def main():
     # Optimize by exclude context fields
     QCATEntries = cw.extractEntriesOfInterest(QCATEntries, \
                   set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID)))
-
 	#################################################################
     ######################## Protocol Filter ########################
     #################################################################
@@ -224,7 +223,6 @@ def main():
     if options.retxType:
         pw.printRetxRatio(retxStatsMap, totCountStatsMap, options.retxType)
         
-    
     # Correlate the retransmission Count with signal strength
     if options.isRetxCountVSSig:
         if options.direction:
@@ -235,6 +233,10 @@ def main():
         else:
             print >> sys.stderr, "Direction is required to print retransmission count vs signal strength"
     
+    # print timeseries plot
+    # TODO: add option here
+    pw.printTraceInformation(QCATEntries, const.PROTOCOL_ID)
+
     # print the signal strength for all specific entries
     """
     if options.direction.lower() == "up":

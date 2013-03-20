@@ -13,6 +13,8 @@ from datetime import datetime
 import const
 import Util as util
 
+DEBUG = False
+
 class QCATEntry:
     """
     Each Entry should have three part:
@@ -85,14 +87,20 @@ class QCATEntry:
                     "non_sched_buffer": None}
         # RLC UL/DL PDU
         # TODO: currently assume only one entities
+        # since sn could be duplicated, bad idea to use it as a key in header
+        # Header has one to one correlation with sn
+        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[]},...]
         self.ul_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
-                        "size": [] }] # bytes
+                        "size": [], # bytes
+                        "header":[]}]
+        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[]},...]
         self.dl_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
-                        "size": [] }] # bytes
+                        "size": [], # bytes
+                        "header":[]}]
         self.dl_RLC_ACK = True  # a boolean determine if last ACK exist in RLC DL AM
         # AGC info, record all the Tx/Rx power info
         # Deprecated
@@ -183,7 +191,11 @@ class QCATEntry:
                     if i.find("DATA PDU") != -1:
                         info = i.split("::")[1].strip().split(", ")
                         self.ul_pdu[0]["chan"] = int(info[0].split(":")[1])
-                        self.ul_pdu[0]["sn"].append(int(info[1].split(" ")[1], 16))
+                        cur_seq = int(info[1].split(" ")[1], 16)
+                        self.ul_pdu[0]["sn"].append(cur_seq)
+                        self.extractRLCHeaderInfo(self.ul_pdu[0]["header"], info, cur_seq, True)
+                        if DEBUG:
+                            print self.ul_pdu[0]
                     elif i[:8] == "PDU Size":
                         self.ul_pdu[0]["size"].append(int(i.split()[-1])/8)
                     elif i[:14] == "Number of PDUs":
@@ -200,7 +212,9 @@ class QCATEntry:
                     if i.find("DATA PDU") != -1:
                         info = i.split("::")[1].strip().split(", ")
                         self.dl_pdu[0]["chan"] = int(info[0].split(":")[0])
-                        self.dl_pdu[0]["sn"].append(int(info[1].split("=")[1], 16))
+                        cur_seq = int(info[1].split("=")[1], 16)
+                        self.dl_pdu[0]["sn"].append(cur_seq)
+                        self.extractRLCHeaderInfo(self.dl_pdu[0]["header"], info, cur_seq, False)
                     elif i[:8] == "PDU Size":
                         if self.dl_pdu[0]["size"] == None:
                             self.dl_pdu[0]["size"] = [int(i.split()[-1])/8]
@@ -311,7 +325,45 @@ class QCATEntry:
                 print "Final segement is %d" % (self.ip["final_seg"])
                 print self.ip["tlp_id"]
                 """
-                
+################################################################################   
+################################# Helper Functions #############################
+################################################################################
+    # extract RLC header inforamtion
+    def extractRLCHeaderInfo(self, pdu_field, info, cur_seq, isUp):
+        header = {}
+        if isUp:
+            delimiter = ": "
+            cur_index = 2
+        else:
+            delimiter = " = "
+            cur_index = 3
+        # extrace required field in the header
+        # 1. Polling bit, 2. Header extension
+        header["p"] = int(info[cur_index].split(delimiter)[1])
+        cur_index += 1
+        header["he"] = int(info[cur_index].split(delimiter)[1])
+        header["data"] = []
+        cur_index += 1
+        if header["he"] == 1:
+            # extract length indicator and extended bit
+            # there might be multiple length indicator, store all of them
+            header["li"] = [int(info[cur_index].split(delimiter)[1])]
+            cur_index += 1
+            header["e"] = int(info[cur_index].split(delimiter)[1])
+            cur_index += 1
+            info_len = len(info)
+            while header["e"] == 1 and cur_index < info_len:
+                header["li"].append(int(info[cur_index].split(delimiter)[1]))
+                cur_index += 1
+                header["e"] = int(info[cur_index].split(delimiter)[1])
+                cur_index += 1
+        # append the rest of info as data
+        for i in range(cur_index, len(info)):
+            # strip off the first 
+            header["data"].append(info[cur_index].split(delimiter)[1][2:])
+            cur_index += 1
+        pdu_field.append(header)
+           
     def __debugIP(self):
         print "ip header is %d" % (self.ip["header_len"])
         print "Protocol type is %d" % (self.ip["tlp_id"])

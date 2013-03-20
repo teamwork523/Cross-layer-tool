@@ -14,6 +14,7 @@ from datetime import datetime
 import Util as util
 
 DEBUG = True
+BINARY_SEARCH = True
 
 def printIPaddressPair(entries, threshold):
     #{ip_addr:count,...}
@@ -48,10 +49,14 @@ def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
         # TODO: currently use the first one, since retx usually happen not within 1ms
         tcp_delay = tcpRetxMap[a][0][1].timestamp - a
         # TODO: change binary search
-        link_ts = 0
-        for link_ts in link_ts_sorted:
-            if link_ts > a and min([i[1] for i in RLCRetxMap[link_ts].values()]) < tcp_delay:# and link_ts - a < ahead_th:
-                break
+        if BINARY_SEARCH:
+            link_ts = util.binarySearch(a, link_ts_sorted)
+        else:
+            link_ts = 0
+            for link_ts in link_ts_sorted:
+                if link_ts > a and min([i[1] for i in RLCRetxMap[link_ts].values()]) < tcp_delay:# and link_ts - a < ahead_th:
+                    break
+
         rlc_delay = 0
         min_count = 0
         entries = []
@@ -70,7 +75,10 @@ def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
             for v in dic.values():
                 totalCount += 1
                 totalDuration += v[1]
-        print "Retrans duration: %f\n" % (totalDuration / totalCount) 
+        if totalCount:
+            print "Retrans duration: %f\n" % (totalDuration / totalCount) 
+        else:
+            print "Retrans duration: %f\n" % (0)
 
 
 # Print ratio stats of retransmission for each state
@@ -188,6 +196,23 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
         print >> sys.stderr, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f" % (totalTCPReTx, totalULReTx, totalDLReTx, totalTCPReTx/totalTCP, totalULReTx/totalUL, totalDLReTx/totalDL, totalTCPReTx/(ts - startTS), totalULReTx/(ts - startTS), totalDLReTx/(ts - startTS))
     else:
         print >> sys.stderr, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f" % (totalTCPReTx, totalULReTx, totalDLReTx, totalTCPReTx/totalTCP, totalULReTx/totalUL, 0, totalTCPReTx/(ts - startTS), totalULReTx/(ts - startTS), totalDLReTx/(ts - startTS))
+
+#######################################################################
+######################## Packet Trace #################################
+#######################################################################
+# Print the most recent information about the packet trace
+def printTraceInformation(entries, logID, start = None, end = None):
+    for entry in entries:
+        # TODO: improve efficiency
+        if entry.rrcID and ((start and entry.timestamp > start) or (not start)) and\
+           ((end and entry.timestamp < end) or (not end)):
+            if entry.logID == logID == const.PROTOCOL_ID and entry.ip["total_len"] > 0:
+                print "%f\t%f\t%d" % (entry.timestamp, entry.ip["total_len"], entry.rrcID)
+            elif entry.logID == logID == const.UL_PDU_ID and util.meanValue(entry.ul_pdu[0]["size"]) > 0:
+                print "%f\t%f\t%d" % (entry.timestamp, util.meanValue(entry.ul_pdu[0]["size"]), entry.rrcID)
+            elif entry.logID == logID == const.DL_PDU_ID and util.meanValue(entry.dl_pdu[0]["size"]) > 0:
+                print "%f\t%f\t%d" % (entry.timestamp, util.meanValue(entry.dl_pdu[0]["size"]), entry.rrcID)
+            
 
 #######################################################################
 ######################## Context Info #################################
