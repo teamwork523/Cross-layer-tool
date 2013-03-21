@@ -18,6 +18,7 @@ import Util as util
 from optparse import OptionParser
 import PrintWrapper as pw
 import contextWorker as cw
+import crossLayerWorker as clw
 import retxWorker as rw
 import delayWorker as dw
 
@@ -129,8 +130,16 @@ def main():
     FACH_delay_analysis_entries = cw.extractEntriesOfInterest(QCATEntries, \
                   set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID)))
     # Optimize by exclude context fields
+    # Make sure no change to QCATEntries later on
     QCATEntries = cw.extractEntriesOfInterest(QCATEntries, \
                   set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID)))
+
+    #################################################################
+    ######################## Cross Layer Maping #####################
+    #################################################################
+    # create a map between entry and QCATEntry index
+    entryIndexMap = util.createEntryMap(QCATEntries)
+    
 	#################################################################
     ######################## Protocol Filter ########################
     #################################################################
@@ -181,6 +190,24 @@ def main():
             tcpReTxMap, tcpFastReTxMap = rw.procTCPReTx(tcpflows, options.direction, options.server_ip)
             tcpReTxCount = rw.countTCPReTx(tcpReTxMap)
             tcpFastReTxCount = rw.countTCPReTx(tcpFastReTxMap)
+            
+            # TODO: test on the retransmission layer in uplink
+            """          
+            for key in sorted(tcpReTxMap.keys()):
+                orig_key = tcpReTxMap[key][0][0]
+                retx_key = tcpReTxMap[key][0][1]
+                orig_Mapped_RLCs = clw.mapRLCtoTCP(QCATEntries, entryIndexMap[orig_key], const.UL_PDU_ID)
+                retx_Mapped_RLCs = clw.mapRLCtoTCP(QCATEntries, entryIndexMap[retx_key], const.UL_PDU_ID, hint_index = orig_Mapped_RLCs[-1][1])
+                if orig_Mapped_RLCs and retx_Mapped_RLCs:
+                    countMap, byteMap, retxList = clw.RLCRetxMapsForInterval(QCATEntries, orig_Mapped_RLCs[0][1], retx_Mapped_RLCs[-1][1], const.UL_PDU_ID)
+                    print "Retransmission count is %d" % (sum(countMap.values()))
+            """
+            item1 = tcpReTxMap[sorted(tcpReTxMap.keys())[0]][0][0]
+            item2 = tcpReTxMap[sorted(tcpReTxMap.keys())[0]][0][1]
+            rt = clw.mapRLCtoTCP(QCATEntries, entryIndexMap[item1], const.UL_PDU_ID)
+            print "hint_index is %d" % rt[-1][1]
+            clw.mapRLCtoTCP(QCATEntries, entryIndexMap[item2], const.UL_PDU_ID, hint_index = rt[-1][1])
+            #clw.mapRLCtoTCP(QCATEntries, entryIndexMap[item2], const.UL_PDU_ID, hint_index = -1)
             if DEBUG:
                 print "TCP ReTx happens %d times" % (tcpReTxCount)
                 print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
@@ -235,7 +262,7 @@ def main():
     
     # print timeseries plot
     # TODO: add option here
-    pw.printTraceInformation(QCATEntries, const.PROTOCOL_ID)
+    # pw.printTraceInformation(QCATEntries, const.PROTOCOL_ID)
 
     # print the signal strength for all specific entries
     """

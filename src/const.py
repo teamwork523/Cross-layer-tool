@@ -78,6 +78,9 @@ Payload_Header_Len = 8
 IP_Header_Len = 20
 TCP_Header_Len = 20 + 12 # include option
 
+# Retransmission mapping
+MAX_ENTRIES_LIST = 200
+
 # RLC DL retransmission
 RETX_PERIOD_THRESHOLD = 5
 MIN_SN_PERIOD = 20

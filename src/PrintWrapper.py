@@ -322,7 +322,7 @@ def printDLCount(entries):
     
     for u in sorted(dlMap):
         if u >= 3851 and u <= 3886:
-            print "DL: %d\t%d" % (u, dlMap[u])
+            print "DL: %d\t%d" % (u,    dlMap[u])
 
 # print a TCP entry information
 def printTCPEntry(entry):
@@ -330,6 +330,14 @@ def printTCPEntry(entry):
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
 	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"], \
                         const.RRC_MAP[entry.rrcID])
+
+# print a RLC entry information
+def printRLCEntry(entry, direction):
+    printEntry(entry)
+    if direction.lower == "up":
+        print entry.ul_pdu[0]
+    else:
+        print entry.dl_pdu[0]
 
 # print a general entry
 def printEntry(entry):

@@ -244,6 +244,14 @@ def removeQXDMDupIP(entries):
             rtEntries.append(entries[i])
     return rtEntries    
 
+# Create a Map between entry and its index in the entry
+# Assume no change on the entry later
+def createEntryMap(entries):
+    entryMap = {}
+    for i in range(len(entries)):
+        entryMap[entries[i]] = i
+    return entryMap
+
 #############################################################################
 ############################ helper functions ###############################
 #############################################################################    

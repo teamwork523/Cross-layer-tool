@@ -7,13 +7,14 @@ Aggregate all the QCAT log information into this class. Part of the fields requi
 context mapping functions to fill in.
 """
 
-import re, math, struct
+import re, math, struct, sys
 import calendar
 from datetime import datetime
 import const
 import Util as util
 
 DEBUG = False
+CUR_DEBUG = False
 
 class QCATEntry:
     """
@@ -25,6 +26,7 @@ class QCATEntry:
     def __init__(self, title, detail, hex_dump):
         self.title = title
         self.detail = detail
+        # Three fields: length, header, payload
         self.hex_dump = hex_dump
         # timestamp: unix_timestamp_secs.millisec
         self.timestamp = 0.0
@@ -38,10 +40,12 @@ class QCATEntry:
         # flow information, Five tuple start in SYN packet (src/dst)(ip/port) + protocol type
         # Also record the start sequence number and ACK number
         self.flow = {}
+        # customized header info
+        self.custom_header = {"final_seg": None, \
+                              "seg_num": None, \
+                              "seq_num": None}
         # ip information
         self.ip = {"tlp_id": None, \
-                   "seg_num": None, \
-                   "final_seg": None, \
                    "src_ip": None, \
                    "dst_ip": None, \
                    "header_len": None, \
@@ -89,13 +93,13 @@ class QCATEntry:
         # TODO: currently assume only one entities
         # since sn could be duplicated, bad idea to use it as a key in header
         # Header has one to one correlation with sn
-        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[]},...]
+        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[], "len": None},...]
         self.ul_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
                         "size": [], # bytes
                         "header":[]}]
-        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[]},...]
+        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[], "len": None},...]
         self.dl_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
@@ -193,7 +197,7 @@ class QCATEntry:
                         self.ul_pdu[0]["chan"] = int(info[0].split(":")[1])
                         cur_seq = int(info[1].split(" ")[1], 16)
                         self.ul_pdu[0]["sn"].append(cur_seq)
-                        self.extractRLCHeaderInfo(self.ul_pdu[0]["header"], info, cur_seq, True)
+                        self.extractRLCHeaderInfo(self.ul_pdu[0], info, cur_seq, True)
                         if DEBUG:
                             print self.ul_pdu[0]
                     elif i[:8] == "PDU Size":
@@ -214,7 +218,7 @@ class QCATEntry:
                         self.dl_pdu[0]["chan"] = int(info[0].split(":")[0])
                         cur_seq = int(info[1].split("=")[1], 16)
                         self.dl_pdu[0]["sn"].append(cur_seq)
-                        self.extractRLCHeaderInfo(self.dl_pdu[0]["header"], info, cur_seq, False)
+                        self.extractRLCHeaderInfo(self.dl_pdu[0], info, cur_seq, False)
                     elif i[:8] == "PDU Size":
                         if self.dl_pdu[0]["size"] == None:
                             self.dl_pdu[0]["size"] = [int(i.split()[-1])/8]
@@ -259,12 +263,18 @@ class QCATEntry:
             # length must greater than wrapping header plus IP header
             if len(self.hex_dump["payload"]) > const.Payload_Header_Len + 20 and \
                int(self.hex_dump["payload"][1], 16) == const.IP_ID:
-                self.ip["seg_num"] = int(self.hex_dump["payload"][6], 16)
+                # customized header parsing
+                # Little Indian
+                self.custom_header["seq_num"] = int("".join(self.hex_dump["payload"][5:3:-1]), 16)
+                self.custom_header["seg_num"] = int(self.hex_dump["payload"][6], 16)
                 if self.hex_dump["payload"][7][0] == '0':
-                    self.ip["final_seg"] = False
+                    self.custom_header["final_seg"] = False
                 else:
-                    self.ip["final_seg"] = True
-
+                    self.custom_header["final_seg"] = True
+                if CUR_DEBUG:
+                    print "*" * 40
+                    print " ".join(self.hex_dump["payload"][4:6])
+                    self.__debugCustomHeader()
                 # IP packet parsing
                 self.ip["header_len"] = int(self.hex_dump["payload"][const.Payload_Header_Len][1], 16) * 4
                 # Avoid fragmented logging packets
@@ -320,17 +330,13 @@ class QCATEntry:
                         self.udp["total_len"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16)
                         # self.__debugUDP()
                         
-                """
-                print "segment number is %d" % (self.ip["seg_num"])
-                print "Final segement is %d" % (self.ip["final_seg"])
-                print self.ip["tlp_id"]
-                """
 ################################################################################   
 ################################# Helper Functions #############################
 ################################################################################
     # extract RLC header inforamtion
     def extractRLCHeaderInfo(self, pdu_field, info, cur_seq, isUp):
         header = {}
+        header_len = 2
         if isUp:
             delimiter = ": "
             cur_index = 2
@@ -352,18 +358,32 @@ class QCATEntry:
             header["e"] = int(info[cur_index].split(delimiter)[1])
             cur_index += 1
             info_len = len(info)
+            # each additional header is one byte
+            header_len += 1
             while header["e"] == 1 and cur_index < info_len:
                 header["li"].append(int(info[cur_index].split(delimiter)[1]))
                 cur_index += 1
                 header["e"] = int(info[cur_index].split(delimiter)[1])
                 cur_index += 1
+                header_len += 1
         # append the rest of info as data
         for i in range(cur_index, len(info)):
             # strip off the first 
             header["data"].append(info[cur_index].split(delimiter)[1][2:])
             cur_index += 1
-        pdu_field.append(header)
-           
+
+        if pdu_field["size"]:
+            header["len"] = pdu_field["size"][-1] - header_len
+        else:
+            print >> sys.stderr, "Didn't find PDU size before calculate the payload length"
+            sys.exit(1)
+        pdu_field["header"].append(header)
+    
+    def __debugCustomHeader(self):
+        print "Sequence number is %d" % (self.custom_header["seq_num"])
+        print "Segment number is %d" % (self.custom_header["seg_num"])
+        print "Final segement flag is %d" % (self.custom_header["final_seg"])
+    
     def __debugIP(self):
         print "ip header is %d" % (self.ip["header_len"])
         print "Protocol type is %d" % (self.ip["tlp_id"])

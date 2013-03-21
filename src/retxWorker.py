@@ -162,59 +162,6 @@ def detectReTx (entry, entryHist, is_up, srv_ip):
             return i
     return False
 
-"""
-# Deprecate:
-# check if an entry's header and body in the retransmission part
-def checkEntryExistInList (entry, entryHist):            
-    for i in entryHist[::-1]:
-        # Exceptional case:
-        # 1. The sender's last ACK in three way handshake has same header as first packets (check the packet size)
-        # 2. TSL vs TCP exactly the same header, need to exam the TSL header (TODO)
-        # 3. Duplicate ACK -> check payload and flow destination
-        #    Special case DUP ACK of SYN-ACK -> (len > 64, TODO: make this better)
-        # 4. Duplicate FIN_ACK vs. ACK -> check flags
-        # 5. Duplicate SYN -> Enable ACK
-        if entry.tcp["ACK_FLAG"] and \
-           entry.ip["total_len"] > 64 and \
-           entry.tcp["seq_num"] == i.tcp["seq_num"] and \
-           entry.tcp["flags"] == i.tcp["flags"] and \
-           entry.ip["total_len"] == i.ip["total_len"] and \
-           entry.tcp["payload"] == i.tcp["payload"]:
-            privTS = i.timestamp[0] + float(i.timestamp[1])/1000.0
-            ts = entry.timestamp[0] + float(entry.timestamp[1])/1000.0
-            #print "#" * 50
-            #print "Priv TS is %s" % (datetime.fromtimestamp(privTS).strftime('%H:%M:%S.%f'))
-            #print "Current TS is %s" % (datetime.fromtimestamp(ts).strftime('%H:%M:%S.%f'))
-            return True
-    return False
-
-# assign transport layer retransmission
-def procTPReTx_old (entries):
-    if not entries:
-        return
-    privEntryHist = []
-    threshold = 30
-    for entry in entries:
-        if entry.logID == const.PROTOCOL_ID and entry.ip["tlp_id"] == const.TCP_ID:            
-            if checkEntryExistInList(entry, privEntryHist):
-               entry.retx["tp"].append(entry.ip["total_len"])
-            if len(privEntryHist) < threshold:
-                privEntryHist.append(entry)
-            else:
-                privEntryHist.pop(0)
-                privEntryHist.append(entry)
-
-# count the TCP retransmission
-def countTCPReTx_old (entries):
-    if not entries:
-        return
-    count = 0
-    for entry in entries:
-        if entry.ip["tlp_id"] == const.TCP_ID:
-            count += len(entry.retx["tp"])
-    return count
-"""
-
 ############################################################################
 ############################# RLC Retx #####################################
 ############################################################################
