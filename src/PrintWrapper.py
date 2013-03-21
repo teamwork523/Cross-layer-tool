@@ -40,14 +40,14 @@ def printRetxCountMapList (countMap):
 
 # Given TCP retransmission find the nearest retransmission
 def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
-    # TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry), (another)]}
+    # TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry, 2nd_retx_entry...), (another)]}
     # RLC map format: {ts: {sn1:(count1,duration1, [entries]), sn2:(count2, duration2, [entries]), ...}
     # RLC could 
     ahead_th = 3
     link_ts_sorted = sorted(RLCRetxMap.keys())
     for a in sorted(tcpRetxMap.keys()):
         # TODO: currently use the first one, since retx usually happen not within 1ms
-        tcp_delay = tcpRetxMap[a][0][1].timestamp - a
+        tcp_delay = tcpRetxMap[a][0][-1].timestamp - a
         # TODO: change binary search
         if BINARY_SEARCH:
             link_ts = util.binarySearch(a, link_ts_sorted)
@@ -326,7 +326,7 @@ def printDLCount(entries):
 
 # print a TCP entry information
 def printTCPEntry(entry):
-	print "%s\t%s\t%s\t%s\t%s\t%d\t%s" % (util.convert_ts_in_human(entry.timestamp),\
+	print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s" % (util.convert_ts_in_human(entry.timestamp),\
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
 	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"], \
                         const.RRC_MAP[entry.rrcID])

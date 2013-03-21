@@ -14,7 +14,7 @@ import PrintWrapper as pw
 from datetime import datetime
 
 DEBUG = True
-CUR_DEBUG = True
+CUR_DEBUG = False
 
 ############################################################################
 ################## Cross Layer Based on RLC Layer ##########################
@@ -34,7 +34,7 @@ CUR_DEBUG = True
 def mapRLCtoTCP(entries, tcp_index, logID, hint_index = -1):
     # search for the entires IP packets
     tcp_payload = findEntireIPPacket(entries, tcp_index)
-    if CUR_DEBUG:
+    if DEBUG:
         print "#" * 40
         print "Index is %d" % tcp_index
         pw.printEntry(entries[tcp_index])
@@ -97,8 +97,11 @@ def mapRLCtoTCP(entries, tcp_index, logID, hint_index = -1):
                     pw.printRLCEntry(return_entries[0][0], "up")
                     print return_entries
                 return return_entries
+            # handle the case where data mismatch at the length indicator entry
             elif cur_header[j].has_key("li") and not cur_header[j]["data"]:
                 cur_match_index = 0
+            elif cur_header[j].has_key("li") and cur_header[j]["data"]:
+                cur_match_index = cur_header[j]["len"] - cur_header[j]["li"][0]
 
         if find_match:
             return_entries.append((entries[i], i))
@@ -118,8 +121,10 @@ def isDataMatch(dataList, payload, matching_index):
     if not dataList and payload:
         return False
         #return True
+    payloadLen = len(payload)
     for dataIndex in range(len(dataList)):
-        if dataList[dataIndex] != payload[matching_index + dataIndex]:
+        if matching_index + dataIndex >= payloadLen or \
+           dataList[dataIndex] != payload[matching_index + dataIndex]:
             return False
     return True
 
@@ -154,11 +159,14 @@ def findEntireIPPacket (entries, index):
 ############################################################################
 # We want to know the number of RLC layer retransmission between the two TCP
 # retransmission 
+# @input: retxList is optional if you just want to test the combination of Retx
+#         RLC entries
 # @return: 
 # 1. map between RLC sequence number and retransmission count
 # 2. map between timestamp and retransmission bytes
 # 3. a list of retransmission entries
-def RLCRetxMapsForInterval (entries, start_index, end_index, logID):
+# def RLCRetxMapsForInterval (entries, start_index, end_index, logID):
+def RLCRetxMapsForInterval (entries, start_index, end_index, logID, retxRLCEntries = None):
     if start_index < 0 or end_index < 0 or start_index >= len(entries) or \
        end_index >= len(entries):
         return None
@@ -169,7 +177,10 @@ def RLCRetxMapsForInterval (entries, start_index, end_index, logID):
     # A list of retransmission entries
     RetxEntriesList = []
 
-    for i in range(start_index, end_index + 1):
+    listRange = range(start_index, end_index + 1)
+    if retxRLCEntries:
+        listRange = [i[1] for i in retxRLCEntries]
+    for i in listRange:
         PDU_SNs = None
         if entries[i].logID == logID == const.UL_PDU_ID:
             PDU = entries[i].ul_pdu[0]
