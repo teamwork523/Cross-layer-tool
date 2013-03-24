@@ -11,9 +11,10 @@ import const
 import QCATEntry as qe
 import PCAPPacket as pp
 import PrintWrapper as pw
+import Util as util
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
 CUR_DEBUG = False
 ############################################################################
 ############################# TCP Retx #####################################
@@ -21,20 +22,23 @@ CUR_DEBUG = False
 # extract the data entry based on flow info
 # @Return [[flow1_of_entries], [flow2_of_entries], ...]
 def extractFlows (entries):
-	flows = []
-	localFlow = []
-	for entry in entries:
-		if entry.logID == const.PROTOCOL_ID and entry.ip["tlp_id"] == const.TCP_ID:
-			if not entry.flow:
-				localFlow.append(entry)
-			elif localFlow:
-				# start a new flow here
-				flows.append(localFlow)
-				localFlow = [entry]
-	return flows
+    flows = []
+    localFlow = []
+    for entry in entries:
+        if entry.logID == const.PROTOCOL_ID and entry.ip["tlp_id"] == const.TCP_ID:
+            if not entry.flow:
+                localFlow.append(entry)
+            elif localFlow:
+                # start a new flow here
+                flows.append(localFlow)
+                localFlow = [entry]
+    if localFlow:
+        flows.append(localFlow)
+    return flows
 
 #########
-# @return: A map of retransmission TCP packet -- {orig_ts: [[orig_entry, retx_entry, 2nd_retx_entry], [...]]}
+# NOTICE: include the one TCP packet after the last retransmission at the end of the retransmission
+# @return: A map of retransmission TCP packet -- {orig_ts: [[orig_entry, retx_entry, 2nd_retx_entry], [entry_after_last_retx]]}
 def procTCPReTx (flows, direction, srv_ip):
     is_up = True
     if direction.lower() != "up":
@@ -50,33 +54,31 @@ def procTCPReTx (flows, direction, srv_ip):
             # Exam fast retransmission first, then check wether it is a RTO
             orig_fast_retx_entry = detectFastReTx(data_pkts[i], priv_pkts, is_up, srv_ip)
             if orig_fast_retx_entry:
+                # assume retransmission entry will have different timestamp
                 if orig_fast_retx_entry.timestamp in tcpFastReTxMap:
                     # Handle multiple retransmission
-                    detect_multi_dup = False
-                    for exist_orig_group in tcpFastReTxMap[orig_fast_retx_entry.timestamp]:
-                        if exist_orig_group[0] == orig_fast_retx_entry:
-                            exist_orig_group.a(data_pkts[i])
-                            detect_multi_dup = True
-                            break
-                    if not detect_multi_dup:
-                        tcpFastReTxMap[orig_fast_retx_entry.timestamp].append([orig_fast_retx_entry, data_pkts[i]])
+                    exist_orig_group = tcpFastReTxMap[orig_fast_retx_entry.timestamp][0]
+                    if exist_orig_group[0] == orig_fast_retx_entry:
+                        exist_orig_group.append(data_pkts[i])
+                        # update the last entry after the this retransmission packet
+                        exist_orig_group[1] = findNextEntry(data_pkts[i], data_pkts[i+1:])
                 else:
-                    tcpFastReTxMap[orig_fast_retx_entry.timestamp] = [[orig_fast_retx_entry, data_pkts[i]]]
+                    tcpFastReTxMap[orig_fast_retx_entry.timestamp] = [[orig_fast_retx_entry, data_pkts[i]], \
+                                   findNextEntry(data_pkts[i], data_pkts[i+1:])]
             else:
                 orig_entry = detectReTx(data_pkts[i], priv_pkts, is_up, srv_ip)
                 if orig_entry:
+                    # assume retransmission entry will have different timestamp
                     if orig_entry.timestamp in tcpReTxMap:
                         # Handle multiple retransmission
-                        detect_multi_dup = False
-                        for exist_orig_group in tcpReTxMap[orig_entry.timestamp]:
-                            if exist_orig_group[0] == orig_entry:
-                                exist_orig_group.append(data_pkts[i])
-                                detect_multi_dup = True
-                                break
-                        if not detect_multi_dup:
-                            tcpReTxMap[orig_entry.timestamp].append([orig_entry, data_pkts[i]])
+                        exist_orig_group = tcpReTxMap[orig_entry.timestamp][0]
+                        if exist_orig_group[0] == orig_entry:
+                            exist_orig_group.append(data_pkts[i])
+                            # update the last entry after the this retransmission packet
+                            exist_orig_group[1] = findNextEntry(data_pkts[i], data_pkts[i+1:])
                     else:
-                        tcpReTxMap[orig_entry.timestamp] = [[orig_entry, data_pkts[i]]]
+                        tcpReTxMap[orig_entry.timestamp] = [[orig_entry, data_pkts[i]], \
+                                   findNextEntry(data_pkts[i], data_pkts[i+1:])]
                 else:
                     priv_pkts.append(data_pkts[i])     
 
@@ -96,12 +98,28 @@ def detectFastReTx (entry, entryHist, is_up, srv_ip):
        entry.tcp["seg_size"] <= 0:
     	return False   
 
+    # TODO: debug with packet of interest
+    target = False
+    if DEBUG:
+        if util.convert_ts_in_human(entry.timestamp) == "11:00:28.738000":
+            print "!!!FIND THE TARGET!!!"
+            pw.printTCPEntry(entry)
+            print "Priv entries length is %d" % len(entryHist[::-1])
+            target = True
+
     for i in entryHist[::-1]:
         """
     	if (entry.ip["src_ip"] != i.ip["dst_ip"] or \
            entry.ip["dst_ip"] != i.ip["src_ip"]):
             continue
-        """
+        """ 
+        # print number of dup ack it encounterd
+        if DEBUG and target:
+            print "[=" * 40
+            pw.printTCPEntry(i)
+            print "# ack number is %d" % ack_count
+            print "Find dup ack is %s" % detectFastReTx
+            print "=]" * 40
         # Make sure we are in the opposite direction when we haven't detect a fast retx
         if not detectFastReTx and \
            (entry.ip["src_ip"] != i.ip["dst_ip"] or \
@@ -122,11 +140,11 @@ def detectFastReTx (entry, entryHist, is_up, srv_ip):
                         print "Checking pkt:"
                         pw.printTCPEntry(i)
                     return i
-                else:
+                elif entry.tcp["seq_num"] > i.tcp["seq_num"]:
                     break
             else:
                 continue
- 
+
         # Track the most recent 3 ACKs
         if ((is_up and i.ip["src_ip"] == srv_ip) or \
            (not is_up and i.ip["dst_ip"] == srv_ip)) and \
@@ -136,6 +154,7 @@ def detectFastReTx (entry, entryHist, is_up, srv_ip):
     	        return False
             else:
                 ack_count += 1
+        
         if ack_count >= const.FAST_RETX_COUNT:
             detectFastReTx = True
             # return i
@@ -477,9 +496,19 @@ def findDataFlowStartIndex(flow):
 		   	return i+1
 	return 0
 
+# find the last entry next to the last ACK
+def findNextEntry(cur_entry, rest_flow):
+    for i in rest_flow:
+        if cur_entry.ip["src_ip"] == i.ip["src_ip"] and \
+           cur_entry.ip["dst_ip"] == i.ip["dst_ip"] and \
+           i.tcp["seg_size"] > 0:
+            return i        
+    return None
+    
+
 # Count the TCP retransmission
 def countTCPReTx(tcpRetxMap):
-	return sum([sum([len(j)-1 for j in i]) for i in tcpRetxMap.values()])
+	return sum([len(i[0])-1 for i in tcpRetxMap.values()])
 
 # Transform the ReTx Count map into Timestamp key base
 # Old format: {sn: [count, ts, duration, entry]}

@@ -33,7 +33,7 @@ def init_optParser():
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
                             " "*extraspace + "[-a] num_packets, [-d] direction, [--srv_ip] server_ip, [--cross_map]\n" + \
                             " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
-                            " "*extraspace + "[--retx_analysis], [--retx_count_sig]")
+                            " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -58,6 +58,8 @@ def init_optParser():
                          help="Enable TCP retransmission analysis")
     optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
                          help="Set this option if you want to map the RLC retransmission with TCP retransmission")
+    optParser.add_option("--cross_analysis", action="store_true", dest="isCrossAnalysis", default=False, \
+                         help="")
     optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
                          help="Relate retransmission signal strength with retransmission count")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
@@ -134,9 +136,6 @@ def main():
     QCATEntries = cw.extractEntriesOfInterest(QCATEntries, \
                   set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID)))
 
-    #################################################################
-    ######################## Cross Layer Maping #####################
-    #################################################################
     # create a map between entry and QCATEntry index
     entryIndexMap = util.createEntryMap(QCATEntries)
     
@@ -187,34 +186,13 @@ def main():
     if options.enable_tcp_retx_test:
         if options.direction and options.server_ip:
             tcpflows = rw.extractFlows(filteredQCATEntries)
+            if DEBUG:
+                print "Filtered QCAT Entry # is %d" % len(filteredQCATEntries)
+                print "TCP flow length is %d" % len(tcpflows)
             tcpReTxMap, tcpFastReTxMap = rw.procTCPReTx(tcpflows, options.direction, options.server_ip)
             tcpReTxCount = rw.countTCPReTx(tcpReTxMap)
             tcpFastReTxCount = rw.countTCPReTx(tcpFastReTxMap)
-            
-            # TODO: test on the retransmission layer in uplink 
-            pduID = const.UL_PDU_ID
-            if options.direction.lower() != "up":
-                pduID = const.DL_PDU_ID
-            for key in sorted(tcpReTxMap.keys()):
-                orig_key = tcpReTxMap[key][0][0]
-                retx_key = tcpReTxMap[key][0][1]
-                print tcpReTxMap[key][0]
-                orig_Mapped_RLCs = clw.mapRLCtoTCP(QCATEntries, entryIndexMap[orig_key], pduID)
-                if orig_Mapped_RLCs:
-                    retx_Mapped_RLCs = clw.mapRLCtoTCP(QCATEntries, entryIndexMap[retx_key], pduID, hint_index = orig_Mapped_RLCs[-1][1])
-                if orig_Mapped_RLCs and retx_Mapped_RLCs:
-                    # countMap, byteMap, retxList = clw.RLCRetxMapsForInterval(QCATEntries, orig_Mapped_RLCs[0][1], retx_Mapped_RLCs[-1][1], pduID, retxRLCEntries = orig_Mapped_RLCs + retx_Mapped_RLCs)
-                    countMap, byteMap, retxList = clw.RLCRetxMapsForInterval(QCATEntries, orig_Mapped_RLCs[0][1], retx_Mapped_RLCs[-1][1], pduID)
-                    print "Retransmission count is %d" % (sum(countMap.values()))
-                    print countMap
-            """
-            item1 = tcpReTxMap[sorted(tcpReTxMap.keys())[1]][0][0]
-            item2 = tcpReTxMap[sorted(tcpReTxMap.keys())[1]][0][1]
-            rt = clw.mapRLCtoTCP(QCATEntries, entryIndexMap[item1], pduID)
-            print "hint_index is %d" % rt[-1][1]
-            clw.mapRLCtoTCP(QCATEntries, entryIndexMap[item2], pduID, hint_index = rt[-1][1])
-            #clw.mapRLCtoTCP(QCATEntries, entryIndexMap[item2], pduID, hint_index = -1)
-            """
+
             if DEBUG:
                 print "TCP ReTx happens %d times" % (tcpReTxCount)
                 print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
@@ -228,6 +206,23 @@ def main():
     # collect statistic information
     retxStatsMap, totCountStatsMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
+    #################################################################
+    ######################## Cross Layer Analysis ###################
+    #################################################################
+    # Apply the one-to-one crosss layer analysis
+    # TODO: uplink analysis only right now
+    crossMap = {"retx": {}, "fast_retx":{}}
+    if options.isCrossAnalysis:
+        if options.direction:
+            if options.direction.lower() == "up":
+                crossMap["retx"] = clw.TCPAndRLCMapper(QCATEntries, entryIndexMap, tcpReTxMap, const.UL_PDU_ID)
+                #pw.printRetxIntervalWithMaxMap(crossMap["retx"], QCATEntries, entryIndexMap,  map_key = "ts_count")
+                pw.printRetxIntervalWithMaxMap(crossMap["retx"], QCATEntries, entryIndexMap, map_key = "ts_byte")
+                crossMap["fast_retx"] = clw.TCPAndRLCMapper(QCATEntries, entryIndexMap, tcpFastReTxMap, const.UL_PDU_ID)
+                # include for debugging
+                #pw.printRetxIntervalWithMaxMap(crossMap["fast_retx"], QCATEntries, entryIndexMap, map_key = "ts_count")
+                pw.printRetxIntervalWithMaxMap(crossMap["fast_retx"], QCATEntries, entryIndexMap, map_key = "ts_byte")
+        
     #################################################################
     ######################## Result Display #########################
     #################################################################
@@ -243,7 +238,8 @@ def main():
         else:
             print >> sys.stderr, "Must specifiy trace direction!!!"
     
-    # Print RLC mapping to RRC
+    # Print RLC mapping to RRC (heuristic)
+    # Deprecated 
     if options.isCrossMap:
         if options.direction:
             if options.direction.lower() == "up":
@@ -266,7 +262,7 @@ def main():
                 pw.printRLCRetxCountAndRSCP(DLReTxCountMap)
         else:
             print >> sys.stderr, "Direction is required to print retransmission count vs signal strength"
-    
+
     # print timeseries plot
     # TODO: add option here
     # pw.printTraceInformation(QCATEntries, const.PROTOCOL_ID)
