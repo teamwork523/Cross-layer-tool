@@ -207,9 +207,10 @@ def generateRLCMap (entries, orig_RLC_list, interval, logID):
 # @return: 
 # 1. map between timestamp and transmission count
 # 2. map between timestamp and transmission bytes
-# 3. map between seq num and transmission count
+# 3. map between RLC seq num and transmission count
 # 4. map between timestamp and entry
-# 5. map between seq num and entry
+# 5. map between RLC seq num and entry
+# 6. map between RLC seq num and average retx time (must encounter more than 2 times)
 # def RLCTxMaps (entries, start_index, end_index, logID):
 def RLCTxMaps (entries, orig_sn_list, logID, interval = (0,0), retxRLCEntries = None):
     start_index, end_index = interval
@@ -226,8 +227,9 @@ def RLCTxMaps (entries, orig_sn_list, logID, interval = (0,0), retxRLCEntries = 
     TSEntryMap = {}
     # Sequence Number Map: {sn1: correspond entry, sn2: correspond entry}
     SNEntryMap = {}
-    # A list of retransmission entries
-    # RetxEntriesList = []
+    # Sequence Number Map: {sn1: avg retx time, sn2: avg retx time...}
+    RLCSNRetxTimeDistMap = {}
+
     # A set of original list of sequence number
     orig_sn_set = set(orig_sn_list)
 
@@ -246,7 +248,10 @@ def RLCTxMaps (entries, orig_sn_list, logID, interval = (0,0), retxRLCEntries = 
         for sn_index in range(len(PDU["sn"])):
             if PDU["sn"][sn_index] in orig_sn_set:
                 TxCountSNMap[PDU["sn"][sn_index]] += 1
-                SNEntryMap[PDU["sn"][sn_index]] = entries[i]
+                if SNEntryMap.has_key(PDU["sn"][sn_index]):
+                    SNEntryMap[PDU["sn"][sn_index]].append(entries[i])
+                else:
+                    SNEntryMap[PDU["sn"][sn_index]] = [entries[i]]
                 if TxCountTimeMap.has_key(entries[i].timestamp):
                     TxCountTimeMap[entries[i].timestamp] += 1
                     TxByteTimeMap[entries[i].timestamp] += PDU["size"][sn_index]
@@ -262,8 +267,8 @@ def RLCTxMaps (entries, orig_sn_list, logID, interval = (0,0), retxRLCEntries = 
                 if entries[i] not in RetxEntriesList:
                     RetxEntriesList.append(entries[i])
                 """
-
-    return (TxCountTimeMap, TxCountSNMap, TxByteTimeMap, TSEntryMap, SNEntryMap)
+    RLCSNRetxTimeDistMap = convertSNEntryToSNAvgRetxTime(SNEntryMap)
+    return (TxCountTimeMap, TxCountSNMap, TxByteTimeMap, TSEntryMap, SNEntryMap, RLCSNRetxTimeDistMap)
 
 # A wrapper function to combine information between TCP/RLC retx time map and TCP -> RLC map
 # Retrun aggregated five maps between TCP and RLC
@@ -275,12 +280,14 @@ def TCPAndRLCMapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
     countSNTopMap = {"TCP": None, "RLC":[]}
     entryTimeTopMap = {"TCP":[], "RLC":[]}
     entrySNTopMap = {"TCP": None, "RLC": []}
+    RetxTimeDistSNTopMap = {"TCP": [], "RLC": []}
 
     for key in sorted(retxTimeMap.keys()):
         # Three Time based Maps for TCP to find the retransmission value and timestamp
         TCPcountTimeMap = {}
         TCPbyteTimeMap = {}
         TCPentryTimeMap = {}
+        TCPRetxTimeDistMap = {}
         
         keyChain = []
         origTCPPacket = retxTimeMap[key][0][0]
@@ -294,15 +301,25 @@ def TCPAndRLCMapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
         TCPcountTimeMap[origTCPPacket.timestamp] = 1
         TCPbyteTimeMap[origTCPPacket.timestamp] = origTCPPacket.ip["total_len"]
         TCPentryTimeMap[origTCPPacket.timestamp] = origTCPPacket
- 
+        TCPRetxTimeDistMap[origTCPPacket.tcp["seq_num"]] = []
+
         if DEBUG:
             print "# of retransmission is %d" % len(retxTimeMap[key][0])
             print "Original TCP mapped Sequnce number is "
             print orig_mapped_sn
         # consider multiple retransmission
+        privTime = origTCPPacket.timestamp
+
+        # Determine the ending index for each RLC retx
+        endPointIndices = []
         for retxEntry in retxTimeMap[key][0][1:]:
+            TCPRetxTimeDistMap[origTCPPacket.tcp["seq_num"]].append(retxEntry.timestamp - privTime)
+            privTime = retxEntry.timestamp
             temp_list, mapped_sn = mapRLCtoTCP(QCATEntries, entryIndexMap[retxEntry], pduID, hint_index = mapped_RLCs[-1][1])
             if temp_list:
+                # add the first RLC in the map list as a break point, the last
+                # break point is used for the divider to count retransmission
+                endPointIndices.append(temp_list[0][1])
                 mapped_RLCs += temp_list
                 TCPcountTimeMap[retxEntry.timestamp] = 1
                 TCPbyteTimeMap[retxEntry.timestamp] = retxEntry.ip["total_len"]
@@ -323,10 +340,17 @@ def TCPAndRLCMapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
             mapped_RLCs.append(lastMapped_list[0])
 
         if mapped_RLCs:
-            #RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap = RLCTxMaps(QCATEntries, mapped_RLCs[0][1], mapped_RLCs[-1][1], pduID, retxRLCEntries = mapped_RLCs)
-            #RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap = RLCTxMaps(QCATEntries, mapped_RLCs[0][1], mapped_RLCs[-1][1], pduID)
-            RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap = RLCTxMaps(QCATEntries, orig_mapped_sn, pduID, interval = (mapped_RLCs[0][1], mapped_RLCs[-1][1]))
-            #RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap = RLCTxMaps(QCATEntries, orig_mapped_sn, pduID, interval = (mapped_RLCs[0][1], mapped_RLCs[-1][1]), retxRLCEntries = mapped_RLCs)
+            #RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap, RLCSNRetxTimeDistMap \
+            # = RLCTxMaps(QCATEntries, mapped_RLCs[0][1], mapped_RLCs[-1][1], pduID, retxRLCEntries = mapped_RLCs)
+            #RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap, RLCSNRetxTimeDistMap \
+            # = RLCTxMaps(QCATEntries, mapped_RLCs[0][1], mapped_RLCs[-1][1], pduID)
+            endPoint = mapped_RLCs[-1][1]
+            if endPointIndices:
+                endPoint = endPointIndices[-1]
+            RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap, RLCSNRetxTimeDistMap \
+             = RLCTxMaps(QCATEntries, orig_mapped_sn, pduID, interval = (mapped_RLCs[0][1], endPoint))
+            #RLCcountTimeMap, RLCcountSNMap, RLCbyteTimeMap, RLCentryTimeMap, RLCentrySNMap, RLCSNRetxTimeDistMap \
+            # = RLCTxMaps(QCATEntries, orig_mapped_sn, pduID, interval = (mapped_RLCs[0][1], mapped_RLCs[-1][1]), retxRLCEntries = mapped_RLCs)
             if DEBUG:
                 # pick the maximum number of retransmissions in the map
                 print "Retransmission count is %d" % (max(RLCcountSNMap.values() + [0]))
@@ -335,10 +359,12 @@ def TCPAndRLCMapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
                 print RLCbyteTimeMap
                 print RLCentryTimeMap
                 print RLCentrySNMap
+                print RLCSNRetxTimeDistMap
 
         countTimeTopMap["TCP"].append(TCPcountTimeMap)
         byteTimeTopMap["TCP"].append(TCPbyteTimeMap)
         entryTimeTopMap["TCP"].append(TCPentryTimeMap)
+        RetxTimeDistSNTopMap["TCP"].append(TCPRetxTimeDistMap)
         if DETAIL_DEBUG:
             print "Current RLCcountTimeMap is"
             print RLCcountTimeMap
@@ -347,6 +373,7 @@ def TCPAndRLCMapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
         countSNTopMap["RLC"].append(RLCcountSNMap)
         entryTimeTopMap["RLC"].append(RLCentryTimeMap)
         entrySNTopMap["RLC"].append(RLCentrySNMap)
+        RetxTimeDistSNTopMap["RLC"].append(RLCSNRetxTimeDistMap)
         
     if CUR_DEBUG:
         print "^.^\n" * 5
@@ -357,11 +384,12 @@ def TCPAndRLCMapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
     
     return {"ts_count": countTimeTopMap, "ts_byte": byteTimeTopMap, \
             "ts_entry": entryTimeTopMap, "sn_count": countSNTopMap, \
-            "sn_entry": entrySNTopMap}
+            "sn_entry": entrySNTopMap, "sn_retx_time_dist": RetxTimeDistSNTopMap}
 
 ############################################################################
-############## Select a group with best for demo purpose ###################
+############################# Helper functions #############################
 ############################################################################
+# Select a group with best for demo purpose 
 # return the best mapped TCP entry
 def findBestMappedIndex(RLCList, TCPList, EntryList, SNCountList):
     maxValue = -1
@@ -396,4 +424,57 @@ def findBestMappedIndex(RLCList, TCPList, EntryList, SNCountList):
             #maxValue = maxTCPCount
     print "Max Product is %d" % maxValue
     return maxIndex
+
+# convert SNEntryMap into SNAvgRetxTime
+def convertSNEntryToSNAvgRetxTime (SNEntryMap):
+    RLCSNRetxTimeDistMap = {}
+    for sn, entries in SNEntryMap.items():
+        privTime = entries[0].timestamp
+        RLCSNRetxTimeDistMap[sn] = []
+        for entry in entries[1:]:
+            RLCSNRetxTimeDistMap[sn].append(entries[-1].timestamp - privTime)
+            privTime = entry.timestamp
+        
+    return RLCSNRetxTimeDistMap
+
+# Determine how many retransmission period experience the three state transission
+# FACH -> PCH -> FACH
+def countShortFACHTORatio(QCATEntries, entryIndexMap, topLevelMaps):
+    totalRetx = len(topLevelMaps["ts_entry"]["TCP"])
+    totalShortFACHTO = 0.0
+    checkStates = [const.FACH_ID, const.PCH_ID, const.FACH_ID]
+    
+    for i in range(len(topLevelMaps["ts_entry"]["TCP"])):
+        firstKey = sorted(topLevelMaps["ts_entry"]["TCP"][i])[0]
+        firstIndex = entryIndexMap[topLevelMaps["ts_entry"]["TCP"][i][firstKey]]
+        lastKey = sorted(topLevelMaps["ts_entry"]["TCP"][i])[-1]
+        lastIndex = entryIndexMap[topLevelMaps["ts_entry"]["TCP"][i][lastKey]]
+        rlcLastKey = sorted(topLevelMaps["ts_entry"]["RLC"][i])[-1]
+        if rlcLastKey > lastKey:
+            lastIndex = entryIndexMap[topLevelMaps["ts_entry"]["RLC"][i][rlcLastKey]]
+        
+        # check if the pattern of FACH -> PCH -> FACH exist
+        checkIndex = 0
+        for index in range(firstIndex, lastIndex+1):
+            if checkIndex >= len(checkStates):
+                break
+            if QCATEntries[index].logID == const.RRC_ID:
+                if QCATEntries[index].rrcID == checkStates[checkIndex]:
+                    checkIndex += 1
+        if checkIndex >= len(checkStates):
+            totalShortFACHTO += 1
+
+    ratio = 0
+    if totalRetx:
+        ratio = totalShortFACHTO/totalRetx
+    if DEBUG:
+        print "FACH->PCH->FACH pattern frequency is %f" % (ratio)
+    return ratio
+
+
+
+
+
+
+
 

@@ -211,10 +211,9 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
 #######################################################################
 #################### Cross Layer Related ##############################
 #######################################################################
-# Print byte map
-# Print the TCP byte and RLC byte
+# Print the TCP and RLC mapping
 # format: timestamp  tcp_byte   RLC_byte    RRC_state
-def printRetxIntervalWithMaxMap(combMap, QCATEntries, entryIndexMap, map_key = "ts_count"):
+def printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_count"):
     maxIndex = clw.findBestMappedIndex(combMap[map_key]["RLC"], combMap[map_key]["TCP"], combMap["ts_entry"]["RLC"], combMap["sn_count"]["RLC"])
     if maxIndex == -1:
         print >> sys.stderr, "No retx happen"
@@ -242,7 +241,13 @@ def printRetxIntervalWithMaxMap(combMap, QCATEntries, entryIndexMap, map_key = "
                         countRetxFACHPromote += 1
         print "Total Fach promote %d" % countTotalFACHPromote
         print "Fach retx is %d" % countRetxFACHPromote
-        print "The FACH promote retx ratio is %f" % (countRetxFACHPromote/countTotalFACHPromote)
+        ratio = 0
+        if countTotalFACHPromote != 0:
+            ratio = countRetxFACHPromote/countTotalFACHPromote
+        print "The FACH promote retx ratio is %f" % (ratio)
+        print "The retx dist is "
+        print combMap["sn_retx_time_dist"]["RLC"][maxIndex]
+        print "The average retx is %f" % (util.meanValue([util.meanValue([util.meanValue(j) for j in i.values()]) for i in combMap["sn_retx_time_dist"]["RLC"]]))
 
     # Use the relative difference in milliseconds
     tcpSortedItems = sorted(combMap[map_key]["TCP"][maxIndex].items())
@@ -253,6 +258,20 @@ def printRetxIntervalWithMaxMap(combMap, QCATEntries, entryIndexMap, map_key = "
         print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 3, 0, max(combMap["sn_count"]["RLC"][maxIndex].values()), combMap["ts_entry"]["TCP"][maxIndex][ts].rrcID)
     for ts, v in sorted(combMap[map_key]["RLC"][maxIndex].items()):
         print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 0, 2, max(combMap["sn_count"]["RLC"][maxIndex].values()), combMap["ts_entry"]["RLC"][maxIndex][ts].rrcID)
+
+# Print all the retransmission
+def printAllRetxIntervalMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_count"):
+    for index in range(len(combMap[map_key]["TCP"])):
+        # print TCP information
+        firstKey = sorted(combMap["ts_entry"]["TCP"][index].keys())[0]
+        print "First IP is:"
+        printEntry(combMap["ts_entry"]["TCP"][index][firstKey])
+        firstTCP = sorted(combMap[map_key]["TCP"][index].keys())[0]
+        for ts, v in sorted(combMap["ts_entry"]["TCP"][index].items()): 
+           print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 3, 0, max(combMap["sn_count"]["RLC"][index].values()), combMap["ts_entry"]["TCP"][index][ts].rrcID)
+        for ts, v in sorted(combMap[map_key]["RLC"][index].items()):
+            print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 0, 2, max(combMap["sn_count"]["RLC"][index].values()), combMap["ts_entry"]["RLC"][index][ts].rrcID) 
+            
 
 #######################################################################
 ######################## Packet Trace #################################
@@ -383,10 +402,10 @@ def printDLCount(entries):
 
 # print a TCP entry information
 def printTCPEntry(entry):
-	print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s" % (util.convert_ts_in_human(entry.timestamp),\
+	print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp),\
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
 	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"], \
-                        const.RRC_MAP[entry.rrcID])
+                        const.RRC_MAP[entry.rrcID], util.meanValue(entry.sig["RSCP"]))
 
 # print a RLC entry information
 def printRLCEntry(entry, direction):

@@ -15,5 +15,5 @@ do
     fi
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     echo "Running $dir $i ..."
-    src/traceAnalyzer.py --retx_analysis -l Data/pkt_train/*$dir*gap_$i* -d $para --srv_ip $srv_ip --print_retx $2
+    src/traceAnalyzer.py --retx_analysis --cross_analysis -l Data/pkt_train/*$dir*gap_$i* -d $para --srv_ip $srv_ip --print_retx $2
 done

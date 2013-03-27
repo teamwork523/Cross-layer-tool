@@ -129,12 +129,12 @@ def main():
     # cw.assignFlowInfo(QCATEntries)
     # use to calculate the buffer range in between two packets
     # TODO: only use for studying FACH state transition delays
-    FACH_delay_analysis_entries = cw.extractEntriesOfInterest(QCATEntries, \
-                  set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID)))
+    #FACH_delay_analysis_entries = cw.extractEntriesOfInterest(QCATEntries, \
+    #              set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID)))
     # Optimize by exclude context fields
     # Make sure no change to QCATEntries later on
     QCATEntries = cw.extractEntriesOfInterest(QCATEntries, \
-                  set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID)))
+                  set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID)))
 
     # create a map between entry and QCATEntry index
     entryIndexMap = util.createEntryMap(QCATEntries)
@@ -216,13 +216,27 @@ def main():
         if options.direction:
             if options.direction.lower() == "up":
                 crossMap["retx"] = clw.TCPAndRLCMapper(QCATEntries, entryIndexMap, tcpReTxMap, const.UL_PDU_ID)
-                #pw.printRetxIntervalWithMaxMap(crossMap["retx"], QCATEntries, entryIndexMap,  map_key = "ts_count")
-                pw.printRetxIntervalWithMaxMap(crossMap["retx"], QCATEntries, entryIndexMap, map_key = "ts_byte")
                 crossMap["fast_retx"] = clw.TCPAndRLCMapper(QCATEntries, entryIndexMap, tcpFastReTxMap, const.UL_PDU_ID)
+                
+                # Only select one sample as best candidate
+                #pw.printRetxIntervalWithMaxMap( QCATEntries, entryIndexMap, crossMap["retx"], map_key = "ts_count")
+                pw.printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, crossMap["retx"], map_key = "ts_byte")
                 # include for debugging
-                #pw.printRetxIntervalWithMaxMap(crossMap["fast_retx"], QCATEntries, entryIndexMap, map_key = "ts_count")
-                pw.printRetxIntervalWithMaxMap(crossMap["fast_retx"], QCATEntries, entryIndexMap, map_key = "ts_byte")
-        
+                #pw.printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, crossMap["fast_retx"], map_key = "ts_count")
+                pw.printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, crossMap["fast_retx"], map_key = "ts_byte")
+                """
+                # print all possible retransmission phenomenon
+                pw.printAllRetxIntervalMap(QCATEntries, entryIndexMap, crossMap["retx"], map_key = "ts_byte")
+                pw.printAllRetxIntervalMap( QCATEntries, entryIndexMap, crossMap["fast_retx"], map_key = "ts_byte")
+                """
+                
+                rtoShortFACHRatio = clw.countShortFACHTORatio(QCATEntries, entryIndexMap, crossMap["retx"])
+                fastRetxShortFACHRatio = clw.countShortFACHTORatio(QCATEntries, entryIndexMap, crossMap["fast_retx"])
+                
+                if DEBUG: 
+                    print "Short FACH promote ratio in rto is %f" % rtoShortFACHRatio
+                    print "Short FACH promote ratio in fast retx ratio is %f" % fastRetxShortFACHRatio                   
+                    
     #################################################################
     ######################## Result Display #########################
     #################################################################
