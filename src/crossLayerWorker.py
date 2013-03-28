@@ -44,7 +44,10 @@ def mapRLCtoTCP(entries, tcp_index, logID, hint_index = -1):
     if DEBUG:
         print "#" * 40
         print "Index is %d" % tcp_index
-        pw.printEntry(entries[tcp_index])
+        print "Length of real payload is %d" % len(tcp_payload)
+        print entries[tcp_index].ip
+        print entries[tcp_index].tcp
+        # pw.printTCPEntry(entries[tcp_index])
         print "First ten bytes: %s" % tcp_payload[:10]
         print "Last ten bytes: %s" % tcp_payload[-10:]
     tcp_len = entries[tcp_index].ip["total_len"]
@@ -114,13 +117,16 @@ def mapRLCtoTCP(entries, tcp_index, logID, hint_index = -1):
                 else:
                     cur_match_index = 0
                     mapped_seq_num_list = []
+
             if DETAIL_DEBUG:
                 print "&" * 60
                 print cur_header[j]
                 print "cur_header position %d" % j
                 print "Does match find? %s" % find_match
                 print "TCP matched index %d and total length is %d" % (cur_match_index, tcp_len)
+
             # Check if the length matches the TCP header length
+            # Notice: HE = 2 was automatically handled here
             if cur_match_index == tcp_len:
                 return_entries.append((entries[i], i))
                 if DEBUG:
@@ -189,17 +195,6 @@ def findEntireIPPacket (entries, index):
 ############################################################################
 ############## Statistics Generated from Cross Layer Mapping ###############
 ############################################################################
-# Map all the duplicate sequence for a given RLC entry list
-# We define the interval as the original TCP packet mapped RLC and 
-# the last retransmitted TCP packet mapped RLC
-# @return: 
-# 1. map between RLC sequence number and retransmission count
-# 2. map between timestamp and retransmission bytes
-# 3. a list of retransmission entries
-def generateRLCMap (entries, orig_RLC_list, interval, logID):
-    pass
-
-
 # We want to know the number of RLC layer retransmission between the two TCP
 # retransmission 
 # @input: retxList is optional if you just want to test the combination of Retx
@@ -272,7 +267,7 @@ def RLCTxMaps (entries, orig_sn_list, logID, interval = (0,0), retxRLCEntries = 
 
 # A wrapper function to combine information between TCP/RLC retx time map and TCP -> RLC map
 # Retrun aggregated five maps between TCP and RLC
-def TCPAndRLCMapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
+def TCP_RLC_Retx_Mapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
     # top level maps
     # {"TCP": [map1, map2], "RLC": [map1, map2....]} # index between TCP and RLC is one-to-one
     countTimeTopMap = {"TCP":[], "RLC":[]}

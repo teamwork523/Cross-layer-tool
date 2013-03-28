@@ -14,6 +14,8 @@ import PCAPPacket as pp
 import PrintWrapper as pw
 from datetime import datetime
 
+DEBUG = False
+
 ###############################################################################################
 ########################################### I/O Related #######################################
 ###############################################################################################
@@ -86,8 +88,24 @@ def packetFilter(entries, cond):
     selectedEntries = []
     privTime = 0
     startTime = 0
+    
+    # Filter decision flags
+    NONIP_FLAG = (cond.has_key("keep_non_ip_entries") and cond["keep_non_ip_entries"])
+    OR_FLAG = (cond.has_key("ip_relation") and cond["ip_relation"] == "or")
+    AND_FLAG = (cond.has_key("ip_relation") and cond["ip_relation"] == "and")
+    
+    # Useful if we want to include all the fragmented IP packet into the trace
+    Detect_Frag = False
+
     for i in entries:
-    	if cond.has_key("ip_relation") and cond["ip_relation"] == "and":
+        # append the non-ip entries if desired
+        if NONIP_FLAG:
+            if i.logID != const.PROTOCOL_ID:
+                selectedEntries.append(i)
+                continue
+        # filter on IP entries
+        # Case 1: filter for single direction
+    	if AND_FLAG:
 		    if i.logID == const.PROTOCOL_ID:
 		        # ip src
 		        if cond.has_key("src_ip") and i.ip["src_ip"] != cond["src_ip"]:
@@ -136,11 +154,30 @@ def packetFilter(entries, cond):
 		        privTime = i.timestamp * 1000
 		    else:
 		        selectedEntries.append(i)
-        elif cond.has_key("ip_relation") and cond["ip_relation"] == "or":
-			if i.logID == const.PROTOCOL_ID:
-				if cond.has_key("srv_ip") and \
-				   (i.ip["src_ip"] == cond["srv_ip"] or i.ip["dst_ip"] == cond["srv_ip"]):
-					selectedEntries.append(i)
+        # Case 2: filter for both direction
+        elif OR_FLAG:
+            if i.logID == const.PROTOCOL_ID:
+                if not NONIP_FLAG:
+				    if cond.has_key("srv_ip") and \
+				       (i.ip["src_ip"] == cond["srv_ip"] or i.ip["dst_ip"] == cond["srv_ip"]):
+					    selectedEntries.append(i)
+                else:
+                    # Include the following fragmented IP
+                    if cond.has_key("srv_ip") and \
+				       (i.ip["src_ip"] == cond["srv_ip"] or i.ip["dst_ip"] == cond["srv_ip"]):
+                        selectedEntries.append(i)
+                        if not i.custom_header["final_seg"]:
+                            # find current segment is not final
+                            Detect_Frag = True
+                    elif cond.has_key("srv_ip"):
+                        if Detect_Frag:
+                            selectedEntries.append(i)
+                            if i.custom_header["final_seg"]:
+                                Detect_Frag = False
+                                if DEBUG:
+                                    print "Append fragment packet: %d" % (i.custom_header["seg_num"])
+                                    pw.printEntry(i)
+
     return selectedEntries
 
 # Not that useful

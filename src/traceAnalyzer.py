@@ -31,9 +31,10 @@ def init_optParser():
                             " "*extraspace + "[--src_ip] source_ip, [--dst_ip] destination_ip\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
-                            " "*extraspace + "[-a] num_packets, [-d] direction, [--srv_ip] server_ip, [--cross_map]\n" + \
+                            " "*extraspace + "[-a] num_packets, [-d] direction, [--srv_ip] server_ip, \n" + \
                             " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
-                            " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]")
+                            " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
+                            " "*extraspace + "[--verify_cross_analysis], [--keep_non_ip]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -50,28 +51,33 @@ def init_optParser():
                          help="PCAP trace file path")
     optParser.add_option("-t", "--type", dest="protocolType", default="TCP", \
                          help="Protocol Type, i.e. TCP or UDP")
-    optParser.add_option("--print_retx", dest="retxType", default=None, \
-                         help="Useful tag to print retx ratio against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
-    optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
-                         help="Flag to enable printing throughput information based on TCP trace analysis")
-    optParser.add_option("--retx_analysis", action="store_true", dest="enable_tcp_retx_test", default=False, \
-                         help="Enable TCP retransmission analysis")
-    optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
-                         help="Set this option if you want to map the RLC retransmission with TCP retransmission")
     optParser.add_option("--cross_analysis", action="store_true", dest="isCrossAnalysis", default=False, \
-                         help="")
-    optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
-                         help="Relate retransmission signal strength with retransmission count")
-    optParser.add_option("--srv_ip", dest="server_ip", default=None, \
-    					  help="Used combined with direction option to filter useful retransmission packets")
-    optParser.add_option("--src_ip", dest="srcIP", default=None, \
-                         help="Filter out entries with source ip")
+                         help="Map the TCP packet with RLC header, then process the cross layer information")
+    #optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
+    #                     help="Set this option if you want to map the RLC retransmission with TCP retransmission")
     optParser.add_option("--dst_ip", dest="dstIP", default=None, \
                          help="Filter out entries with destination ip")
-    optParser.add_option("--src_port", dest="srcPort", default=None, \
-                         help="Filter out entries with source port number")
     optParser.add_option("--dst_port", dest="dstPort", default=None, \
                          help="Filter out entries with destination port number")
+    optParser.add_option("--keep_non_ip", action="store_true", dest="keep_non_ip_entries", default=False, \
+                         help="Enable it if you want to non-IP entries in the result")
+    optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
+                         help="Flag to enable printing throughput information based on TCP trace analysis")
+    optParser.add_option("--print_retx", dest="retxType", default=None, \
+                         help="Useful tag to print retx ratio against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
+    optParser.add_option("--retx_analysis", action="store_true", dest="enable_tcp_retx_test", default=False, \
+                         help="Enable TCP retransmission analysis")
+    optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
+                         help="Relate retransmission signal strength with retransmission count")
+    optParser.add_option("--src_ip", dest="srcIP", default=None, \
+                         help="Filter out entries with source ip")
+    optParser.add_option("--src_port", dest="srcPort", default=None, \
+                         help="Filter out entries with source port number")
+    optParser.add_option("--srv_ip", dest="server_ip", default=None, \
+    					  help="Used combined with direction option to filter useful retransmission packets")
+    optParser.add_option("--verify_cross_analysis", action="store_true", dest="verify_cross_analysis", default=False, \
+    					  help="Print out each TCP packets and mapped RLC PDU")
+
     # Debugging options
     # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
     #                     help="Signal strength file")
@@ -147,6 +153,11 @@ def main():
     cond = {}
     # this used for filter based on Union or Intersection of all relationships
     cond["ip_relation"] = "and"
+    # this used for keep the non-IP entries in the logs
+    cond["keep_non_ip_entries"] = False
+    # To verify the cross analysis, must include the non ip entries
+    if options.verify_cross_analysis or options.keep_non_ip_entries:
+        cond["keep_non_ip_entries"] = True
     if options.srcIP != None:
         if util.validateIP(options.srcIP) == None:
             optParser.error("Invalid source IP")
@@ -171,7 +182,9 @@ def main():
     		cond["ip_relation"] = "or"
     		cond["srv_ip"] = options.server_ip
     filteredQCATEntries = util.packetFilter(QCATEntries, cond)
-    
+    # create a map between Filtered entries and its index
+    filteredEntryToIndexMap = util.createEntryMap(filteredQCATEntries)
+
     #################################################################
     #################### FACH State delay Process ###################
     #################################################################
@@ -215,8 +228,8 @@ def main():
     if options.isCrossAnalysis:
         if options.direction:
             if options.direction.lower() == "up":
-                crossMap["retx"] = clw.TCPAndRLCMapper(QCATEntries, entryIndexMap, tcpReTxMap, const.UL_PDU_ID)
-                crossMap["fast_retx"] = clw.TCPAndRLCMapper(QCATEntries, entryIndexMap, tcpFastReTxMap, const.UL_PDU_ID)
+                crossMap["retx"] = clw.TCP_RLC_Retx_Mapper(QCATEntries, entryIndexMap, tcpReTxMap, const.UL_PDU_ID)
+                crossMap["fast_retx"] = clw.TCP_RLC_Retx_Mapper(QCATEntries, entryIndexMap, tcpFastReTxMap, const.UL_PDU_ID)
                 
                 # Only select one sample as best candidate
                 #pw.printRetxIntervalWithMaxMap( QCATEntries, entryIndexMap, crossMap["retx"], map_key = "ts_count")
@@ -252,8 +265,9 @@ def main():
         else:
             print >> sys.stderr, "Must specifiy trace direction!!!"
     
-    # Print RLC mapping to RRC (heuristic)
-    # Deprecated 
+    # Print RLC mapping to RRC (timestamp based heuristic)
+    # Deprecated
+    """
     if options.isCrossMap:
         if options.direction:
             if options.direction.lower() == "up":
@@ -262,6 +276,7 @@ def main():
                 pw.printMapRLCtoTCPRetx(tcpReTxMap, DLReTxCountMap)
         else:
             print >> sys.stderr, "Direction is required to print the TCP and RLC mapping"
+    """
     
     # print the retx ratio for each state
     if options.retxType:
@@ -299,10 +314,26 @@ def main():
     #pw.printReTxVSRRCResult(QCATEntries, None)
     
     #################################################################
-    # You can ignore the part below
+    ######################## Verification Section ###################
     #################################################################
-    ################ Verify QXDM and PCAP timing ####################
+    # verify the TCP layer information with RRC layer by printing
+    # each TCP packet and corresponding RLC packet
+    if options.verify_cross_analysis:
+        if options.direction and options.server_ip:
+            if options.direction.lower() == "up":
+                pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
+            else:
+                pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
+        else:
+            print sys.stderr >> "Must specify the direction and server ip to \
+                                 perform the cross layer optimization"
+
     #################################################################
+    ######################## Deprecated Section #####################
+    #################################################################
+    ################# You can ignore the part below #################
+    #################################################################
+    # Verify QXDM and PCAP timestamp offset
     # Not useful at this point
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
@@ -340,7 +371,6 @@ def main():
         errDict = util.sycTimeLine(QCATEntries, tsDict)
         print "Mean squared error is %f" % (util.meanValue(errDict.values()))
     """
-    # Deprecated:
     # ULRLCOTMap, DLRLCOTMap = cw.mapRLCReTxOverTime(QCATEntries, interval)
     # pw.printRLCReTxMapStats(ULRLCOTMap)
     # pw.printRLCReTxMapStats(DLRLCOTMap)

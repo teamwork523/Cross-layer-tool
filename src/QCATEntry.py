@@ -45,7 +45,7 @@ class QCATEntry:
                               "seg_num": None, \
                               "seq_num": None}
         # ip information
-        self.ip = {"tlp_id": None, \
+        self.ip = {"tlp_id": None, # transport layer protocol \
                    "src_ip": None, \
                    "dst_ip": None, \
                    "header_len": None, \

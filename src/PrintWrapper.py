@@ -259,7 +259,7 @@ def printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, combMap, map_key = "
     for ts, v in sorted(combMap[map_key]["RLC"][maxIndex].items()):
         print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 0, 2, max(combMap["sn_count"]["RLC"][maxIndex].values()), combMap["ts_entry"]["RLC"][maxIndex][ts].rrcID)
 
-# Print all the retransmission
+# Print all the retransmission one-to-all mapping
 def printAllRetxIntervalMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_count"):
     for index in range(len(combMap[map_key]["TCP"])):
         # print TCP information
@@ -272,6 +272,34 @@ def printAllRetxIntervalMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_c
         for ts, v in sorted(combMap[map_key]["RLC"][index].items()):
             print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 0, 2, max(combMap["sn_count"]["RLC"][index].values()), combMap["ts_entry"]["RLC"][index][ts].rrcID) 
             
+#######################################################################
+######################## Verification #################################
+#######################################################################
+# Verify the correctness of TCP and RLC one-to-all Mapping 
+# Print all the TCP and mapped RLC packet
+def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, srv_ip):
+    for i in range(len(QCATEntries)):
+        tcpEntry = QCATEntries[i]
+        if tcpEntry.logID == const.PROTOCOL_ID and tcpEntry.ip["tlp_id"] == const.TCP_ID \
+           and ((pduID== const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
+                (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
+            if DEBUG:
+                print "Before mapping"
+                printTCPEntry(tcpEntry)
+            
+            mapped_RLCs, mapped_sn = clw.mapRLCtoTCP(QCATEntries, i , pduID)
+            print ("+" + "-"*15)*4
+            print ">>> TCP Packet:"
+            printTCPEntry(tcpEntry)
+            if mapped_RLCs:
+                print "<<< Mapped %d RLC PDUs:" % (len(mapped_RLCs))
+                for rlcEntryTuple in mapped_RLCs:
+                    if rlcEntryTuple[0].logID == const.UL_PDU_ID:
+                        printRLCEntry(rlcEntryTuple[0], "up")
+                    else:
+                        printRLCEntry(rlcEntryTuple[0], "down")
+            else:
+                print "??? Not found a mapped RLC entry. Double check!!!"
 
 #######################################################################
 ######################## Packet Trace #################################
@@ -288,7 +316,7 @@ def printTraceInformation(entries, logID, start = None, end = None):
                 print "%f\t%f\t%d" % (entry.timestamp, util.meanValue(entry.ul_pdu[0]["size"]), entry.rrcID)
             elif entry.logID == logID == const.DL_PDU_ID and util.meanValue(entry.dl_pdu[0]["size"]) > 0:
                 print "%f\t%f\t%d" % (entry.timestamp, util.meanValue(entry.dl_pdu[0]["size"]), entry.rrcID)
-            
+
 
 #######################################################################
 ######################## Context Info #################################
@@ -411,9 +439,9 @@ def printTCPEntry(entry):
 def printRLCEntry(entry, direction):
     printEntry(entry)
     if direction.lower() == "up":
-        print entry.ul_pdu[0]
+        print "RLC AM UL Detail: " + str(entry.ul_pdu[0])
     else:
-        print entry.dl_pdu[0]
+        print "RLC AM DL Detail: " + str(entry.dl_pdu[0])
 
 # print a general entry
 def printEntry(entry):
