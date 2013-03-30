@@ -321,9 +321,11 @@ def main():
     if options.verify_cross_analysis:
         if options.direction and options.server_ip:
             if options.direction.lower() == "up":
-                pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
+                # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
+                pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
             else:
-                pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
+                # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
+                pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
         else:
             print sys.stderr >> "Must specify the direction and server ip to \
                                  perform the cross layer optimization"

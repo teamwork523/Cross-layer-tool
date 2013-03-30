@@ -105,6 +105,38 @@ class QCATEntry:
                         "numPDU": None,
                         "size": [], # bytes
                         "header":[]}]
+        # the ctrl PDU
+        self.dl_ctrl = {"chan": None,
+                        "ack": None, 
+                        "list": [] # [(seq_num1, len1), (seq_num2, len2), ...]
+                       }
+        # TODO: currently hard configure the channel ID should be 19
+        # uplink RLC configuration setting
+        self.ul_config = {"chan": None, 
+                          "radio_bearer_id": None,
+                          "tx_win_size": None,
+                          "reset_timer": None,
+                          "max_reset": None,
+                          "max_retx": None,
+                          "is_discard": None,
+                          # polling related
+                          "poll": {
+                              "poll_proh_timer": None,  # prohibit timer
+                              "poll_timer": None,   # this applies on individual poll PDU, unit: ms
+                              "poll_periodic_timer": None, # periodic timer expires, unit: ms
+                              "poll_pdu": None, # poll every xxx PDU
+                              "poll_sdu": None, # poll every xxx SDU
+                              "is_last_tx_pdu_poll": None,
+                              "is_last_retx_pdu_poll": None,
+                              "poll_win_size": None}
+                           }
+        # downlink RLC configuration settting
+        self.dl_config = {"chan": None,
+                          "radio_bearer_id": None,
+                          "receive_win_size": None,
+                          "is_pdu_order_preserved": None,
+                          "min_time_btw_poll": None,
+                          "is_report_missing_pdu": None}
         self.dl_RLC_ACK = True  # a boolean determine if last ACK exist in RLC DL AM
         # AGC info, record all the Tx/Rx power info
         # Deprecated
@@ -240,6 +272,15 @@ class QCATEntry:
                     # May encounter end of statement with pending string case
                     if i.find("RSCP") != -1:
                         self.sig["RSCP"].append(float(i.split()[2]))
+            # process downlink DL control packets
+            elif self.logID == const.DL_CTRL_PDU_ID:
+                # check for number of entities
+                if int(self.detail[0].split()[-1]) != 1:
+                    raise Exception("More than one entities in UL AM PDU")
+                for index in self.detail[2:]:
+                    if i.find("CONTROL PDU") != -1:
+                        info = i.split("::")[1].strip().split(", ")
+                        pass
             # TODO: process other type of log entry
 
     def __procHexDump(self):

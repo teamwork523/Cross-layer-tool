@@ -35,6 +35,9 @@ RETX_GAP = 0.003
 PROTOCOL_ID = int("0x11EB", 16)
 RRC_ID = int("0x4125", 16)
 EUL_STATS_ID = int("0x4311", 16)
+DL_CONFIG_PDU_ID = int("0x4132", 16)
+UL_CONFIG_PDU_ID = int("0x4133", 16)    # polling configurations included
+DL_CTRL_PDU_ID = int("0x4134", 16)      # LIST/ACK info on UL RLC AM
 UL_PDU_ID = int("0x413B", 16)   # UL on Link Layer info
 DL_PDU_ID = int("0x418B", 16)   # DL on Link Layer info
 SIG_ID = int("0x4005", 16)  # Signal information
@@ -43,7 +46,14 @@ LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                EUL_STATS_ID: "EUL Link Statistics", 
                UL_PDU_ID: "UL PDU information", 
                DL_PDU_ID: "DL PDU information",
-               SIG_ID: "Signal Strength related"}
+               SIG_ID: "Signal Strength related",
+               DL_CONFIG_PDU_ID: "Downlink RLC configuration",
+               UL_CONFIG_PDU_ID: "Uplink RLC configuration",
+               DL_CTRL_PDU_ID: "Downlink control PDU"}
+
+# Include data configuration settings
+# TODO: hard configured, to be changed
+DATA_LOGIC_CHANNEL_ID = 19
 
 ############ RRC State
 # map between RRC id and RRC state

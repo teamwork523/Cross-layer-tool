@@ -276,7 +276,7 @@ def printAllRetxIntervalMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_c
 ######################## Verification #################################
 #######################################################################
 # Verify the correctness of TCP and RLC one-to-all Mapping 
-# Print all the TCP and mapped RLC packet
+# Print all the TCP and mapped RLC packet details
 def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, srv_ip):
     for i in range(len(QCATEntries)):
         tcpEntry = QCATEntries[i]
@@ -298,6 +298,22 @@ def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, sr
                         printRLCEntry(rlcEntryTuple[0], "up")
                     else:
                         printRLCEntry(rlcEntryTuple[0], "down")
+            else:
+                print "??? Not found a mapped RLC entry. Double check!!!"
+
+# Verify the correctness of TCP and RLC one-to-all Mapping in terms of sequence number
+# Print TCP sequence number plus a line of mapped RLC sequence number 
+def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_ip):
+    for i in range(len(QCATEntries)):
+        tcpEntry = QCATEntries[i]
+        if tcpEntry.logID == const.PROTOCOL_ID and tcpEntry.ip["tlp_id"] == const.TCP_ID \
+           and ((pduID== const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
+                (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
+
+            mapped_RLCs, mapped_sn = clw.mapRLCtoTCP(QCATEntries, i , pduID)
+            print "TCP\t" + str(int(tcpEntry.tcp["seq_num"]))[:-1]
+            if mapped_RLCs:
+                print "RLC\t" + str(mapped_sn)[1:-1]
             else:
                 print "??? Not found a mapped RLC entry. Double check!!!"
 

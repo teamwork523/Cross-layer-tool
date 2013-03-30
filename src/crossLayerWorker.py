@@ -14,7 +14,7 @@ import PrintWrapper as pw
 import Util as util
 from datetime import datetime
 
-DEBUG = False
+DEBUG = True
 DETAIL_DEBUG = False
 CUR_DEBUG = False
 
@@ -403,19 +403,19 @@ def findBestMappedIndex(RLCList, TCPList, EntryList, SNCountList):
 
     # the best of the mean * length product
     for i in indexOfInterest:
-        #mean = util.meanValue(RLCList[i].values())
+        mean = util.meanValue(RLCList[i].values())
         # MAX = max(RLCList[i].values() + [0])
-        #length = len(RLCList[i])
-        maxCount = max(SNCountList[i].values())
+        length = len(RLCList[i])
+        #maxCount = max(SNCountList[i].values())
         #maxTCPCount = max(TCPList[i].values())
         #if MAX * length > maxValue:
-        #if mean * length > maxValue:
-        if maxCount > maxValue:
+        if mean * length > maxValue:
+        #if maxCount > maxValue:
         #if maxTCPCount > maxValue:
             maxIndex = i
             #maxValue = MAX * length
-            #maxValue = mean * length
-            maxValue = maxCount
+            maxValue = mean * length
+            #maxValue = maxCount
             #maxValue = maxTCPCount
     print "Max Product is %d" % maxValue
     return maxIndex
