@@ -74,7 +74,7 @@ def assignEULState(entries):
     mostRecentRC = None
     mostRecentED = None
     mostRecentSpeed = None
-    # need bottom up approach
+    # Sampling first, then log => bottom up approach
     entries.reverse()
     for entry in entries:
         if entry.logID == const.EUL_STATS_ID:
@@ -201,6 +201,23 @@ def calThrouhgput(entries, direction):
             print "Time diff is %f" % (cur_ts - i.flow["timestamp"])
             print "Throught is : %d" % (i.throughput) 
             """
+
+############## RLC Configuration ##############
+# assign previous configurations
+def assignPrivConfiguration (entries, logID):
+    privConfig = None
+    for entry in entries:
+        if logID == entry.logID:
+            if logID == const.DL_CONFIG_PDU_ID and entry.dl_config["chan"] != None:
+                privConfig = entry.dl_config
+            elif logID == const.UL_CONFIG_PDU_ID and entry.ul_config["chan"] != None:
+                privConfig = entry.ul_config
+        else:
+            if logID == const.DL_CONFIG_PDU_ID and not entry.dl_config["chan"] and privConfig:
+                entry.dl_config = privConfig
+            elif logID == const.UL_CONFIG_PDU_ID and not entry.ul_config["chan"] and privConfig:
+                entry.ul_config = privConfig
+
 
 #####################################
 ########## Helper ###################

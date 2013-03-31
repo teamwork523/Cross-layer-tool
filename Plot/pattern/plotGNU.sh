@@ -1,0 +1,23 @@
+#!/bin/bash
+
+file=$1
+gnuplot -p << EOF
+# scalable
+#set terminal postscript eps color
+#set terminal jpeg
+set xdata time
+set timefmt "%s"
+set format x "%M:%S"     # or anything else
+set autoscale
+set xtic auto                          # set xtics automatically
+set ytic auto                          # set ytics automatically
+set title '$file Traffic Pattern'
+set xlabel "Time (s)"
+set ylabel "FACH (2), DCH (3), PCH (4)"
+set palette defined (2 "blue", 3 "red", 4 "green")
+set style arrow 1 nohead lw 3 palette
+
+# P82 (x, y, xdelta, ydelta)
+plot "$file.txt" using 1:(0):(0):2:3 with vectors arrowstyle 1 title "$file"
+EOF
+#evince $name.eps & evince $name-rrc.eps

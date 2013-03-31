@@ -11,6 +11,7 @@ import const
 import QCATEntry as qe
 import PCAPPacket as pp
 import PrintWrapper as pw
+import retxWorker as rw
 import Util as util
 from datetime import datetime
 
@@ -382,6 +383,32 @@ def TCP_RLC_Retx_Mapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
             "sn_entry": entrySNTopMap, "sn_retx_time_dist": RetxTimeDistSNTopMap}
 
 ############################################################################
+###################### Context & Configuration #############################
+############################################################################
+# return a configuration map 
+def printContextInfo(retxMap, logID):
+    # A map between link configuration and their count
+    # WARNING: 
+    total_configs = rw.initFullRRCMap(None)
+    for retxEntries in retxMap.values():
+        for entry in retxEntries[0]:
+            target_config = None
+            if logID == const.DL_CONFIG_PDU_ID:
+                target_config = str(entry.dl_config)
+            elif logID == const.UL_CONFIG_PDU_ID:
+                target_config = str(entry.ul_config)
+            # insert into the retransmission entry
+            if total_configs[entry.rrcID]:
+                if target_config in total_configs[entry.rrcID]:
+                    total_configs[entry.rrcID][target_config] += 1
+                else:
+                    total_configs[entry.rrcID][target_config] = 1.0
+            else:
+                total_configs[entry.rrcID] = {}
+                total_configs[entry.rrcID][target_config] = 1.0
+    print total_configs
+
+############################################################################
 ############################# Helper functions #############################
 ############################################################################
 # Select a group with best for demo purpose 
@@ -465,11 +492,4 @@ def countShortFACHTORatio(QCATEntries, entryIndexMap, topLevelMaps):
     if DEBUG:
         print "FACH->PCH->FACH pattern frequency is %f" % (ratio)
     return ratio
-
-
-
-
-
-
-
 

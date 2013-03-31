@@ -360,22 +360,22 @@ def procRLCReTx(entries):
 def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     ######
     ## Occurance count
-    RLC_UL_retx = initFullRRCMap()
-    RLC_DL_retx = initFullRRCMap()
-    RLC_UL_tot_pkts = initFullRRCMap()
-    RLC_DL_tot_pkts = initFullRRCMap()
-    TCP_rto_retx = initFullRRCMap()
-    TCP_fast_retx = initFullRRCMap()
-    TCP_total_count = initFullRRCMap()
+    RLC_UL_retx = initFullRRCMap(0.0)
+    RLC_DL_retx = initFullRRCMap(0.0)
+    RLC_UL_tot_pkts = initFullRRCMap(0.0)
+    RLC_DL_tot_pkts = initFullRRCMap(0.0)
+    TCP_rto_retx = initFullRRCMap(0.0)
+    TCP_fast_retx = initFullRRCMap(0.0)
+    TCP_total_count = initFullRRCMap(0.0)
 
-    rrc_state = initFullRRCMap()
+    rrc_state = initFullRRCMap(0.0)
 
     ######
     ## Bytes Count
-    TCP_rto_retx_bytes = initFullRRCMap()
-    TCP_fast_retx_bytes = initFullRRCMap()
-    RLC_UL_bytes = initFullRRCMap()
-    RLC_DL_bytes =  initFullRRCMap()
+    TCP_rto_retx_bytes = initFullRRCMap(0.0)
+    TCP_fast_retx_bytes = initFullRRCMap(0.0)
+    RLC_UL_bytes = initFullRRCMap(0.0)
+    RLC_DL_bytes =  initFullRRCMap(0.0)
     ULBytes_total = 0.0
     DLBytes_total = 0.0
     Bytes_on_fly = 0.0
@@ -482,10 +482,10 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
 ###################### Helper Functions ####################################
 ############################################################################
 # return a dict with all existing RRC state as keys, with value 0.0
-def initFullRRCMap():
+def initFullRRCMap(init_value):
     initMap = {}
     for i in const.RRC_MAP.keys():
-        initMap[i] = 0.0
+        initMap[i] = init_value
     return initMap
 
 # basic idea is to find the first ACK that 

@@ -108,7 +108,7 @@ class QCATEntry:
         # the ctrl PDU
         self.dl_ctrl = {"chan": None,
                         "ack": None, 
-                        "list": [] # [(seq_num1, len1), (seq_num2, len2), ...]
+                        "list": [] # [(seq_num1, len1), (seq_num2, len2), ...], while the log got cut off, so not all SNs included
                        }
         # TODO: currently hard configure the channel ID should be 19
         # uplink RLC configuration setting
@@ -117,7 +117,7 @@ class QCATEntry:
                           "tx_win_size": None,
                           "reset_timer": None,
                           "max_reset": None,
-                          "max_retx": None,
+                          "max_tx": None,
                           "is_discard": None,
                           # polling related
                           "poll": {
@@ -277,10 +277,82 @@ class QCATEntry:
                 # check for number of entities
                 if int(self.detail[0].split()[-1]) != 1:
                     raise Exception("More than one entities in UL AM PDU")
-                for index in self.detail[2:]:
-                    if i.find("CONTROL PDU") != -1:
-                        info = i.split("::")[1].strip().split(", ")
-                        pass
+                # skip the first several lines
+                lineOfinterest = self.detail[5:]
+                for index in range(len(lineOfinterest)):
+                    if lineOfinterest[index].find("CONTROL PDU") != -1:
+                        info = lineOfinterest[index].split("::")[1].strip().split(", ")
+                        self.dl_ctrl["chan"] = int(info[0].split(":")[1])
+                        statusIndex = index + 1
+                        if lineOfinterest[statusIndex].find("ACK") != -1:
+                            leftIndex = lineOfinterest[statusIndex].find("(")
+                            rightIndex = lineOfinterest[statusIndex].find(")")
+                            self.dl_ctrl["ack"] = int(lineOfinterest[statusIndex][leftIndex+1:rightIndex])
+                        if lineOfinterest[statusIndex].find("LIST") != -1:
+                            # TODO: right now only one line is useful, but if log changes, add more (sn, len) pair
+                            sn_line = lineOfinterest[statusIndex + 1]
+                            cur_sn = int(sn_line.split(" ")[1], 16)
+                            cur_len = int(sn_line.split(" ")[-1])
+                            self.dl_ctrl["list"].append((cur_sn, cur_len))
+                        break
+            # parse the UL AM log and extract the configuration
+            elif self.logID == const.UL_CONFIG_PDU_ID:
+                # We target on the entity with the number we are interested in
+                index = 0
+                for index in range(len(self.detail)):
+                    if self.detail[index].find("Data Logical Channel ID") != 1:
+                        if self.detail[index].split()[-1] == str(const.DATA_LOGIC_CHANNEL_ID):
+                            break
+                if index < len(self.detail) - 1:
+                    self.ul_config["chan"] = const.DATA_LOGIC_CHANNEL_ID
+                    # find the index inline
+                    for line in self.detail[index:index+13]:
+                        if line.find("Radio Bearer ID") != -1:
+                            self.ul_config["radio_bearer_id"] = int(line[-1])
+                        if line.find("Transmit Wind Size") != -1:
+                            self.ul_config["tx_win_size"] = int(line[-1])
+                        if line.find("TMR RST") != -1:
+                            resetEntries = line.split(",")
+                            self.ul_config["reset_timer"] = int(resetEntries[0].split()[-1])
+                            self.ul_config["max_reset"] = int(resetEntries[-1].split()[-1])
+                        if line.find("SDU Discard") != -1:
+                            self.ul_config["is_discard"] = (line.split(", ")[0].split(": ")[-1] != "No Discard")
+                        if line.find("MAX DAT") != -1:
+                            self.ul_config["max_tx"] = int(line.split(", ")[1].split("= ")[-1])
+                        if line.find("TMR Poll Proh") != -1:
+                            self.ul_config["poll"]["poll_proh_timer"] = int(line.split(", ")[0].split(" ")[-2])
+                            self.ul_config["poll"]["poll_timer"] = int(line.split(", ")[1].split(" ")[-2])
+                        if line.find("Poll PU") != -1:
+                            self.ul_config["poll"]["poll_pdu"] = int(line.split(", ")[0].split(" ")[-1])
+                            self.ul_config["poll"]["poll_sdu"] = int(line.split(", ")[-1].split(" ")[-1])
+                        if line.find("Last Tx Poll") != -1:
+                            self.ul_config["poll"]["is_last_tx_pdu_poll"] = (line.split(", ")[0].split()[-1] == "On")
+                            self.ul_config["poll"]["is_last_retx_pdu_poll"] = (line.split(", ")[-1].split()[-1] == "On")
+                        if line.find("Poll Win") != -1:
+                            self.ul_config["poll"]["poll_win_size"] = int(line.split(", ")[0].split()[-1])
+                            self.ul_config["poll"]["poll_periodic_timer"] = int(line.split(", ")[1].split()[-2])
+            # parse the DL AM log and extract the configuration
+            elif self.logID == const.DL_CONFIG_PDU_ID:
+                # We target on the entity with the number we are interested in
+                index = 0
+                for index in range(len(self.detail)):
+                    if self.detail[index].find("Data Logical Channel ID") != 1:
+                        if self.detail[index].split()[-1] == str(const.DATA_LOGIC_CHANNEL_ID):
+                            break
+                if index < len(self.detail) - 1:
+                    self.dl_config["chan"] = const.DATA_LOGIC_CHANNEL_ID
+                    # find the index inline
+                    for line in self.detail[index:index+11]:
+                        if line.find("Radio Bearer ID") != -1:
+                            self.dl_config["radio_bearer_id"] = int(line[-1])
+                        if line.find("Receive Wind Size") != -1:
+                            self.dl_config["receive_win_size"] = int(line.split(",")[0].split()[-1])
+                        if line.find("RLC Preserve order of higher layer PDUs") != -1:
+                            self.dl_config["is_pdu_order_preserved"] = (line.split()[-1] == "TRUE")
+                        if line.find("Min Time Between Status Reports") != -1:
+                            self.dl_config["min_time_btw_poll"] = int(line.split()[-2])
+                        if line.find("UE should send status report for missing PU") != -1:
+                            self.dl_config["is_report_missing_pdu"] = (line.split()[-1] == "TRUE")
             # TODO: process other type of log entry
 
     def __procHexDump(self):

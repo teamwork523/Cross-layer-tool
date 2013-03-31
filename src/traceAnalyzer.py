@@ -131,6 +131,21 @@ def main():
     cw.assignRRCState(QCATEntries)
     cw.assignEULState(QCATEntries)
     cw.assignSignalStrengthValue(QCATEntries)
+    # assign the RLC configuration information
+    cw.assignPrivConfiguration(QCATEntries, const.DL_CONFIG_PDU_ID)
+    cw.assignPrivConfiguration(QCATEntries, const.UL_CONFIG_PDU_ID)
+
+    """
+    # verify configuration assignment
+    for index in range(len(QCATEntries)):
+        print "*" * 80
+        if QCATEntries[index].logID == const.DL_CONFIG_PDU_ID:
+            print "!!!!!!!!!!!!!!!!!! New DL config"
+        elif QCATEntries[index].logID == const.UL_CONFIG_PDU_ID:
+            print "@@@@@@@@@@@@@@@@@@ New UL config"
+        print "%d is %s" % (index, QCATEntries[index].dl_config)
+        print "%d is %s" % (index, QCATEntries[index].ul_config)
+    """
     # assign flow information
     # cw.assignFlowInfo(QCATEntries)
     # use to calculate the buffer range in between two packets
@@ -192,7 +207,7 @@ def main():
         #dw.extractFACHStatePktDelayInfo(FACH_delay_analysis_entries, options.direction)
     
     #################################################################
-    #################### Retransmission Process #####################
+    #################### Retransmission Analysis #####################
     #################################################################
     tcpReTxMap = tcpFastReTxMap = None
     # TCP retransmission process
@@ -209,6 +224,11 @@ def main():
             if DEBUG:
                 print "TCP ReTx happens %d times" % (tcpReTxCount)
                 print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
+
+            # Correlate the TCP retransmission information with RLC configuration info
+            # TODO: fill this up
+            clw.printContextInfo(tcpReTxMap, const.DL_CONFIG_PDU_ID)
+            clw.printContextInfo(tcpFastReTxMap, const.UL_CONFIG_PDU_ID)
         else:
             print >> sys.stderr, "Please specify direction and server ip to apply retransmission analysis"
             sys.exit(1)
@@ -217,7 +237,7 @@ def main():
     [ULReTxCountMap, DLReTxCountMap] = rw.procRLCReTx(QCATEntries)
     
     # collect statistic information
-    retxStatsMap, totCountStatsMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
+    retxStatsMap, totCountStatsMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)    
 
     #################################################################
     ######################## Cross Layer Analysis ###################
