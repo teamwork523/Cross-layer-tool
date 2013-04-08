@@ -89,7 +89,10 @@ IP_Header_Len = 20
 TCP_Header_Len = 20 + 12 # include option
 
 # Retransmission mapping (heuristics)
-MAX_ENTRIES_LIST = 700
+MAX_ENTRIES_LIST = 10000
+
+# maximum lookup ahead in search for the polling bit
+MAX_LOOK_AHEAD_INDEX = 200
 
 # RLC DL retransmission
 RETX_PERIOD_THRESHOLD = 5

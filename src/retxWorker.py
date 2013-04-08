@@ -439,7 +439,7 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
 
     # assign the map    
     retx_count_map = {"tcp_rto": TCP_rto_retx, "tcp_fast": TCP_fast_retx, "rlc_ul": RLC_UL_retx, "rlc_dl":RLC_DL_retx}
-    total_count_map = {"tcp": TCP_total_count, "rlc_ul": RLC_UL_tot_pkts, "rlc_dl": RLC_DL_tot_pkts}
+    total_count_map = {"tcp_rto": TCP_total_count, "tcp_fast": TCP_total_count, "rlc_ul": RLC_UL_tot_pkts, "rlc_dl": RLC_DL_tot_pkts}
     
     if CUR_DEBUG:
         if count_total_fach_promote:

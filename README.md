@@ -56,7 +56,7 @@ Sample Usage
   > ./traceAnalyzer.py -l QCAT_log_file_path -d up --srv_ip srver_ip_addr --retx_analysis --print_retx tcp_rto 
 
 - Print cross layer map between RLC and RRC state
-  > ./traceAnalyzer.py -l QCAT_log_file_path -d up --srv_ip srver_ip_addr --retx_analysis --cross_map
+  > ./traceAnalyzer.py -l QCAT_log_file_path -d up --srv_ip srver_ip_addr --retx_analysis --cross_analysis
 
 - Print throughput vs timestamps
   > ./traceAnalyzer.py -l QCAT_log_file_path --print_throughput

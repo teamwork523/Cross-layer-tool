@@ -7,12 +7,12 @@ gnuplot -p << EOF
 #set terminal jpeg
 set xdata time
 set timefmt "%s"
-set format x "%S"     # or anything else
+set format x "%M:%S"     # or anything else
 set autoscale
 set xtic auto                          # set xtics automatically
 set ytic auto                          # set ytics automatically
 set title '$file Traffic Pattern'
-set xlabel "Time (ms)"
+set xlabel "Time (s)"
 set ylabel "FACH (2), DCH (3), PCH (4)"
 set palette defined (2 "blue", 3 "red", 4 "green")
 set style arrow 1 nohead lw 3 palette

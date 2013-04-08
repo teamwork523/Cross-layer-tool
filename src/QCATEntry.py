@@ -106,8 +106,10 @@ class QCATEntry:
                         "size": [], # bytes
                         "header":[]}]
         # the ctrl PDU
+        # NOTICE that both DL_CTRL_PDU_ID and DL_PDU_ID could contribute to CTRL PDU
         self.dl_ctrl = {"chan": None,
-                        "ack": None, 
+                        "ack": None,
+                        "reset": None,
                         "list": [] # [(seq_num1, len1), (seq_num2, len2), ...], while the log got cut off, so not all SNs included
                        }
         # TODO: currently hard configure the channel ID should be 19
@@ -244,6 +246,7 @@ class QCATEntry:
                 # check for number of entities
                 if int(self.detail[0].split()[-1]) != 1:
                     raise Exception("More than one entities in DL AM PDU")
+                index = 0
                 for i in self.detail:
                     if i.find("DATA PDU") != -1:
                         info = i.split("::")[1].strip().split(", ")
@@ -258,6 +261,23 @@ class QCATEntry:
                             self.dl_pdu[0]["size"].append(int(i.split()[-1])/8)
                     elif i[:14] == "Number of PDUs":
                         self.dl_pdu[0]["numPDU"] = int(i.split()[-1])
+                    # include Control PDU part
+                    if i.find("CTL PDU") != -1:
+                        info = i.split("::")[1].strip().split(", ")
+                        self.dl_ctrl["chan"] = int(info[0])
+                        if info[-1].split()[-1] == "RESET":
+                            self.dl_ctrl["reset"] = True
+                        elif info[-1].split()[-1] == "STATUS":
+                            if index + 2 < len(self.detail):
+                                status_line = self.detail[index+2]
+                                if status_line.find("ACK") != -1:
+                                    self.dl_ctrl["ack"] = int(status_line.split()[-1])
+                                elif status_line.find("LIST") != -1:
+                                    # TODO: add more sequence number if log enabled
+                                    seq_num = int(status_line.split(", ")[-2])
+                                    length = int(status_line.split(", ")[-1].split()[-1])
+                                    self.dl_ctrl["list"].append((seq_num, length))
+                    index += 1
             # Parse the Signal Strength state
             # Assume the number of cell we get is always in WCDMA
             elif self.logID == const.SIG_ID:
@@ -281,19 +301,29 @@ class QCATEntry:
                 lineOfinterest = self.detail[5:]
                 for index in range(len(lineOfinterest)):
                     if lineOfinterest[index].find("CONTROL PDU") != -1:
+                        # Debug
+                        """
+                        print lineOfinterest
+                        print "Index is %d" % index
+                        print "length of lineOfinterest is %d" % len(lineOfinterest)
+                        """
                         info = lineOfinterest[index].split("::")[1].strip().split(", ")
                         self.dl_ctrl["chan"] = int(info[0].split(":")[1])
+                        ctrl_type = info[1].split(" ")[-1]
                         statusIndex = index + 1
-                        if lineOfinterest[statusIndex].find("ACK") != -1:
-                            leftIndex = lineOfinterest[statusIndex].find("(")
-                            rightIndex = lineOfinterest[statusIndex].find(")")
-                            self.dl_ctrl["ack"] = int(lineOfinterest[statusIndex][leftIndex+1:rightIndex])
-                        if lineOfinterest[statusIndex].find("LIST") != -1:
-                            # TODO: right now only one line is useful, but if log changes, add more (sn, len) pair
-                            sn_line = lineOfinterest[statusIndex + 1]
-                            cur_sn = int(sn_line.split(" ")[1], 16)
-                            cur_len = int(sn_line.split(" ")[-1])
-                            self.dl_ctrl["list"].append((cur_sn, cur_len))
+                        if statusIndex < len(lineOfinterest) and ctrl_type == "STATUS":
+                            if lineOfinterest[statusIndex].find("ACK") != -1:
+                                leftIndex = lineOfinterest[statusIndex].find("(")
+                                rightIndex = lineOfinterest[statusIndex].find(")")
+                                self.dl_ctrl["ack"] = int(lineOfinterest[statusIndex][leftIndex+1:rightIndex])
+                            if lineOfinterest[statusIndex].find("LIST") != -1:
+                                # TODO: right now only one line is useful, but if log changes, add more (sn, len) pair
+                                sn_line = lineOfinterest[statusIndex + 1]
+                                cur_sn = int(sn_line.split(" ")[1], 16)
+                                cur_len = int(sn_line.split(" ")[-1])
+                                self.dl_ctrl["list"].append((cur_sn, cur_len))
+                        elif ctrl_type == "RESET":
+                            self.dl_ctrl["reset"] = True
                         break
             # parse the UL AM log and extract the configuration
             elif self.logID == const.UL_CONFIG_PDU_ID:
@@ -457,7 +487,7 @@ class QCATEntry:
             delimiter = " = "
             cur_index = 3
         # extrace required field in the header
-        # 1. Polling bit, 2. Header extension
+        # 1. Polling bit (line indicator = 1, last seg = 2), 2. Header extension
         header["p"] = int(info[cur_index].split(delimiter)[1])
         cur_index += 1
         header["he"] = int(info[cur_index].split(delimiter)[1])

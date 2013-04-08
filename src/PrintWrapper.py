@@ -46,7 +46,6 @@ def printRetxCountMapList (countMap):
 def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
     # TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry, 2nd_retx_entry...), (another)]}
     # RLC map format: {ts: {sn1:(count1,duration1, [entries]), sn2:(count2, duration2, [entries]), ...}
-    # RLC could 
     ahead_th = 3
     link_ts_sorted = sorted(RLCRetxMap.keys())
     for a in sorted(tcpRetxMap.keys()):
@@ -58,7 +57,7 @@ def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
         else:
             link_ts = 0
             for link_ts in link_ts_sorted:
-                if link_ts > a and min([i[1] for i in RLCRetxMap[link_ts].values()]) < tcp_delay:# and link_ts - a < ahead_th:
+                if link_ts > a and min([i[1] for i in RLCRetxMap[link_ts].values()]) < tcp_delay: # and link_ts - a < ahead_th:
                     break
 
         rlc_delay = 0
@@ -91,7 +90,8 @@ def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
 #        "tcp_fast": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
 #        "rlc_ul": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
 #        "rlc_dl": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...} ... }, 
-#       {"tcp": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
+#       {"tcp_rto": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
+#        "tcp_fast": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
 #        "rlc_ul": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
 #        "rlc_dl": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...}})
 def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
@@ -99,6 +99,7 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
     tot_result = ""
     totKey = ""
     per_state_ratio = ""
+    per_state_count = ""
     # track through all the key name in totalMap, if find a string match, then
     # print the whole state ratio of that entry
     for totKey in totalStatsMap:
@@ -117,13 +118,15 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
             result += str(ratio) + "\t"
             tot_result += str(total_count) + "\t"
             per_state_ratio += str(stateRatio) + "\t"
+            per_state_count += str(v) + "\t"
     else:
         print >> sys.stderr, "ERROR: Invalid retransmission type"
         return
     print result
     if DEBUG:
-        print "Total Ratio: %s" % result
-        print "Total Count: %s" %tot_result
+        print "Retx_count / Total_count: %s" % result
+        print "Total_count: %s" % tot_result
+        print "Each State count: %s" % per_state_count
         print "Per state ratio: %s" %per_state_ratio
         print "*"*40
 
@@ -211,24 +214,28 @@ def printRetxSummaryInfo (entries, uplinkMap, downlinkMap, tcpMap):
 #######################################################################
 #################### Cross Layer Related ##############################
 #######################################################################
-# Print the TCP and RLC mapping
-# format: timestamp  tcp_byte   RLC_byte    RRC_state
+# Print the best selection between TCP and UDP mapping 
+# format: timestamp  tcp_byte   RLC_byte    RRC_state   (optional: dup_ack_num)
 def printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_count"):
     maxIndex = clw.findBestMappedIndex(combMap[map_key]["RLC"], combMap[map_key]["TCP"], combMap["ts_entry"]["RLC"], combMap["sn_count"]["RLC"])
     if maxIndex == -1:
         print >> sys.stderr, "No retx happen"
         return
+
+    # find the ratio for the promotion retransmission
+    firstKey = sorted(combMap["ts_entry"]["TCP"][maxIndex].keys())[0]
+    lastKey = sorted(combMap["ts_entry"]["RLC"][maxIndex].keys())[-1]
+    beginIndex = entryIndexMap[combMap["ts_entry"]["TCP"][maxIndex][firstKey]]
+    endIndex = entryIndexMap[combMap["ts_entry"]["RLC"][maxIndex][lastKey]]
+
+    ############ Debug #############
     if DEBUG:
         print "Corresponding RLC count map:"
         print combMap["sn_count"]["RLC"][maxIndex]
         print "Retx TCP entries:" 
         for k, v in sorted(combMap["ts_entry"]["TCP"][maxIndex].items()):
             printTCPEntry(v)
-        # find the ratio for the promotion retransmission
-        firstKey = sorted(combMap["ts_entry"]["TCP"][maxIndex].keys())[0]
-        lastKey = sorted(combMap["ts_entry"]["RLC"][maxIndex].keys())[-1]
-        beginIndex = entryIndexMap[combMap["ts_entry"]["TCP"][maxIndex][firstKey]]
-        endIndex = entryIndexMap[combMap["ts_entry"]["RLC"][maxIndex][lastKey]]
+        
         countTotalFACHPromote = 0.0
         countRetxFACHPromote = 0.0
         print "being index is %d" % beginIndex
@@ -248,7 +255,7 @@ def printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, combMap, map_key = "
         print "The retx dist is "
         print combMap["sn_retx_time_dist"]["RLC"][maxIndex]
         print "The average retx is %f" % (util.meanValue([util.meanValue([util.meanValue(j) for j in i.values()]) for i in combMap["sn_retx_time_dist"]["RLC"]]))
-
+    
     # Use the relative difference in milliseconds
     tcpSortedItems = sorted(combMap[map_key]["TCP"][maxIndex].items())
     firstTCP = tcpSortedItems[0][0]
@@ -258,6 +265,14 @@ def printRetxIntervalWithMaxMap(QCATEntries, entryIndexMap, combMap, map_key = "
         print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 3, 0, max(combMap["sn_count"]["RLC"][maxIndex].values()), combMap["ts_entry"]["TCP"][maxIndex][ts].rrcID)
     for ts, v in sorted(combMap[map_key]["RLC"][maxIndex].items()):
         print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 0, 2, max(combMap["sn_count"]["RLC"][maxIndex].values()), combMap["ts_entry"]["RLC"][maxIndex][ts].rrcID)
+
+    ###################### Dup ACK part #################
+    # find the duplicate ack in between the first and last item
+    dupACKMap = clw.detectDupACK(QCATEntries, beginIndex, endIndex)
+    for key in dupACKMap:
+        for index in dupACKMap[key]:
+            ts = QCATEntries[index].timestamp
+            print "%d\t%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 1, 1, max(combMap["sn_count"]["RLC"][maxIndex].values()), QCATEntries[index].rrcID, key)
 
 # Print all the retransmission one-to-all mapping
 def printAllRetxIntervalMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_count"):
@@ -271,7 +286,34 @@ def printAllRetxIntervalMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_c
            print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 3, 0, max(combMap["sn_count"]["RLC"][index].values()), combMap["ts_entry"]["TCP"][index][ts].rrcID)
         for ts, v in sorted(combMap[map_key]["RLC"][index].items()):
             print "%d\t%d\t%d\t%d\t%d" % ((int)((ts - firstTCP)*1000), 0, 2, max(combMap["sn_count"]["RLC"][index].values()), combMap["ts_entry"]["RLC"][index][ts].rrcID) 
-            
+
+
+#######################################################################
+#################### RLC Fast Retx Related ############################
+#######################################################################
+# plot the detailed case of RLC fast retransmission break down
+# the duplicate ACKs and duplicate ACKs 
+# @return "time_stamp \t sn_for_dup_ack \t sn_for_rlc"
+def print_rlc_fast_retx_case (QCATEntries, rlc_fast_retx_map):
+    offset = QCATEntries[rlc_fast_retx_map["dup_ack"][0]].timestamp * 1000
+    for dup_ack_index in rlc_fast_retx_map["dup_ack"]:
+        cur_entry = QCATEntries[dup_ack_index]
+        print "%f\t%f\t%f" % (cur_entry.timestamp * 1000 - offset, cur_entry.dl_ctrl["ack"], 0)
+    time_diff = 0
+    for rlc_index in range(len(rlc_fast_retx_map["rlc"])-1):
+        cur_entry = QCATEntries[rlc_fast_retx_map["rlc"][rlc_index]]
+        length = len(cur_entry.ul_pdu[0]["sn"])
+        if length:
+            time_unit = (QCATEntries[rlc_fast_retx_map["rlc"][rlc_index+1]].timestamp - cur_entry.timestamp) * 1000.0 / float(length)
+        for i in range(length):
+            cur_time = cur_entry.timestamp*1000 + time_unit * i - offset
+            print "%f\t%f\t%f" % (cur_time, 0, cur_entry.ul_pdu[0]["sn"][i])
+    # print last rlc
+    cur_entry = QCATEntries[rlc_fast_retx_map["rlc"][len(rlc_fast_retx_map["rlc"])-1]]
+    for i in range(len(cur_entry.ul_pdu[0]["sn"])):
+        cur_time = cur_entry.timestamp*1000 + time_unit * i - offset
+        print "%f\t%f\t%f" % (cur_time, 0, cur_entry.ul_pdu[0]["sn"][i])
+
 #######################################################################
 ######################## Verification #################################
 #######################################################################
@@ -304,19 +346,31 @@ def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, sr
 # Verify the correctness of TCP and RLC one-to-all Mapping in terms of sequence number
 # Print TCP sequence number plus a line of mapped RLC sequence number 
 def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_ip):
+    TCP_entry_count = 0.0
+    Mapped_TCP_entry_count = 0.0
+
     for i in range(len(QCATEntries)):
         tcpEntry = QCATEntries[i]
         if tcpEntry.logID == const.PROTOCOL_ID and tcpEntry.ip["tlp_id"] == const.TCP_ID \
            and ((pduID== const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
                 (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
-
+            
+            TCP_entry_count += 1
             mapped_RLCs, mapped_sn = clw.mapRLCtoTCP(QCATEntries, i , pduID)
+            if mapped_RLCs:
+                Mapped_TCP_entry_count += 1
+
+            """
             print "TCP\t" + str(int(tcpEntry.tcp["seq_num"]))[:-1]
             if mapped_RLCs:
                 print "RLC\t" + str(mapped_sn)[1:-1]
             else:
                 print "??? Not found a mapped RLC entry. Double check!!!"
-
+            """
+    ratio = 0
+    if TCP_entry_count > 0:
+        ratio = Mapped_TCP_entry_count / TCP_entry_count
+    print "Mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, ratio)
 #######################################################################
 ######################## Packet Trace #################################
 #######################################################################
@@ -439,7 +493,7 @@ def printDLCount(entries):
                     dlMap[sn] += len(entry.retx["dl"][sn])
                 else:
                     dlMap[sn] = len(entry.retx["dl"][sn])
-    
+
     for u in sorted(dlMap):
         if u >= 3851 and u <= 3886:
             print "DL: %d\t%d" % (u, dlMap[u])
@@ -452,12 +506,14 @@ def printTCPEntry(entry):
                         const.RRC_MAP[entry.rrcID], util.meanValue(entry.sig["RSCP"]))
 
 # print a RLC entry information
-def printRLCEntry(entry, direction):
+def printRLCEntry(entry, dir_type):
     printEntry(entry)
-    if direction.lower() == "up":
+    if dir_type.lower() == "up":
         print "RLC AM UL Detail: " + str(entry.ul_pdu[0])
-    else:
+    elif dir_type.lower() == "down":
         print "RLC AM DL Detail: " + str(entry.dl_pdu[0])
+    elif dir_type.lower() == "down_ctrl":
+        print "RLC DL Ctrl Detail: " + str(entry.dl_ctrl)
 
 # print a general entry
 def printEntry(entry):

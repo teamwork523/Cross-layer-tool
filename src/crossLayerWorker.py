@@ -15,9 +15,11 @@ import retxWorker as rw
 import Util as util
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
 DETAIL_DEBUG = False
 CUR_DEBUG = False
+CONFIG_DEBUG = False
+DUP_DEBUG = False
 
 ############################################################################
 ################## Cross Layer Based on RLC Layer ##########################
@@ -54,7 +56,8 @@ def mapRLCtoTCP(entries, tcp_index, logID, hint_index = -1):
     tcp_len = entries[tcp_index].ip["total_len"]
     # tracking which byte has been matched in the TCP payload
     cur_match_index = 0
-    max_reachable_index = min(len(entries), tcp_index + const.MAX_ENTRIES_LIST)
+    # max_reachable_index = min(len(entries), tcp_index + const.MAX_ENTRIES_LIST)
+    max_reachable_index = len(entries)
     
     # return variable
     return_entries = []
@@ -152,6 +155,8 @@ def mapRLCtoTCP(entries, tcp_index, logID, hint_index = -1):
 
     if DETAIL_DEBUG:
         print (return_entries, mapped_seq_num_list)
+    if DEBUG:
+        print "@@@@@@@@@@@@ NOOOOO MATCH Found @@@@@@@@@@@@"
     return (None, None)
 
 # match the existing data with payload
@@ -385,10 +390,9 @@ def TCP_RLC_Retx_Mapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
 ############################################################################
 ###################### Context & Configuration #############################
 ############################################################################
-# return a configuration map 
-def printContextInfo(retxMap, logID):
-    # A map between link configuration and their count
-    # WARNING: 
+# return a configuration map
+# A map between RRC state, RLC configuration and their count
+def getContextInfo(retxMap, logID): 
     total_configs = rw.initFullRRCMap(None)
     for retxEntries in retxMap.values():
         for entry in retxEntries[0]:
@@ -406,11 +410,397 @@ def printContextInfo(retxMap, logID):
             else:
                 total_configs[entry.rrcID] = {}
                 total_configs[entry.rrcID][target_config] = 1.0
-    print total_configs
+
+    return total_configs
+
+############################################################################
+#################### Dup ACK and RLC Fast Retransmision ####################
+############################################################################
+# Find the duplicate ACKs for a given range
+#   {ack_#1:[list of index with same ack], ack_#2:[...], ...}
+def detectDupACK (QCATEntries, beginIndex , endIndex):
+    dup_ack_map = {}
+    # search for duplicate ack
+    for index in range(beginIndex, endIndex+1):
+        cur_ack = QCATEntries[index].dl_ctrl["ack"]
+        if cur_ack:
+            if cur_ack in dup_ack_map:
+                dup_ack_map[cur_ack].append(index)
+            else:
+                dup_ack_map[cur_ack] = [index]
+    # eliminate non-dup ack
+    for key, value in dup_ack_map.items():
+        if len(value) <= 1:
+            del dup_ack_map[key]
+    return dup_ack_map
+
+# Calculate the dup ack ratio and bitmap of retx indices
+# Return:
+# 1. RATIO of Duplicate ACK # / Total retransmission #
+# 2. A bit Map that indicate whether a index is in the retransmission range
+def cal_dup_ack_ratio_and_fast_retx_benefit (QCATEntries, entryIndexMap, crossMap):
+    count_dup_ack = 0.0
+    retx_bit_map = [False] * len(QCATEntries)
+
+    # use the TCP and RLC cross mapping to implement this
+    for mapindex in range(len(crossMap["ts_entry"]["TCP"])):
+        firstKey = sorted(crossMap["ts_entry"]["TCP"][mapindex].keys())[0]
+        lastKey = sorted(crossMap["ts_entry"]["RLC"][mapindex].keys())[-1]
+        beginIndex = entryIndexMap[crossMap["ts_entry"]["TCP"][mapindex][firstKey]]
+        endIndex = entryIndexMap[crossMap["ts_entry"]["RLC"][mapindex][lastKey]]
+        
+        dup_ack_map = detectDupACK(QCATEntries, beginIndex, endIndex)
+        
+        if dup_ack_map:
+            count_dup_ack += 1
+
+        retx_bit_map[beginIndex:endIndex+1] = [True] * (endIndex + 1 - beginIndex)
+
+        # TODO: check if all retransmission could save all of them
+
+    dup_ack_ratio = 0
+    if len(crossMap["ts_entry"]["TCP"]):
+        dup_ack_ratio = count_dup_ack / float(len(crossMap["ts_entry"]["TCP"]))
+    
+    return dup_ack_ratio, count_dup_ack, float(len(crossMap["ts_entry"]["TCP"])), retx_bit_map
+
+# Detect all duplicate ACKs within a window.
+# In detail, we calculate the benefit by transmit the retransmission packets ahead
+# OR we retransmit before TCP RTO
+# Three cases:
+#   1. RLC fast retx occur within the TCP retransmission -- win
+#   2. RLC fast retx occur follow by NACK, without TCP retx -- draw
+#       2.1 packets will be retrans later -- draw_plus
+#   3. RLC fast retx occur follow by an ACK (or a larger NACK), without TCP retx -- lose (real overhead)
+# @ return
+#   1. break down fraction for each case
+#   2. index list of duplicate ACK and retransmitted PDU within the range for each case
+#      e.g. {"win":[{"dup_ack":[], "rlc":[], "sn":[]}, {...}], "draw":[...], "draw_plus":[...] "loss":[...]}
+#      NOTE: we capture the rlc upto the next ctrl ACK
+#   3. Benefit time (the last Dup ACK to the next retx time)
+#      e.g. {"win":[], "draw":[]}
+def rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, win_size, retx_bit_map, dup_ack_threshold):
+    dup_ack_count = 0.0
+    # Dup Acks falls outside the retx intervals
+    dup_ack_overhead_count = 0.0
+    entry_len = len(QCATEntries)
+    # skip over some of the entries
+    next_target = None
+    # calculate the time in between dup ACKs (deprecated)
+    dup_ack_time_intervals = {"non_retx":[], "retx":[]}
+    # the whole retransmission map
+    rlc_fast_retx_map = {"win":[], "draw":[], "draw_plus":[], "loss":[]}
+    # real benefit map
+    benefit_time_map = {"win":[], "draw_plus":[]}
+
+    if DUP_DEBUG:
+        print "Duplicate ACK threshold is %d" % dup_ack_threshold
+
+    # add all the index pair into a set
+    for i in range(entry_len):
+        if next_target and i < next_target:
+            continue
+        if QCATEntries[i].dl_ctrl["chan"]:
+            cur_ack_num = QCATEntries[i].dl_ctrl["ack"]
+            temp_count = 0
+            dup_ack_index_temp_buffer = []
+            dup_ack_temp_time_interval = []
+
+            for j in range(i, min(i+win_size, entry_len)):
+                if QCATEntries[j].dl_ctrl["ack"] and QCATEntries[j].dl_ctrl["ack"] == cur_ack_num:
+                    temp_count += 1
+                    dup_ack_index_temp_buffer.append(j)
+                # detect of fast retransmission
+                if temp_count >= dup_ack_threshold:
+                    # STRICT RULE: 
+                    # if any of the index doesn't belong to the retx range
+                    # then count as overhead
+                    test_overhead = False
+                    local_bit_map = []
+                    tmp_rlc_sum = {"dup_ack":[], "rlc":[]}
+                    benefit_time = 0.0
+
+                    for tmp_index in range(1,len(dup_ack_index_temp_buffer)):
+                        cur_entry = QCATEntries[dup_ack_index_temp_buffer[tmp_index]]
+                        priv_entry = QCATEntries[dup_ack_index_temp_buffer[tmp_index-1]]
+                        dup_ack_temp_time_interval.append(cur_entry.timestamp - priv_entry.timestamp)
+
+                    for index in dup_ack_index_temp_buffer:
+                        if not retx_bit_map[index]:
+                            test_overhead = True
+                        local_bit_map.append(retx_bit_map[index])
+                        
+                    # Next ctrl ACK and Next list (nack)
+                    cur_dup_ack = QCATEntries[dup_ack_index_temp_buffer[0]].dl_ctrl["ack"]
+                    # TODO: this might be larger than expected
+                    next_ctrl_ack_index = findNextCtrlMsg(QCATEntries, dup_ack_index_temp_buffer[-1], "ack", cur_dup_ack)
+                    next_list_index = findNextCtrlMsg(QCATEntries, dup_ack_index_temp_buffer[-1], "list", cur_dup_ack)
+
+                    # don't count due to inaccurate info
+                    if not next_ctrl_ack_index or not next_list_index:
+                        break
+
+                    next_list = QCATEntries[next_list_index].dl_ctrl["list"][0][0]
+                    dup_ack_index_temp_buffer += findDupAckInRange(QCATEntries, dup_ack_index_temp_buffer[-1] + 1, next_list_index, cur_dup_ack)
+                    tmp_rlc_sum["dup_ack"] = dup_ack_index_temp_buffer
+                    
+                    firstACKindex = dup_ack_index_temp_buffer[0]
+                    lastIndex = max(next_list_index, next_ctrl_ack_index)
+                    tmp_rlc_sum["rlc"] = find_RLC_PDU_within_interval(QCATEntries, firstACKindex, lastIndex)
+
+                    if DUP_DEBUG:
+                        print "Current sequence number is %d, next Ctrl index is %d, next list index is %d" % (cur_dup_ack, next_ctrl_ack_index, next_list_index)
+                    # draw / loss case
+                    if test_overhead:
+                        dup_ack_overhead_count += 1
+                        dup_ack_time_intervals["non_retx"].append(dup_ack_temp_time_interval)
+                        
+                        # loss case
+                        # judge by index order or time order
+                        if next_ctrl_ack_index < next_list_index or next_list > cur_dup_ack:
+                            rlc_fast_retx_map["loss"].append(tmp_rlc_sum)
+                        # draw case
+                        else:
+                            retx_seq_num_li = find_SN_within_interval(QCATEntries, firstACKindex, dup_ack_index_temp_buffer[dup_ack_threshold-1])
+                            # we want to calculate until the next ACK
+                            target_seq_num_li = find_SN_within_interval(QCATEntries, dup_ack_index_temp_buffer[dup_ack_threshold-1], next_ctrl_ack_index)
+                            if DUP_DEBUG:
+                                print "Retx SN %s" % set(retx_seq_num_li)
+                                print "rest SN %s" % set(target_seq_num_li)
+                            # TODO: tune threshold
+                            #if util.set_partial_belongs_to(set(retx_seq_num_li), set(target_seq_num_li), 25):
+                            # all the previous packets has been retransmit before 
+                            if util.set_belongs_to(set(retx_seq_num_li), set(target_seq_num_li)):
+                                rlc_fast_retx_map["draw_plus"].append(tmp_rlc_sum)
+                                retx_after_dup_ack_index = find_sn_of_interest(QCATEntries, dup_ack_index_temp_buffer[dup_ack_threshold-1], next_ctrl_ack_index, cur_dup_ack)
+                                if retx_after_dup_ack_index:
+                                    benefit_time = QCATEntries[retx_after_dup_ack_index].timestamp - QCATEntries[dup_ack_index_temp_buffer[dup_ack_threshold-1]].timestamp
+                                    benefit_time_map["draw_plus"].append(benefit_time)
+                                    print "Draw_plus benefit time is %d" % benefit_time
+                            else:
+                                rlc_fast_retx_map["draw"].append(tmp_rlc_sum)
+                    # win case
+                    else:
+                        dup_ack_time_intervals["retx"].append(dup_ack_temp_time_interval)
+                        # win case
+                        rlc_fast_retx_map["win"].append(tmp_rlc_sum)
+                        retx_after_dup_ack_index = find_end_TCP_retx (retx_bit_map, dup_ack_index_temp_buffer[dup_ack_threshold-1])
+                        if retx_after_dup_ack_index:
+                            benefit_time = QCATEntries[retx_after_dup_ack_index].timestamp - QCATEntries[dup_ack_index_temp_buffer[dup_ack_threshold-1]].timestamp
+                            benefit_time_map["win"].append(benefit_time)
+                            print "Win benefit time is %d" % benefit_time
+
+                    dup_ack_count += 1
+                    next_target = lastIndex+1
+                    totalRetxMap = []
+
+                    # print duplicate ACKs
+                    if DUP_DEBUG:
+                        print "$"*100
+                        print "$"*40 + "Duplicate ACK Channel" + "$"*40
+                        print "Index list is: " + str(dup_ack_index_temp_buffer)
+                        print "Retx table is %s" % local_bit_map
+                        for temp_index in dup_ack_index_temp_buffer:
+                            pw.printRLCEntry(QCATEntries[temp_index], "down_ctrl")
+                    break
+        
+    return (dup_ack_count, rlc_fast_retx_map, benefit_time_map)
+
+############################################################################
+######################## Analysis of Err Demotion ##########################
+############################################################################
+# Determine ratio of retransmission period experience the three state transission
+# Also the short demotion FACH state index to determine the gap
+# FACH -> PCH -> FACH
+# @return
+#   1. Ratio of total_num_short_FACH_demotion / total_num_retx
+#   2. list of index with problematic short FACH demotion timer
+def err_demotion_analysis(QCATEntries, entryIndexMap, topLevelMaps):
+    totalRetx = len(topLevelMaps["ts_entry"]["TCP"])
+    err_demote_count = 0.0
+    checkStates = [const.FACH_ID, const.PCH_ID, const.FACH_ID]
+    err_demotion_FACH_index_list = []
+
+    for i in range(len(topLevelMaps["ts_entry"]["TCP"])):
+        firstKey = sorted(topLevelMaps["ts_entry"]["TCP"][i])[0]
+        firstIndex = entryIndexMap[topLevelMaps["ts_entry"]["TCP"][i][firstKey]]
+        lastKey = sorted(topLevelMaps["ts_entry"]["TCP"][i])[-1]
+        lastIndex = entryIndexMap[topLevelMaps["ts_entry"]["TCP"][i][lastKey]]
+        rlcLastKey = sorted(topLevelMaps["ts_entry"]["RLC"][i])[-1]
+        # TODO: debug variable, delete later
+        lastEntry = topLevelMaps["ts_entry"]["TCP"][i][lastKey]
+        if rlcLastKey > lastKey:
+            lastIndex = entryIndexMap[topLevelMaps["ts_entry"]["RLC"][i][rlcLastKey]]
+            lastEntry = topLevelMaps["ts_entry"]["RLC"][i][rlcLastKey]
+        
+        # check if the pattern of FACH -> PCH -> FACH exist
+        checkIndex = 0
+        first_FACH_index = 0
+        for index in range(firstIndex, lastIndex+1):
+            if checkIndex >= len(checkStates):
+                break
+            if QCATEntries[index].logID == const.RRC_ID:
+                if QCATEntries[index].rrcID == checkStates[checkIndex]:
+                    if checkIndex == 0:
+                        first_FACH_index = index
+                    checkIndex += 1
+                else:
+                    # reset the cases where first FACH promote
+                    # i.e. FACH -> DCH -> PCH -> FACH
+                    checkIndex = 0
+        if checkIndex >= len(checkStates):
+            if DEBUG:
+                entry = topLevelMaps["ts_entry"]["TCP"][i][firstKey]
+                print "FACH error corresponding TCP entry time %s with index %d" % (util.convert_ts_in_human(entry.timestamp), firstIndex)
+                print "The last entry time is %s with index %d" % (util.convert_ts_in_human(lastEntry.timestamp), lastIndex)
+            err_demotion_FACH_index_list.append(first_FACH_index)
+            err_demote_count += 1
+
+    ratio = 0
+    if totalRetx:
+        ratio = err_demote_count/totalRetx
+    if DEBUG:
+        print "Total error pattern %d, and total pattern is %d" % (err_demote_count, totalRetx)
+        print "FACH->PCH->FACH pattern ratio (totalPattern/totalRetx) is %f" % (ratio)
+    return (ratio, err_demotion_FACH_index_list)
+
+# analyze the best poll_timer configuration to fix the best retransmission
+# @return
+#   {time:[time_between_poll_err_fatch, ...], poll_timer:[whether_poll_timer_enabled, ...], ...}
+
+def figure_out_best_timer(QCATEntries, FACH_state_list, logID):
+    extra_timer = {"time":[], "poll_timer":[]}
+
+    for index in FACH_state_list:
+        match_index = search_prev_polling_bit(QCATEntries, index, logID)
+        entryConfig = None
+        if QCATEntries[match_index].logID == const.UL_PDU_ID:
+            entryConfig = QCATEntries[match_index].ul_config
+        elif QCATEntries[match_index].logID == const.DL_PDU_ID:
+            entryConfig = QCATEntries[match_index].dl_config
+        if match_index:
+            time_diff = QCATEntries[index].timestamp - QCATEntries[match_index].timestamp
+            extra_timer["time"].append(time_diff)
+            extra_timer["poll_timer"].append((entryConfig["poll"]["poll_timer"] > 0))
+
+            if CONFIG_DEBUG:
+                print "poll timer is %d, and poll period is %d" % (entryConfig["poll"]["poll_timer"], entryConfig["poll"]["poll_periodic_timer"])
+                print "Time diff is %f with FACH time %s" % (time_diff, util.convert_ts_in_human(QCATEntries[index].timestamp))
+                print "The corresponding index is %d" % (index)
+
+    return extra_timer
 
 ############################################################################
 ############################# Helper functions #############################
 ############################################################################
+# RLC_FAST_RETX_ANALYSIS
+# find the nearest control message of ACK or NACK
+# @input: 
+#   1. ctrl_type: "ack" or "list" (nack)
+# @output:
+#   1. "index" of target entry
+#   2. "None" if not found
+def findNextCtrlMsg (QCATEntries, startIndex, ctrl_type, cur_seq):
+    entry_len = len(QCATEntries)
+    for index in range(startIndex, entry_len):
+        if QCATEntries[index].dl_ctrl["chan"]:
+            if ctrl_type == "ack":
+                if QCATEntries[index].dl_ctrl["ack"] > cur_seq:
+                    return index
+            elif ctrl_type == "list":
+                if QCATEntries[index].dl_ctrl["list"]:
+                    list_seq = QCATEntries[index].dl_ctrl["list"][-1][0]
+                    if list_seq >= cur_seq:
+                        return index
+    return None
+
+# RLC_FAST_RETX_ANALYSIS
+# find the other duplicate ack in the range
+# @ return: a list of duplicate ack index in the original list
+def findDupAckInRange (QCATEntries, startIndex, endIndex, cur_seq):
+    listDupAck = []
+    if endIndex > len(QCATEntries):
+        return []
+    for index in range(startIndex, endIndex):
+        if QCATEntries[index].dl_ctrl["chan"]:
+            if QCATEntries[index].dl_ctrl["ack"] and QCATEntries[index].dl_ctrl["ack"] == cur_seq:
+                listDupAck.append(index)
+    return listDupAck
+
+# RLC_FAST_RETX_ANALYSIS
+# find all the RLC packets within the range
+# @ return: a list of RLC log index within range
+def find_RLC_PDU_within_interval (QCATEntries, startIndex, endIndex):
+    listOfRLC = []
+    if endIndex > len(QCATEntries):
+        return []
+    for index in range(startIndex, endIndex):
+        if QCATEntries[index].logID == const.UL_PDU_ID:
+            listOfRLC.append(index)
+
+    return listOfRLC            
+
+# RLC_FAST_RETX_ANALYSIS
+# return a list of sequence number for a given interval
+def find_SN_within_interval (QCATEntries, startIndex, endIndex):
+    listOfSN = []
+    if endIndex > len(QCATEntries):
+        return []
+    for index in range(startIndex, endIndex):
+        if QCATEntries[index].logID == const.UL_PDU_ID and QCATEntries[index].ul_pdu[0]["sn"]:
+            listOfSN += QCATEntries[index].ul_pdu[0]["sn"]
+    return listOfSN    
+
+# RLC_FAST_RETX_ANALYSIS
+# Select the largest duplicate ACK number 
+# @ input:
+#   li = {"win":[{"dup_ack":[], "rlc":[]}, {...}], "draw":[...], "draw_plus":[...] "loss":[...]}
+#   li["win"]
+# @ return: index of interest entry in the list
+def findLongestRLCSeq (fast_retx_map_list):
+    maxLen = 0
+    maxIndex = 0
+    for index in range(len(fast_retx_map_list)):
+        cur_len = len(fast_retx_map_list[index]["dup_ack"])
+        if cur_len > maxLen:
+            maxLen = cur_len
+            maxIndex = index
+    return maxIndex
+
+# RLC_FAST_RETX_ANALYSIS
+# Select the smallest number of RLC entry
+# @ input:
+#   li = {"win":[{"dup_ack":[], "rlc":[]}, {...}], "draw":[...], "draw_plus":[...] "loss":[...]}
+#   li["win"]
+# @ return: index of interest entry in the list
+def findShortestRLCSeq (fast_retx_map_list):
+    minLen = 99999
+    minIndex = 0
+    for index in range(len(fast_retx_map_list)):
+        cur_len = len(fast_retx_map_list[index]["rlc"])
+        if cur_len < minLen:
+            minLen = cur_len
+            minIndex = index
+    return minIndex
+
+# RLC_FAST_RETX_ANALYSIS
+# find the target fast retx packet for a given range
+def find_sn_of_interest (QCATEntries, startIndex, endIndex, seq_num):
+    for index in range(startIndex, endIndex):
+        if QCATEntries[index].logID == const.UL_PDU_ID and QCATEntries[index].ul_pdu[0]["sn"] \
+           and seq_num in QCATEntries[index].ul_pdu[0]["sn"]:
+            return index
+    return None
+
+# RLC_FAST_RETX_ANALYSIS
+# Find the end of TCP retx section in the bit_map
+# @ return the last index of TCP retx
+def find_end_TCP_retx (bit_map, startIndex):
+    for index in range(startIndex, len(bit_map)):
+        if not bit_map[index]:
+            return index - 1
+    return None
+
 # Select a group with best for demo purpose 
 # return the best mapped TCP entry
 def findBestMappedIndex(RLCList, TCPList, EntryList, SNCountList):
@@ -459,37 +849,15 @@ def convertSNEntryToSNAvgRetxTime (SNEntryMap):
         
     return RLCSNRetxTimeDistMap
 
-# Determine how many retransmission period experience the three state transission
-# FACH -> PCH -> FACH
-def countShortFACHTORatio(QCATEntries, entryIndexMap, topLevelMaps):
-    totalRetx = len(topLevelMaps["ts_entry"]["TCP"])
-    totalShortFACHTO = 0.0
-    checkStates = [const.FACH_ID, const.PCH_ID, const.FACH_ID]
-    
-    for i in range(len(topLevelMaps["ts_entry"]["TCP"])):
-        firstKey = sorted(topLevelMaps["ts_entry"]["TCP"][i])[0]
-        firstIndex = entryIndexMap[topLevelMaps["ts_entry"]["TCP"][i][firstKey]]
-        lastKey = sorted(topLevelMaps["ts_entry"]["TCP"][i])[-1]
-        lastIndex = entryIndexMap[topLevelMaps["ts_entry"]["TCP"][i][lastKey]]
-        rlcLastKey = sorted(topLevelMaps["ts_entry"]["RLC"][i])[-1]
-        if rlcLastKey > lastKey:
-            lastIndex = entryIndexMap[topLevelMaps["ts_entry"]["RLC"][i][rlcLastKey]]
-        
-        # check if the pattern of FACH -> PCH -> FACH exist
-        checkIndex = 0
-        for index in range(firstIndex, lastIndex+1):
-            if checkIndex >= len(checkStates):
-                break
-            if QCATEntries[index].logID == const.RRC_ID:
-                if QCATEntries[index].rrcID == checkStates[checkIndex]:
-                    checkIndex += 1
-        if checkIndex >= len(checkStates):
-            totalShortFACHTO += 1
+# find the previous RLC with polling bit enabled
+def search_prev_polling_bit(QCATEntries, startIndex, logID):
+    endIndex = max(-1, startIndex - const.MAX_LOOK_AHEAD_INDEX)
 
-    ratio = 0
-    if totalRetx:
-        ratio = totalShortFACHTO/totalRetx
-    if DEBUG:
-        print "FACH->PCH->FACH pattern frequency is %f" % (ratio)
-    return ratio
+    for i in range(startIndex, endIndex, -1):
+        if QCATEntries[i].logID == logID == const.UL_PDU_ID:
+            for header in QCATEntries[i].ul_pdu[0]["header"][::-1]:
+                if header["p"] == 1:
+                    return i
+
+    return None
 

@@ -295,15 +295,37 @@ def createEntryMap(entries):
 def meanValue(li):
 	if not li:
 		return 0.0
-	return sum(li)/len(li)
+	return sum(li)*1.0/len(li)
+
+def listMeanValue(li):
+    if not li:
+        return 0.0
+    return meanValue([meanValue(item) for item in li])
 
 def medianValue(li):
     if not li:
         return None
     if len(li) % 2 == 0:
-        return (li[len(li)/2-1] + li[len(li)/2])/2.0
+        return (li[len(li)*1.0/2-1] + li[len(li)*1.0/2])/2.0
     if len(li) % 2 != 0:
-        return li[len(li)/2]
+        return li[len(li)*1.0/2]
+
+def set_belongs_to(A, B):
+    for i in A:
+        if not i in B:
+            return False
+    return True
+
+# over threshold% of A in B
+def set_partial_belongs_to (A, B, threshold):
+    real_th = int(float(len(A) * threshold) / 100.0)
+    count = 0
+    for i in A:
+        if i in B:
+            count += 1
+        if count >= real_th:
+            return True
+    return False
 
 def conv_dmb_to_rssi(sig):
     # Detail at http://m10.home.xs4all.nl/mac/downloads/3GPP-27007-630.pdf
