@@ -293,7 +293,7 @@ def printAllRetxIntervalMap(QCATEntries, entryIndexMap, combMap, map_key = "ts_c
 #######################################################################
 # plot the detailed case of RLC fast retransmission break down
 # the duplicate ACKs and duplicate ACKs 
-# @return "time_stamp \t sn_for_dup_ack \t sn_for_rlc"
+# @print "time_stamp \t sn_for_dup_ack \t sn_for_rlc"
 def print_rlc_fast_retx_case (QCATEntries, rlc_fast_retx_map):
     offset = QCATEntries[rlc_fast_retx_map["dup_ack"][0]].timestamp * 1000
     for dup_ack_index in rlc_fast_retx_map["dup_ack"]:
@@ -314,12 +314,61 @@ def print_rlc_fast_retx_case (QCATEntries, rlc_fast_retx_map):
         cur_time = cur_entry.timestamp*1000 + time_unit * i - offset
         print "%f\t%f\t%f" % (cur_time, 0, cur_entry.ul_pdu[0]["sn"][i])
 
+# print RLC fast retx benefit/cost detail
+def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map):
+    win = float(len(retx_map["win"]))
+    draw = float(len(retx_map["draw"]))
+    draw_plus = float(len(retx_map["draw_plus"]))
+    loss = float(len(retx_map["loss"]))
+    totalCount = win + draw + draw_plus + loss
+    win_ratio = draw_ratio = draw_plus_ratio = loss_ratio = 0
+    if totalCount:
+        win_ratio = win / totalCount
+        draw_ratio = draw / totalCount
+        draw_plus_ratio = draw_plus / totalCount
+        loss_ratio = loss / totalCount
+    print "Total Count is %d" % totalCount
+    print "Win\tdraw_plus\tdraw\tloss"
+    print "%f\t%f\t%f\t%f" % (win, draw_plus, draw, loss)
+    print "%f\t%f\t%f\t%f" % (win_ratio, draw_plus_ratio, draw_ratio, loss_ratio)
+    print "Win Trans benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["win"])
+    print "Draw Trans Plus benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["draw_plus"])
+    print "Draw Trans overhead is %f" % util.meanValue(trans_time_benefit_cost_map["draw"])
+    print "Loss Trans overhead is %f" % util.meanValue(trans_time_benefit_cost_map["loss"])
+    print "Win avg RTT benefit time is %f" % util.meanValue(rtt_benefit_cost_time_map["win"])
+    print "Draw Plus avg RTT benefit time is %f" % util.meanValue(rtt_benefit_cost_time_map["draw_plus"])
+    print "Draw avg RTT overhead is %f" % util.meanValue(rtt_benefit_cost_time_map["draw"])
+    print "Loss avg RTT overhead is %f" % util.meanValue(rtt_benefit_cost_time_map["loss"])
+    print "Win benefit count is %f" % util.meanValue(rtt_benefit_cost_count_map["win"])
+    print "Draw Plus benefit count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw_plus"])
+    print "Draw overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw"])
+    print "Loss overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["loss"])
+
+    """
+    print "!"*50 + "Win" + "!"*50
+    if win > 0:
+        target_index = clw.findLongestRLCSeq(retx_map["win"])
+        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["win"][target_index])
+    print "!"*50 + "Draw Plus" + "!"*50
+    if draw_plus > 0:
+        target_index = clw.findLongestRLCSeq(retx_map["draw_plus"])
+        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["draw_plus"][target_index])
+    print "!"*50 + "Draw" + "!"*50
+    if draw > 0:
+        target_index = clw.findLongestRLCSeq(retx_map["draw"])
+        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["draw"][target_index])
+    print "!"*50 + "Loss" + "!"*50
+    if loss > 0:
+        target_index = clw.findLongestRLCSeq(retx_map["loss"])
+        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["loss"][target_index])
+    """
+
 #######################################################################
 ####################### Loss Rate Analysis ############################
 #######################################################################
 # print the loss ratio based on retransmission
 def print_loss_ratio(retxStatsMap, totCountStatsMap):
-    
+    pass
 
 #######################################################################
 ######################## Verification #################################

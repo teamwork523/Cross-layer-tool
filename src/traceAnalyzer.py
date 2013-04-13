@@ -72,7 +72,7 @@ def init_optParser():
     optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
                          help="Flag to enable printing throughput information based on TCP trace analysis")
     optParser.add_option("--print_retx", dest="retxType", default=None, \
-                         help="Useful tag to print retx ratio against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
+                         help="Useful tag to print retx ratio (loss ratio) against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
     optParser.add_option("--retx_analysis", action="store_true", dest="enable_tcp_retx_test", default=False, \
                          help="Enable TCP retransmission analysis")
     optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
@@ -252,7 +252,7 @@ def main():
     [ULReTxCountMap, DLReTxCountMap] = rw.procRLCReTx(QCATEntries)
 
     # collect statistic information
-    retxStatsMap, totCountStatsMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
+    retxCountMap, totCountStatsMap, retxRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
     #################################################################
     ######################## Cross Layer Analysis ###################
@@ -307,6 +307,11 @@ def main():
                 # total_dup_ack, retx_map, trans_time_benefit_cost_map = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
                 total_dup_ack, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, all_Retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
 
+                # overall benefit calculation
+                reduced_rtt, incr_rtt, total_retx_rtt = clw.rlc_fast_retx_overall_benefit(retxRTTMap, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map)
+                correct_ratio = (reduced_rtt - incr_rtt) / total_retx_rtt
+                improved_ratio = reduced_rtt / total_retx_rtt
+
                 if DEBUG:
                     print "RTO: Short FACH ratio is %f" % rtoShortFACHRatio
                     print "RTO: timer distribution %s" % rto_config_timer["time"]
@@ -325,60 +330,18 @@ def main():
                     print "$"*60
 
                 if DUP_DEBUG:
-                    win = float(len(retx_map["win"]))
-                    draw = float(len(retx_map["draw"]))
-                    draw_plus = float(len(retx_map["draw_plus"]))
-                    loss = float(len(retx_map["loss"]))
-                    totalCount = win + draw + draw_plus + loss
-                    win_ratio = draw_ratio = draw_plus_ratio = loss_ratio = 0
-                    if totalCount:
-                        win_ratio = win / totalCount
-                        draw_ratio = draw / totalCount
-                        draw_plus_ratio = draw_plus / totalCount
-                        loss_ratio = loss / totalCount
-                    print "Total Count is %d" % totalCount
-                    print "Win\tdraw_plus\tdraw\tloss"
-                    print "%f\t%f\t%f\t%f" % (win, draw_plus, draw, loss)
-                    print "%f\t%f\t%f\t%f" % (win_ratio, draw_plus_ratio, draw_ratio, loss_ratio)
-                    print "Win Trans benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["win"])
-                    print "Draw Trans Plus benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["draw_plus"])
-                    print "Draw Trans overhead is %f" % util.meanValue(trans_time_benefit_cost_map["draw"])
-                    print "Loss Trans overhead is %f" % util.meanValue(trans_time_benefit_cost_map["loss"])
-                    print "Win avg RTT benefit time is %f" % util.meanValue(rtt_benefit_cost_time_map["win"])
-                    print "Draw Plus avg RTT benefit time is %f" % util.meanValue(rtt_benefit_cost_time_map["draw_plus"])
-                    print "Draw avg RTT overhead is %f" % util.meanValue(rtt_benefit_cost_time_map["draw"])
-                    print "Loss avg RTT overhead is %f" % util.meanValue(rtt_benefit_cost_time_map["loss"])
-                    print "Win benefit count is %f" % util.meanValue(rtt_benefit_cost_count_map["win"])
-                    print "Draw Plus benefit count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw_plus"])
-                    print "Draw overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw"])
-                    print "Loss overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["loss"])
+                    pw.print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map)
+                    print "Correct Benefit RTT ratio: (%f - %f) / %f = \n>>>>>>>> %f" % (reduced_rtt, incr_rtt, total_retx_rtt, correct_ratio)
+                    print "'Improved Benefit' RTT ratio: %f / %f = \n<<<<<<<< %f" % (reduced_rtt, total_retx_rtt, improved_ratio)
 
-                    """
-                    print "!"*50 + "Win" + "!"*50
-                    if win > 0:
-                        target_index = clw.findLongestRLCSeq(retx_map["win"])
-                        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["win"][target_index])
-                    print "!"*50 + "Draw Plus" + "!"*50
-                    if draw_plus > 0:
-                        target_index = clw.findLongestRLCSeq(retx_map["draw_plus"])
-                        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["draw_plus"][target_index])
-                    print "!"*50 + "Draw" + "!"*50
-                    if draw > 0:
-                        target_index = clw.findLongestRLCSeq(retx_map["draw"])
-                        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["draw"][target_index])
-                    print "!"*50 + "Loss" + "!"*50
-                    if loss > 0:
-                        target_index = clw.findLongestRLCSeq(retx_map["loss"])
-                        pw.print_rlc_fast_retx_case(QCATEntries, retx_map["loss"][target_index])
-                    """
     #################################################################
     ######################## Loss Analysis ##########################
     #################################################################        
     # Loss ratio is essentially the retransmission ratio 
-    # TODO: calculate the overall overhead of the rlc fast retx
     if options.is_loss_analysis:
         if options.direction:
-            pw.print_loss_ratio(retxStatsMap, totCountStatsMap)
+            pw.print_loss_ratio(retxCountMap, totCountStatsMap)
+            
 
     #################################################################
     ######################## Result Display #########################
@@ -412,13 +375,13 @@ def main():
     if options.retxType:
         if options.retxType.lower() == "up":
             print "RLC uplink:"
-            pw.printRetxRatio(retxStatsMap, totCountStatsMap, "rlc_ul")
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, "rlc_ul")
             print "TCP RTO uplink:"
-            pw.printRetxRatio(retxStatsMap, totCountStatsMap, "tcp_rto")
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, "tcp_rto")
             print "TCP Fast Retx uplink:"
-            pw.printRetxRatio(retxStatsMap, totCountStatsMap, "tcp_fast")
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, "tcp_fast")
         else:
-            pw.printRetxRatio(retxStatsMap, totCountStatsMap, options.retxType)
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, options.retxType)
         
     # Correlate the retransmission Count with signal strength
     if options.isRetxCountVSSig:

@@ -634,14 +634,16 @@ def rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, win_size, retx_b
 
                             draw_benefit_time = 0.0
                             draw_cost_time = 0.0
-                            # calculate the RTT overhead
+                            
+                            # RTT cost / benefit calculation
                             benefit_count = 0.0
                             cost_count = 0.0
                             for sn in retx_seq_num_li:
                                 if sn not in set(target_seq_num_li):
                                     sn_index = sn_to_index_map_within_dup_acks[sn]
                                     if QCATEntries[sn_index].rtt["rlc"]:
-                                        draw_cost_time += QCATEntries[sn_index].rtt["rlc"]
+                                        # draw_cost_time += QCATEntries[sn_index].rtt["rlc"]
+                                        draw_cost_time += last_dup_ack_rtt
                                         cost_count += 1
                                 else:
                                     sn_index = sn_to_index_map_after_dup_acks[sn]
@@ -826,6 +828,33 @@ def rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, win_size, retx_b
                     break
         
     return (dup_ack_count, rlc_fast_retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map)
+
+# overall benefit calculation
+# TODO: only consider uplink right now
+# @return: reduced_rtt, incr_rtt, total_retx_rtt
+def rlc_fast_retx_overall_benefit(retxRTTMap, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map):
+    total_rtt = float(sum(retxRTTMap["rlc_ul"].values()))
+    reduced_rtt = 0.0
+    incr_rtt = 0.0
+    benefit_kw = ["win", "draw_plus"]
+    overhead_kw = ["draw", "loss"]
+    
+    # reduced rtt calculation
+    for kw in benefit_kw:
+        for index in range(len(rtt_benefit_cost_time_map[kw])):
+            avg_time = rtt_benefit_cost_time_map[kw][index]
+            count = rtt_benefit_cost_count_map[kw][index]
+            reduced_rtt += avg_time * count
+
+    # overhead rtt calculation
+    for kw in overhead_kw:
+        for index in range(len(rtt_benefit_cost_count_map[kw])):
+            avg_time = rtt_benefit_cost_time_map[kw][index]
+            count = rtt_benefit_cost_count_map[kw][index]
+            incr_rtt += avg_time * count
+
+    return reduced_rtt, incr_rtt, total_rtt
+        
 
 ############################################################################
 ######################## Analysis of Err Demotion ##########################
