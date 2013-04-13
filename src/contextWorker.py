@@ -202,6 +202,40 @@ def calThrouhgput(entries, direction):
             print "Throught is : %d" % (i.throughput) 
             """
 
+########## RTT ##########
+# calculate the RTT based on polling and STATUS PDU
+# assume RTT doesn't varies within a certain amount of time
+def calc_rlc_rtt(QCATEntries):
+    recent_poll_index = None
+    for index in range(len(QCATEntries)):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.UL_PDU_ID and check_polling_bit(cur_entry.ul_pdu[0]["header"]):
+            recent_poll_index = index
+        elif cur_entry.dl_ctrl["chan"]:
+            if recent_poll_index: 
+                # find an STATUS with a matched privious polling request
+                QCATEntries[recent_poll_index].rtt["rlc"] = cur_entry.timestamp - QCATEntries[recent_poll_index].timestamp
+                #if CUR_DEBUG:
+                    #print "RLC RTT: %f" % QCATEntries[recent_poll_index].rtt["rlc"]
+            recent_poll_index = None
+
+
+# assign the RLC RTT result
+def assign_rlc_rtt(QCATEntries):
+    recent_rtt = None
+    for entry in QCATEntries:
+        if entry.rtt["rlc"]:
+            recent_rtt = entry.rtt["rlc"]
+        elif recent_rtt:
+            # TODO: downlink part is not well taken care
+            if entry.logID == const.UL_PDU_ID or \
+               entry.logID == const.DL_CTRL_PDU_ID or \
+               entry.logID == const.DL_PDU_ID:
+                entry.rtt["rlc"] = recent_rtt
+        if CUR_DEBUG:
+            if entry.rtt["rlc"]:
+                print "entry's RLC rtt is %f" % entry.rtt["rlc"]
+
 ############## RLC Configuration ##############
 # assign previous configurations
 def assignPrivConfiguration (entries, logID):
@@ -229,4 +263,11 @@ def extractEntriesOfInterest(entries, ids_of_interest):
         if entry.logID in ids_of_interest:
             new_entries.append(entry)
     return new_entries
-            
+
+# check if there is a polling request in the header list
+def check_polling_bit(header_list):
+    if header_list:
+        for header in header_list:
+            if header["p"]:
+                return True
+    return False

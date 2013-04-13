@@ -43,7 +43,7 @@ def printRetxCountMapList (countMap):
         	print v[2]
 
 # Given TCP retransmission find the nearest retransmission
-def printMapRLCtoTCPRetx (tcpRetxMap, RLCRetxMap):
+def printmap_SDU_to_PDURetx (tcpRetxMap, RLCRetxMap):
     # TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry, 2nd_retx_entry...), (another)]}
     # RLC map format: {ts: {sn1:(count1,duration1, [entries]), sn2:(count2, duration2, [entries]), ...}
     ahead_th = 3
@@ -315,6 +315,13 @@ def print_rlc_fast_retx_case (QCATEntries, rlc_fast_retx_map):
         print "%f\t%f\t%f" % (cur_time, 0, cur_entry.ul_pdu[0]["sn"][i])
 
 #######################################################################
+####################### Loss Rate Analysis ############################
+#######################################################################
+# print the loss ratio based on retransmission
+def print_loss_ratio(retxStatsMap, totCountStatsMap):
+    
+
+#######################################################################
 ######################## Verification #################################
 #######################################################################
 # Verify the correctness of TCP and RLC one-to-all Mapping 
@@ -323,13 +330,13 @@ def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, sr
     for i in range(len(QCATEntries)):
         tcpEntry = QCATEntries[i]
         if tcpEntry.logID == const.PROTOCOL_ID and tcpEntry.ip["tlp_id"] == const.TCP_ID \
-           and ((pduID== const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
+           and ((pduID == const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
                 (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
             if DEBUG:
                 print "Before mapping"
                 printTCPEntry(tcpEntry)
             
-            mapped_RLCs, mapped_sn = clw.mapRLCtoTCP(QCATEntries, i , pduID)
+            mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(QCATEntries, i , pduID)
             print ("+" + "-"*15)*4
             print ">>> TCP Packet:"
             printTCPEntry(tcpEntry)
@@ -356,7 +363,7 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                 (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
             
             TCP_entry_count += 1
-            mapped_RLCs, mapped_sn = clw.mapRLCtoTCP(QCATEntries, i , pduID)
+            mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(QCATEntries, i , pduID)
             if mapped_RLCs:
                 Mapped_TCP_entry_count += 1
 
@@ -371,6 +378,7 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
     if TCP_entry_count > 0:
         ratio = Mapped_TCP_entry_count / TCP_entry_count
     print "Mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, ratio)
+
 #######################################################################
 ######################## Packet Trace #################################
 #######################################################################

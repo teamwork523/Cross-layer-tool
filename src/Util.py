@@ -377,7 +377,49 @@ def binarySearch (target, sortedList):
     elif target > mid:
         return binarySearch(target, sortedList[len(sortedList)/2:])
     else:
-        return binarySearch(target, sortedList[:len(sortedList)/2+1])   
+        return binarySearch(target, sortedList[:len(sortedList)/2+1]) 
+
+# use binary search to find the smallest value that greater than the target
+# i.e. a = [1, 4, 7, 10, 13, 16, 19], and binary_search_smallest_greater_value(3, a) = 4
+def binary_search_smallest_greater_value(target, sortedList):
+    if not sortedList:
+        return None
+    if target > sortedList[-1]:
+        return None
+    if target < sortedList[0]:
+        return sortedList[0]
+    if len(sortedList) == 1:
+        return sortedList[0]
+    if len(sortedList) == 2:
+        return sortedList[1]
+    mid = sortedList[len(sortedList)/2]
+    if target == mid:
+        return mid
+    elif target > mid:
+        return binary_search_smallest_greater_value(target, sortedList[len(sortedList)/2:])
+    else:
+        return binary_search_smallest_greater_value(target, sortedList[:len(sortedList)/2+1])
+
+# use binary search to find the largest smaller value that greater than the target
+# i.e. a = [1, 4, 7, 10, 13, 16, 19], and binary_search_largest_smaller_value(3, a) = 1
+def binary_search_largest_smaller_value(target, sortedList):
+    if not sortedList:
+        return None
+    if target < sortedList[0]:
+        return None
+    if target > sortedList[-1]:
+        return sortedList[-1]
+    if len(sortedList) == 1:
+        return sortedList[0]
+    if len(sortedList) == 2:
+        return sortedList[0]
+    mid = sortedList[len(sortedList)/2]
+    if target == mid:
+        return mid
+    elif target >= mid:
+        return binary_search_largest_smaller_value(target, sortedList[len(sortedList)/2:])
+    else:
+        return binary_search_largest_smaller_value(target, sortedList[:len(sortedList)/2+1])
 
 ## Used in verify PCAP timestamp that maps with QCAT log
 # Use timestamp as key to create the map

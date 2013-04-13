@@ -109,7 +109,7 @@ class QCATEntry:
         # NOTICE that both DL_CTRL_PDU_ID and DL_PDU_ID could contribute to CTRL PDU
         self.dl_ctrl = {"chan": None,
                         "ack": None,
-                        "reset": None,
+                        "reset": None, # boolean
                         "list": [] # [(seq_num1, len1), (seq_num2, len2), ...], while the log got cut off, so not all SNs included
                        }
         # TODO: currently hard configure the channel ID should be 19
@@ -158,8 +158,10 @@ class QCATEntry:
         self.sig = {"num_cells": None,
                     "ECIO": [],
                     "RSCP": []}
-        # Throughput information based on ACK calculation
+        # TCP Throughput information based on ACK calculation
         self.throughput = -1
+        # TCP / RLC RTT based on ARQ mechanism
+        self.rtt = {"tcp": None, "rlc": None}
         # order matters
         self.__procTitle()
         self.__procDetail()

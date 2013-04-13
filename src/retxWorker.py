@@ -38,13 +38,17 @@ def extractFlows (entries):
 
 #########
 # NOTICE: include the one TCP packet after the last retransmission at the end of the retransmission
-# @return: A map of retransmission TCP packet -- {orig_ts: [[orig_entry, retx_entry, 2nd_retx_entry], [entry_after_last_retx]]}
+# @return: TCP retx map -- {orig_ts: [[orig_entry, retx_entry, 2nd_retx_entry], entry_after_last_retx], next_ts: [[entry_list, ...], entry_right_after]}
+#   1. RTO map  2. Fast retx Map    3. Union of the previous two
 def procTCPReTx (flows, direction, srv_ip):
     is_up = True
     if direction.lower() != "up":
         is_up = False
+    # RTO and fast retx map
     tcpReTxMap = {}
     tcpFastReTxMap = {}
+    tcpOverallRetxMap = {}  # basically a combine of RTO and fast retx map
+
     for flow in flows:
         startPosition = findDataFlowStartIndex(flow)
         data_pkts = flow[startPosition:]
@@ -65,6 +69,8 @@ def procTCPReTx (flows, direction, srv_ip):
                 else:
                     tcpFastReTxMap[orig_fast_retx_entry.timestamp] = [[orig_fast_retx_entry, data_pkts[i]], \
                                    findNextEntry(data_pkts[i], data_pkts[i+1:])]
+                    tcpOverallRetxMap[orig_fast_retx_entry.timestamp] = [[orig_fast_retx_entry, data_pkts[i]], \
+                                      findNextEntry(data_pkts[i], data_pkts[i+1:])]
             else:
                 orig_entry = detectReTx(data_pkts[i], priv_pkts, is_up, srv_ip)
                 if orig_entry:
@@ -79,10 +85,12 @@ def procTCPReTx (flows, direction, srv_ip):
                     else:
                         tcpReTxMap[orig_entry.timestamp] = [[orig_entry, data_pkts[i]], \
                                    findNextEntry(data_pkts[i], data_pkts[i+1:])]
+                        tcpOverallRetxMap[orig_entry.timestamp] = [[orig_entry, data_pkts[i]], \
+                                          findNextEntry(data_pkts[i], data_pkts[i+1:])]
                 else:
                     priv_pkts.append(data_pkts[i])     
 
-    return (tcpReTxMap, tcpFastReTxMap)
+    return (tcpReTxMap, tcpFastReTxMap, tcpOverallRetxMap)
 
 # check if an entry is a fast retransmission packet by detecting the existance
 # of duplicate ACKs in the reverse trace.
@@ -353,7 +361,8 @@ def procRLCReTx(entries):
 #        "tcp_fast": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
 #        "rlc_ul": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
 #        "rlc_dl": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...} ... }, 
-#       {"tcp": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
+#       {"tcp_rto": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...}, 
+#        "tcp_fast": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
 #        "rlc_ul": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
 #        "rlc_dl": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...}})
 # TODO: adjust to finer granularity of state later
