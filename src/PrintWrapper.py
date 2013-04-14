@@ -113,8 +113,9 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxTyp
         if retxType.lower().find(totKey) != -1:
             break
     if retxStatsMap.has_key(retxType.lower()):
-        total_count = sum(totalStatsMap[totKey].values())
-        total_rtt = sum(totalRTTMap[totKey].values())
+        # We need to exclude the retransmitted packets as total
+        total_count = sum(totalStatsMap[totKey].values()) - sum(retxStatsMap[totKey].values())
+        total_rtt = sum(totalRTTMap[totKey].values()) - sum(retxRTTMap[totKey].values())
         
         # construct count_retx result
         if not total_count:
