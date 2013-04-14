@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo "Please run on Owl server"
 dir=$1
 srv_ip=141.212.113.208
 for model in HTC S3; do
