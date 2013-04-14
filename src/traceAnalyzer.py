@@ -173,7 +173,7 @@ def main():
     # TODO: right now uplink only
     cw.calc_rlc_rtt(QCATEntries)
     cw.assign_rlc_rtt(QCATEntries)
-    
+
 	#################################################################
     ######################## Protocol Filter ########################
     #################################################################
@@ -252,7 +252,7 @@ def main():
     [ULReTxCountMap, DLReTxCountMap] = rw.procRLCReTx(QCATEntries)
 
     # collect statistic information
-    retxCountMap, totCountStatsMap, retxRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
+    retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
     #################################################################
     ######################## Cross Layer Analysis ###################
@@ -305,12 +305,14 @@ def main():
                 # TODO: currently set win_size to be 200 as heuristic
                 # TODO: combine the retx_bit_map
                 # total_dup_ack, retx_map, trans_time_benefit_cost_map = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
-                total_dup_ack, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, all_Retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
+                total_dup_ack, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, all_Retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
 
                 # overall benefit calculation
-                reduced_rtt, incr_rtt, total_retx_rtt = clw.rlc_fast_retx_overall_benefit(retxRTTMap, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map)
-                correct_ratio = (reduced_rtt - incr_rtt) / total_retx_rtt
-                improved_ratio = reduced_rtt / total_retx_rtt
+                detailed_benefit_cost_time_map, detailed_benefit_cost_count_map = clw.rlc_fast_retx_overall_benefit(rtt_benefit_cost_time_list, rtt_benefit_cost_count_list)
+                total_retx_rtt = float(sum(retxRTTMap["rlc_ul"].values()))
+                total_retx_count = float(sum(retxCountMap["rlc_ul"].values()))
+                total_rtt = float(sum(totalRTTMap["rlc_ul"].values()))
+                total_count = float(sum(totCountStatsMap["rlc_ul"].values()))
 
                 if DEBUG:
                     print "RTO: Short FACH ratio is %f" % rtoShortFACHRatio
@@ -330,18 +332,18 @@ def main():
                     print "$"*60
 
                 if DUP_DEBUG:
-                    pw.print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map)
-                    print "Correct Benefit RTT ratio: (%f - %f) / %f = \n>>>>>>>> %f" % (reduced_rtt, incr_rtt, total_retx_rtt, correct_ratio)
-                    print "'Improved Benefit' RTT ratio: %f / %f = \n<<<<<<<< %f" % (reduced_rtt, total_retx_rtt, improved_ratio)
+                    pw.print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list, total_retx_rtt, detailed_benefit_cost_time_map, total_retx_count, detailed_benefit_cost_count_map)
+                    print "RLC retx ratio is %f" % (total_retx_rtt / total_rtt)
+                    print "RLC count ratio is %f" % (total_retx_count / total_count)
+                    
 
     #################################################################
     ######################## Loss Analysis ##########################
     #################################################################        
-    # Loss ratio is essentially the retransmission ratio 
+    # Loss ratio is essentially the retransmission ratio
+    # use the old retransmission ratio map and the RTT calculation map
     if options.is_loss_analysis:
-        if options.direction:
-            pw.print_loss_ratio(retxCountMap, totCountStatsMap)
-            
+        pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
 
     #################################################################
     ######################## Result Display #########################
@@ -375,13 +377,13 @@ def main():
     if options.retxType:
         if options.retxType.lower() == "up":
             print "RLC uplink:"
-            pw.printRetxRatio(retxCountMap, totCountStatsMap, "rlc_ul")
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap, "rlc_ul")
             print "TCP RTO uplink:"
-            pw.printRetxRatio(retxCountMap, totCountStatsMap, "tcp_rto")
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap, "tcp_rto")
             print "TCP Fast Retx uplink:"
-            pw.printRetxRatio(retxCountMap, totCountStatsMap, "tcp_fast")
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap, "tcp_fast")
         else:
-            pw.printRetxRatio(retxCountMap, totCountStatsMap, options.retxType)
+            pw.printRetxRatio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap, options.retxType)
         
     # Correlate the retransmission Count with signal strength
     if options.isRetxCountVSSig:

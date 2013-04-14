@@ -53,7 +53,6 @@ class QCATEntry:
                    # Wrap header + Raw IP header + TCP header as signature
                    "signature": None}
         # TCP information
-        # TODO: add more tcp fields
         self.tcp = {"src_port": None, \
                     "dst_port": None, \
                     "CWR_FLAG": None, \
@@ -70,6 +69,7 @@ class QCATEntry:
                     "payload": None, \
                     "header_len": None,\
                     "seg_size": None}
+        # UDP fields
         self.udp = {"src_port": None, \
                     "dst_port": None, \
                     "total_len": None}

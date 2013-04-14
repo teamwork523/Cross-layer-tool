@@ -831,29 +831,31 @@ def rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, win_size, retx_b
 
 # overall benefit calculation
 # TODO: only consider uplink right now
-# @return: reduced_rtt, incr_rtt, total_retx_rtt
-def rlc_fast_retx_overall_benefit(retxRTTMap, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map):
-    total_rtt = float(sum(retxRTTMap["rlc_ul"].values()))
-    reduced_rtt = 0.0
-    incr_rtt = 0.0
-    benefit_kw = ["win", "draw_plus"]
-    overhead_kw = ["draw", "loss"]
+# @return: RTT benefit total time map + RTT benefit total count map
+def rlc_fast_retx_overall_benefit( rtt_benefit_cost_time_list, rtt_benefit_cost_count_list):   
+    all_kw = ["win", "draw_plus", "draw", "loss"]
+    benefit_kw = all_kw[:2]
+    overhead_kw = all_kw[2:]
+    rtt_benefit_cost_time_map = dict(zip(all_kw, [0.0]*len(all_kw)))
+    rtt_benefit_cost_count_map = dict(zip(all_kw, [0.0]*len(all_kw)))
     
     # reduced rtt calculation
     for kw in benefit_kw:
-        for index in range(len(rtt_benefit_cost_time_map[kw])):
-            avg_time = rtt_benefit_cost_time_map[kw][index]
-            count = rtt_benefit_cost_count_map[kw][index]
-            reduced_rtt += avg_time * count
+        for index in range(len(rtt_benefit_cost_time_list[kw])):
+            avg_time = rtt_benefit_cost_time_list[kw][index]
+            count = rtt_benefit_cost_count_list[kw][index]
+            rtt_benefit_cost_time_map[kw] += avg_time * count
+            rtt_benefit_cost_count_map[kw] += count
 
     # overhead rtt calculation
     for kw in overhead_kw:
-        for index in range(len(rtt_benefit_cost_count_map[kw])):
-            avg_time = rtt_benefit_cost_time_map[kw][index]
-            count = rtt_benefit_cost_count_map[kw][index]
-            incr_rtt += avg_time * count
+        for index in range(len(rtt_benefit_cost_count_list[kw])):
+            avg_time = rtt_benefit_cost_time_list[kw][index]
+            count = rtt_benefit_cost_count_list[kw][index]
+            rtt_benefit_cost_time_map[kw] += avg_time * count
+            rtt_benefit_cost_count_map[kw] += count
 
-    return reduced_rtt, incr_rtt, total_rtt
+    return rtt_benefit_cost_time_map, rtt_benefit_cost_count_map
         
 
 ############################################################################

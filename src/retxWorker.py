@@ -367,7 +367,12 @@ def procRLCReTx(entries):
 #        "tcp_fast": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
 #        "rlc_ul": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
 #        "rlc_dl": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...}})
-# 3. Fast retx RTT Map
+# 3. Retx RTT Map
+#       {"tcp_rto": {TODO}, 
+#        "tcp_fast": {TODO},
+#        "rlc_ul": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
+#        "rlc_dl": {TODO}})
+# 4. total RTT Map:
 #       {"tcp_rto": {TODO}, 
 #        "tcp_fast": {TODO},
 #        "rlc_ul": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
@@ -397,11 +402,18 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     Bytes_on_fly = 0.0
 
     ######
-    ## RLC RTT Map
+    ## retx RTT Map
     TCP_rto_RTT = initFullRRCMap(0.0)
     TCP_fast_retx_RTT = initFullRRCMap(0.0)
-    RLC_UL_RTT = initFullRRCMap(0.0)
-    RLC_DL_RTT = initFullRRCMap(0.0)
+    RLC_UL_RETX_RTT = initFullRRCMap(0.0)
+    RLC_DL_RETX_RTT = initFullRRCMap(0.0)
+
+    ######
+    ## overall RTT Map
+    TCP_rto_TOT_RTT = initFullRRCMap(0.0)
+    TCP_fast_retx_TOT_RTT = initFullRRCMap(0.0)
+    RLC_UL_TOT_RTT = initFullRRCMap(0.0)
+    RLC_DL_TOT_RTT = initFullRRCMap(0.0)
 
     count_total_fach_promote = 0.0
     count_total_fach = 0.0
@@ -449,10 +461,12 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
             if i.logID == const.UL_PDU_ID:
                 ULBytes_total += sum(i.ul_pdu[0]["size"])
                 RLC_UL_tot_pkts[i.rrcID] += i.ul_pdu[0]["numPDU"]
+                if i.rtt["rlc"]:
+                    RLC_UL_TOT_RTT[i.rrcID] += i.ul_pdu[0]["numPDU"] * i.rtt["rlc"]
                 if i.retx["ul"]:
                     RLC_UL_bytes[i.rrcID] += sum([sum(x) for x in i.retx["ul"].values()])
                     if i.rtt["rlc"]:
-                        RLC_UL_RTT[i.rrcID] += cur_ul_retx_count * i.rtt["rlc"]
+                        RLC_UL_RETX_RTT[i.rrcID] += cur_ul_retx_count * i.rtt["rlc"]
                     if CUR_DEBUG:
                         if i.rrcID == const.FACH_TO_DCH_ID: 
                             count_fach_promote_retx += 1
@@ -467,7 +481,8 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
     # assign the map    
     retx_count_map = {"tcp_rto": TCP_rto_retx, "tcp_fast": TCP_fast_retx, "rlc_ul": RLC_UL_retx, "rlc_dl":RLC_DL_retx}
     total_count_map = {"tcp_rto": TCP_total_count, "tcp_fast": TCP_total_count, "rlc_ul": RLC_UL_tot_pkts, "rlc_dl": RLC_DL_tot_pkts}
-    rtt_overall_map = {"tcp_rto": TCP_rto_RTT, "tcp_fast": TCP_fast_retx_RTT, "rlc_ul": RLC_UL_RTT, "rlc_dl": RLC_DL_RTT}
+    rtt_retx_map = {"tcp_rto": TCP_rto_RTT, "tcp_fast": TCP_fast_retx_RTT, "rlc_ul": RLC_UL_RETX_RTT, "rlc_dl": RLC_DL_RETX_RTT}
+    rtt_overall_map = {"tcp_rto": TCP_rto_TOT_RTT, "tcp_fast": TCP_fast_retx_TOT_RTT, "rlc_ul": RLC_UL_TOT_RTT, "rlc_dl": RLC_DL_TOT_RTT}
     
     if CUR_DEBUG:
         if count_total_fach_promote:
@@ -475,7 +490,7 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
             # print "Stable FACH retransmission ratio %f " % (count_fach_retx / (count_total_fach_promote))
         else:
             print "FACH promote ratio %f" % (0)
-    return (retx_count_map, total_count_map, rtt_overall_map)
+    return (retx_count_map, total_count_map, rtt_retx_map, rtt_overall_map)
 
     # print "***************"
     totUL = float(sum(RLC_UL_retx))

@@ -84,7 +84,7 @@ def printmap_SDU_to_PDURetx (tcpRetxMap, RLCRetxMap):
             print "Retrans duration: %f\n" % (0)
 
 
-# Print ratio stats of retransmission for each state
+# Print retransmission count and RTT ratio for each state
 # In forms of:
 #      ({"tcp_rto": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...}, 
 #        "tcp_fast": {RRC_state_1: retx_count1, RRC_state_2: retx_count2, ...},
@@ -94,8 +94,15 @@ def printmap_SDU_to_PDURetx (tcpRetxMap, RLCRetxMap):
 #        "tcp_fast": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
 #        "rlc_ul": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...},
 #        "rlc_dl": {RRC_state_1: total_count1, RRC_state_2: total_count2, ...}})
-def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
-    result = ""
+def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxType):
+    # RTT result    
+    rtt_result = ""
+    rtt_per_state_ratio_result = ""
+    rtt_per_state_result = ""
+    rtt_tot_result = ""
+
+    # Count result
+    count_result = ""
     tot_result = ""
     totKey = ""
     per_state_ratio = ""
@@ -107,27 +114,50 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxType):
             break
     if retxStatsMap.has_key(retxType.lower()):
         total_count = sum(totalStatsMap[totKey].values())
+        total_rtt = sum(totalRTTMap[totKey].values())
+        
+        # construct count_retx result
         if not total_count:
-            print "0\t" * len(retxStatsMap[retxType.lower()])
-            return
-        for k, v in sorted(retxStatsMap[retxType.lower()].items()):
-            ratio = v / total_count
-            stateRatio = 0
-            if totalStatsMap[retxType.lower()][k]:
-                stateRatio = v / totalStatsMap[retxType.lower()][k]                
-            result += str(ratio) + "\t"
-            tot_result += str(total_count) + "\t"
-            per_state_ratio += str(stateRatio) + "\t"
-            per_state_count += str(v) + "\t"
+            count_result = "0\t" * len(retxStatsMap[retxType.lower()])
+        else:
+            for k, v in sorted(retxStatsMap[retxType.lower()].items()):
+                count_ratio = v / total_count
+                stateRatio = 0
+                if totalStatsMap[retxType.lower()][k]:
+                    stateRatio = v / totalStatsMap[retxType.lower()][k]                
+                count_result += str(count_ratio) + "\t"
+                tot_result += str(total_count) + "\t"
+                per_state_ratio += str(stateRatio) + "\t"
+                per_state_count += str(v) + "\t"
+
+        # construct rtt_retx result
+        if not total_rtt:
+            rtt_result = "0\t" * len(retxRTTMap[retxType.lower()])
+        else:
+            for k, v in sorted(retxRTTMap[retxType.lower()].items()):
+                rtt_ratio = v / total_rtt
+                rtt_per_state_ratio = 0
+                if totalRTTMap[retxType.lower()][k]:
+                   rtt_per_state_ratio = v / totalRTTMap[retxType.lower()][k]
+                rtt_result += str(rtt_ratio) + "\t"
+                rtt_tot_result += str(total_rtt) + "\t"
+                rtt_per_state_ratio_result += str(rtt_per_state_ratio) + "\t"
+                rtt_per_state_result += str(v) + "\t"
+
     else:
         print >> sys.stderr, "ERROR: Invalid retransmission type"
         return
-    print result
+    print "Retx Count Ratio for %s:" % retxType
+    print count_result
+    print "RTT Ratio %s:" %     retxType
+    print rtt_result
     if DEBUG:
-        print "Retx_count / Total_count: %s" % result
-        print "Total_count: %s" % tot_result
-        print "Each State count: %s" % per_state_count
-        print "Per state ratio: %s" %per_state_ratio
+        print "Retx_Count: Total_count is %d" % total_count
+        print "Retx_Count: Per State count is %s" % per_state_count
+        print "Retx_Count: Per state ratio is %s" % per_state_ratio
+        print "Retx_RTT: Total RTT is %d" % total_rtt
+        print "Retx_RTT: Per State RTT is %s" % rtt_per_state_result
+        print "Retx_RTT: Per State ratio is %s" % rtt_per_state_ratio_result
         print "*"*40
 
 # RLC retransmission count vs signal strength
@@ -315,7 +345,7 @@ def print_rlc_fast_retx_case (QCATEntries, rlc_fast_retx_map):
         print "%f\t%f\t%f" % (cur_time, 0, cur_entry.ul_pdu[0]["sn"][i])
 
 # print RLC fast retx benefit/cost detail
-def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map):
+def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map, total_retx_rtt, detailed_benefit_cost_rtt_map, total_retx_count, detailed_benefit_cost_count_map):
     win = float(len(retx_map["win"]))
     draw = float(len(retx_map["draw"]))
     draw_plus = float(len(retx_map["draw_plus"]))
@@ -344,6 +374,23 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
     print "Draw overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw"])
     print "Loss overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["loss"])
 
+    # Overall RTT benefit calculation
+    reduced_rtt = detailed_benefit_cost_rtt_map["win"] + detailed_benefit_cost_rtt_map["draw_plus"]
+    incr_rtt = detailed_benefit_cost_rtt_map["loss"] + detailed_benefit_cost_rtt_map["draw"]
+    correct_ratio = (reduced_rtt - incr_rtt) / total_retx_rtt
+    improved_ratio = reduced_rtt / total_retx_rtt
+
+    print "Correct Benefit RTT ratio: (%f - %f) / %f = \n>>>>>>>> %f" % (reduced_rtt, incr_rtt, total_retx_rtt, correct_ratio)
+    print "'Improved Benefit' RTT ratio: %f / %f = \n<<<<<<<< %f" % (reduced_rtt, total_retx_rtt, improved_ratio)
+    print "Win improved ratio: %f " % (detailed_benefit_cost_rtt_map["win"] / total_retx_rtt)
+    print "Draw Plus improved ratio: %f" % (detailed_benefit_cost_rtt_map["draw_plus"] / total_retx_rtt)
+    print "Draw overhead ratio: %f" % (detailed_benefit_cost_rtt_map["draw"] / total_retx_rtt)
+    print "Loss overhead ratio: %f" % (detailed_benefit_cost_rtt_map["loss"] / total_retx_rtt)
+    
+    # Count overhead
+    overhead_count = detailed_benefit_cost_count_map["draw"] + detailed_benefit_cost_count_map["loss"]
+    print "Cost count overhead ratio: %f" % (overhead_count/total_retx_count)
+
     """
     print "!"*50 + "Win" + "!"*50
     if win > 0:
@@ -364,11 +411,11 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
     """
 
 #######################################################################
-####################### Loss Rate Analysis ############################
+####################### Loss Analysis #################################
 #######################################################################
 # print the loss ratio based on retransmission
-def print_loss_ratio(retxStatsMap, totCountStatsMap):
-    pass
+def print_loss_ratio(retxStatsMap, totCountStatsMap, retxRTTMap, totalRTTMap):
+    printRetxRatio(retxStatsMap, totCountStatsMap, retxRTTMap, totalRTTMap, "rlc_ul")
 
 #######################################################################
 ######################## Verification #################################
