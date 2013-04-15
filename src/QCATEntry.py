@@ -50,7 +50,7 @@ class QCATEntry:
                    "dst_ip": None, \
                    "header_len": None, \
                    "total_len": 0, \
-                   # Wrap header + Raw IP header + TCP header as signature
+                   # Wrap header + Raw IP header + TCP/UDP header as signature
                    "signature": None}
         # TCP information
         self.tcp = {"src_port": None, \
@@ -466,7 +466,8 @@ class QCATEntry:
                             self.flow["ack_num"] = self.tcp["ack_num"]
                             self.flow["timestamp"] = self.timestamp
                         # self.__debugTCP()
-                    	self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+self.tcp["header_len"]])
+                        # Use IP and transport layer header as signature
+                        self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+self.tcp["header_len"]])
                     # Parse UDP Packet
                     if self.ip["tlp_id"] == const.UDP_ID:
                         start = const.Payload_Header_Len + self.ip["header_len"] 
@@ -474,6 +475,9 @@ class QCATEntry:
                         self.udp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                         self.udp["seg_size"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16) - const.UDP_Header_Len
                         # self.__debugUDP()
+                        # Use IP and transport layer header as signature
+                        self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+const.UDP_Header_Len])
+                    
                         
 ################################################################################   
 ################################# Helper Functions #############################

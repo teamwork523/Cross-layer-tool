@@ -15,8 +15,8 @@ import retxWorker as rw
 import Util as util
 from datetime import datetime
 
-DEBUG = False
-DETAIL_DEBUG = False
+DEBUG = True
+DETAIL_DEBUG = True
 CUR_DEBUG = False
 CONFIG_DEBUG = False
 DUP_DEBUG = True
