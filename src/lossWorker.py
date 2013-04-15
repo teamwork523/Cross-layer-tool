@@ -50,7 +50,6 @@ def UDP_loss_analysis (QCATEntries, udp_lookup_table, srv_ip):
         cur_entry = QCATEntries[entryIndex]
         if cur_entry.logID == const.PROTOCOL_ID and \
            cur_entry.ip["tlp_id"] == const.UDP_ID and \
-           cur_entry.ip["dst_ip"] == srv_ip and \
            cur_entry.rrcID:
             udp_payload = clw.findEntireIPPacket(QCATEntries, entryIndex)
             udp_payload_len = cur_entry.udp["seg_size"]
@@ -60,7 +59,7 @@ def UDP_loss_analysis (QCATEntries, udp_lookup_table, srv_ip):
             # count the UDP packet
             udp_total_per_rrc_map[cur_entry.rrcID] += 1            
             udp_payload_key = util.md5_hash("".join(udp_payload[-udp_payload_len:]))
-            if not udp_lookup_table.has_key(udp_payload_key):
+            if cur_entry.ip["dst_ip"] == srv_ip and not udp_lookup_table.has_key(udp_payload_key):
                 udp_loss_per_rrc_map[cur_entry.rrcID] += 1
                 udp_loss_list.append(entryIndex)
 
