@@ -1,0 +1,1376 @@
+2013-04-11_18:07:59.803 1365718079803 RRC1: test No.1 starts
+2013-04-11_18:08:04.090 1365718084090 RRC1: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_18:08:11.215 1365718091215 RRC1: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_18:08:12.413 1365718092413 RRC1: Send 10240 receive 0 with gap: 0 at trial 2
+2013-04-11_18:08:12.610 1365718092610 RRC1: Send 0 receive 0 with gap: 0 at trial 2
+2013-04-11_18:08:12.671 1365718092671 RRC1: {max_rtt, min_rtt, wait_time}: {127, 114, 0}
+2013-04-11_18:08:12.673 1365718092673 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:08:15.315 1365718095315 RRC1: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_18:08:15.988 1365718095988 RRC1: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_18:08:16.055 1365718096055 RRC1: {max_rtt, min_rtt, wait_time}: {111, 96, 500}
+2013-04-11_18:08:16.057 1365718096057 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:08:17.891 1365718097891 RRC1: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:08:26.017 1365718106017 RRC1: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:08:28.312 1365718108312 RRC1: Send 10240 receive 0 with gap: 1000 at trial 2
+2013-04-11_18:08:29.505 1365718109505 RRC1: Send 0 receive 0 with gap: 1000 at trial 2
+2013-04-11_18:08:29.602 1365718109602 RRC1: {max_rtt, min_rtt, wait_time}: {101, 147, 1000}
+2013-04-11_18:08:29.606 1365718109606 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:08:31.913 1365718111913 RRC1: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:08:33.593 1365718113593 RRC1: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:08:33.671 1365718113671 RRC1: {max_rtt, min_rtt, wait_time}: {202, 107, 1500}
+2013-04-11_18:08:33.677 1365718113677 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:08:36.201 1365718116201 RRC1: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:08:38.366 1365718118366 RRC1: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:08:38.403 1365718118403 RRC1: {max_rtt, min_rtt, wait_time}: {201, 95, 2000}
+2013-04-11_18:08:38.406 1365718118406 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:08:41.693 1365718121693 RRC1: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:08:44.401 1365718124401 RRC1: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:08:44.468 1365718124468 RRC1: {max_rtt, min_rtt, wait_time}: {197, 106, 2500}
+2013-04-11_18:08:44.470 1365718124470 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:08:50.151 1365718130151 RRC1: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:08:55.681 1365718135681 RRC1: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:08:55.813 1365718135813 RRC1: {max_rtt, min_rtt, wait_time}: {2406, 1820, 3000}
+2013-04-11_18:08:55.829 1365718135829 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:09:02.221 1365718142221 RRC1: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:09:05.892 1365718145892 RRC1: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:09:11.971 1365718151971 RRC1: Send 10240 receive 0 with gap: 3500 at trial 2
+2013-04-11_18:09:17.400 1365718157400 RRC1: Send 0 receive 0 with gap: 3500 at trial 2
+2013-04-11_18:09:26.148 1365718166148 RRC1: Send 10240 receive 0 with gap: 3500 at trial 3
+2013-04-11_18:09:36.837 1365718176837 RRC1: Send 0 receive 0 with gap: 3500 at trial 3
+2013-04-11_18:09:36.960 1365718176960 RRC1: {max_rtt, min_rtt, wait_time}: {786, 110, 3500}
+2013-04-11_18:09:36.970 1365718176970 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 1}
+2013-04-11_18:09:43.777 1365718183777 RRC1: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:09:48.071 1365718188071 RRC1: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:09:48.197 1365718188197 RRC1: {max_rtt, min_rtt, wait_time}: {1631, 224, 4000}
+2013-04-11_18:09:48.209 1365718188209 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:09:54.177 1365718194177 RRC1: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:09:59.107 1365718199107 RRC1: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:09:59.242 1365718199242 RRC1: {max_rtt, min_rtt, wait_time}: {1150, 255, 4500}
+2013-04-11_18:09:59.253 1365718199253 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:10:08.080 1365718208080 RRC1: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:10:14.050 1365718214050 RRC1: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:10:14.210 1365718214210 RRC1: {max_rtt, min_rtt, wait_time}: {2723, 251, 5000}
+2013-04-11_18:10:14.221 1365718214221 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:10:20.957 1365718220957 RRC1: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:10:27.388 1365718227388 RRC1: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:10:27.527 1365718227527 RRC1: {max_rtt, min_rtt, wait_time}: {969, 226, 5500}
+2013-04-11_18:10:27.535 1365718227535 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:10:36.671 1365718236671 RRC1: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:10:44.170 1365718244170 RRC1: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:10:53.503 1365718253503 RRC1: Send 10240 receive 0 with gap: 6000 at trial 2
+2013-04-11_18:11:00.661 1365718260661 RRC1: Send 0 receive 0 with gap: 6000 at trial 2
+2013-04-11_18:11:08.843 1365718268843 RRC1: Send 10240 receive 0 with gap: 6000 at trial 3
+2013-04-11_18:11:16.319 1365718276319 RRC1: Send 0 receive 0 with gap: 6000 at trial 3
+2013-04-11_18:11:16.447 1365718276447 RRC1: {max_rtt, min_rtt, wait_time}: {1050, 248, 6000}
+2013-04-11_18:11:16.457 1365718276457 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:11:27.273 1365718287273 RRC1: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:11:41.156 1365718301156 RRC1: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:11:41.291 1365718301291 RRC1: {max_rtt, min_rtt, wait_time}: {3034, 254, 6500}
+2013-04-11_18:11:41.301 1365718301301 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 3}
+2013-04-11_18:11:51.477 1365718311477 RRC1: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:12:00.426 1365718320426 RRC1: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:12:00.556 1365718320556 RRC1: {max_rtt, min_rtt, wait_time}: {1460, 742, 7000}
+2013-04-11_18:12:00.564 1365718320564 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:12:10.677 1365718330677 RRC1: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:12:19.718 1365718339718 RRC1: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:12:19.848 1365718339848 RRC1: {max_rtt, min_rtt, wait_time}: {1408, 691, 7500}
+2013-04-11_18:12:19.858 1365718339858 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:12:30.453 1365718350453 RRC1: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:12:40.319 1365718360319 RRC1: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:12:51.429 1365718371429 RRC1: Send 10240 receive 0 with gap: 8000 at trial 2
+2013-04-11_18:13:01.279 1365718381279 RRC1: Send 0 receive 0 with gap: 8000 at trial 2
+2013-04-11_18:13:01.411 1365718381411 RRC1: {max_rtt, min_rtt, wait_time}: {1546, 677, 8000}
+2013-04-11_18:13:01.420 1365718381420 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:13:12.427 1365718392427 RRC1: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:13:22.589 1365718402589 RRC1: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:13:22.718 1365718402718 RRC1: {max_rtt, min_rtt, wait_time}: {1187, 750, 8500}
+2013-04-11_18:13:22.728 1365718402728 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:13:34.362 1365718414362 RRC1: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:13:44.816 1365718424816 RRC1: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:13:44.945 1365718424945 RRC1: {max_rtt, min_rtt, wait_time}: {1329, 296, 9000}
+2013-04-11_18:13:44.955 1365718424955 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:14:00.161 1365718440161 RRC1: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:14:11.385 1365718451385 RRC1: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:14:11.512 1365718451512 RRC1: {max_rtt, min_rtt, wait_time}: {4302, 816, 9500}
+2013-04-11_18:14:11.527 1365718451527 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:14:24.577 1365718464577 RRC1: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:14:36.526 1365718476526 RRC1: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:14:36.658 1365718476658 RRC1: {max_rtt, min_rtt, wait_time}: {1625, 808, 10000}
+2013-04-11_18:14:36.668 1365718476668 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:14:49.682 1365718489682 RRC1: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:15:01.825 1365718501825 RRC1: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:15:15.030 1365718515030 RRC1: Send 10240 receive 0 with gap: 10500 at trial 2
+2013-04-11_18:15:27.704 1365718527704 RRC1: Send 0 receive 0 with gap: 10500 at trial 2
+2013-04-11_18:15:27.920 1365718527920 RRC1: {max_rtt, min_rtt, wait_time}: {1351, 802, 10500}
+2013-04-11_18:15:27.926 1365718527926 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:15:41.506 1365718541506 RRC1: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:15:54.504 1365718554504 RRC1: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:15:54.602 1365718554602 RRC1: {max_rtt, min_rtt, wait_time}: {1376, 753, 11000}
+2013-04-11_18:15:54.608 1365718554608 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:16:08.677 1365718568677 RRC1: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:16:22.131 1365718582131 RRC1: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:16:22.259 1365718582259 RRC1: {max_rtt, min_rtt, wait_time}: {1569, 770, 11500}
+2013-04-11_18:16:22.269 1365718582269 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:16:36.896 1365718596896 RRC1: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:16:50.652 1365718610652 RRC1: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:16:50.784 1365718610784 RRC1: {max_rtt, min_rtt, wait_time}: {1365, 771, 12000}
+2013-04-11_18:16:50.794 1365718610794 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:17:06.104 1365718626104 RRC1: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:17:20.502 1365718640502 RRC1: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:17:20.632 1365718640632 RRC1: {max_rtt, min_rtt, wait_time}: {1512, 731, 12500}
+2013-04-11_18:17:20.640 1365718640640 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:17:36.384 1365718656384 RRC1: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:17:51.302 1365718671302 RRC1: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:17:51.436 1365718671436 RRC1: {max_rtt, min_rtt, wait_time}: {1530, 789, 13000}
+2013-04-11_18:17:51.446 1365718671446 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:18:07.707 1365718687707 RRC1: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:18:23.241 1365718703241 RRC1: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:18:23.372 1365718703372 RRC1: {max_rtt, min_rtt, wait_time}: {1538, 785, 13500}
+2013-04-11_18:18:23.382 1365718703382 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:18:40.147 1365718720147 RRC1: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:18:56.150 1365718736150 RRC1: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:18:56.289 1365718736289 RRC1: {max_rtt, min_rtt, wait_time}: {1608, 775, 14000}
+2013-04-11_18:18:56.298 1365718736298 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:19:13.656 1365718753656 RRC1: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:19:29.831 1365718769831 RRC1: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:19:29.967 1365718769967 RRC1: {max_rtt, min_rtt, wait_time}: {1579, 784, 14500}
+2013-04-11_18:19:29.979 1365718769979 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:19:50.613 1365718790613 RRC1: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:20:07.410 1365718807410 RRC1: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:20:07.543 1365718807543 RRC1: {max_rtt, min_rtt, wait_time}: {4425, 1687, 15000}
+2013-04-11_18:20:07.552 1365718807552 RRC1: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:20:11.109 1365718811109 RRC1: test No.1 ends
+2013-04-11_18:20:41.119 1365718841119 RRC2: test No.2 starts
+2013-04-11_18:20:46.151 1365718846151 RRC2: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_18:20:46.272 1365718846272 RRC2: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_18:20:46.402 1365718846402 RRC2: {max_rtt, min_rtt, wait_time}: {98, 80, 0}
+2013-04-11_18:20:46.413 1365718846413 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:20:47.541 1365718847541 RRC2: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_18:20:48.159 1365718848159 RRC2: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_18:20:48.298 1365718848298 RRC2: {max_rtt, min_rtt, wait_time}: {214, 80, 500}
+2013-04-11_18:20:48.312 1365718848312 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:20:49.769 1365718849769 RRC2: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:20:50.952 1365718850952 RRC2: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:20:51.086 1365718851086 RRC2: {max_rtt, min_rtt, wait_time}: {98, 119, 1000}
+2013-04-11_18:20:51.097 1365718851097 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:20:53.200 1365718853200 RRC2: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:20:54.883 1365718854883 RRC2: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:20:55.010 1365718855010 RRC2: {max_rtt, min_rtt, wait_time}: {203, 119, 1500}
+2013-04-11_18:20:55.019 1365718855019 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:20:57.614 1365718857614 RRC2: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:20:59.739 1365718859739 RRC2: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:20:59.859 1365718859859 RRC2: {max_rtt, min_rtt, wait_time}: {192, 88, 2000}
+2013-04-11_18:20:59.868 1365718859868 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:21:03.013 1365718863013 RRC2: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:21:05.703 1365718865703 RRC2: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:21:05.855 1365718865855 RRC2: {max_rtt, min_rtt, wait_time}: {188, 128, 2500}
+2013-04-11_18:21:05.864 1365718865864 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:21:12.108 1365718872108 RRC2: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:21:17.881 1365718877881 RRC2: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:21:18.009 1365718878009 RRC2: {max_rtt, min_rtt, wait_time}: {2757, 1743, 3000}
+2013-04-11_18:21:18.020 1365718878020 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:21:24.398 1365718884398 RRC2: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:21:30.989 1365718890989 RRC2: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:21:31.132 1365718891132 RRC2: {max_rtt, min_rtt, wait_time}: {1654, 1776, 3500}
+2013-04-11_18:21:31.141 1365718891141 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:21:40.347 1365718900347 RRC2: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:21:44.507 1365718904507 RRC2: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:21:44.629 1365718904629 RRC2: {max_rtt, min_rtt, wait_time}: {763, 97, 4000}
+2013-04-11_18:21:44.643 1365718904643 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:21:50.341 1365718910341 RRC2: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:22:02.937 1365718922937 RRC2: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:22:03.072 1365718923072 RRC2: {max_rtt, min_rtt, wait_time}: {818, 430, 4500}
+2013-04-11_18:22:03.086 1365718923086 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 2}
+2013-04-11_18:22:13.722 1365718933722 RRC2: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:22:20.100 1365718940100 RRC2: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:22:29.433 1365718949433 RRC2: Send 10240 receive 0 with gap: 5000 at trial 2
+2013-04-11_18:22:35.807 1365718955807 RRC2: Send 0 receive 0 with gap: 5000 at trial 2
+2013-04-11_18:22:35.937 1365718955937 RRC2: {max_rtt, min_rtt, wait_time}: {2961, 256, 5000}
+2013-04-11_18:22:35.946 1365718955946 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:22:45.003 1365718965003 RRC2: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:22:51.729 1365718971729 RRC2: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:22:59.551 1365718979551 RRC2: Send 10240 receive 0 with gap: 5500 at trial 2
+2013-04-11_18:23:06.485 1365718986485 RRC2: Send 0 receive 0 with gap: 5500 at trial 2
+2013-04-11_18:23:06.607 1365718986607 RRC2: {max_rtt, min_rtt, wait_time}: {1043, 259, 5500}
+2013-04-11_18:23:06.617 1365718986617 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:23:15.691 1365718995691 RRC2: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:23:23.078 1365719003078 RRC2: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:23:32.288 1365719012288 RRC2: Send 10240 receive 0 with gap: 6000 at trial 2
+2013-04-11_18:23:39.488 1365719019488 RRC2: Send 0 receive 0 with gap: 6000 at trial 2
+2013-04-11_18:23:47.623 1365719027623 RRC2: Send 10240 receive 0 with gap: 6000 at trial 3
+2013-04-11_18:23:55.136 1365719035136 RRC2: Send 0 receive 0 with gap: 6000 at trial 3
+2013-04-11_18:23:55.262 1365719035262 RRC2: {max_rtt, min_rtt, wait_time}: {869, 258, 6000}
+2013-04-11_18:23:55.275 1365719035275 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:24:06.090 1365719046090 RRC2: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:24:14.627 1365719054627 RRC2: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:24:14.754 1365719054754 RRC2: {max_rtt, min_rtt, wait_time}: {3166, 1099, 6500}
+2013-04-11_18:24:14.762 1365719054762 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:24:24.242 1365719064242 RRC2: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:24:32.146 1365719072146 RRC2: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:24:41.604 1365719081604 RRC2: Send 10240 receive 0 with gap: 7000 at trial 2
+2013-04-11_18:24:50.575 1365719090575 RRC2: Send 0 receive 0 with gap: 7000 at trial 2
+2013-04-11_18:24:50.708 1365719090708 RRC2: {max_rtt, min_rtt, wait_time}: {1757, 701, 7000}
+2013-04-11_18:24:50.718 1365719090718 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:25:00.802 1365719100802 RRC2: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:25:10.256 1365719110256 RRC2: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:25:10.385 1365719110385 RRC2: {max_rtt, min_rtt, wait_time}: {1508, 678, 7500}
+2013-04-11_18:25:10.394 1365719110394 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:25:20.805 1365719120805 RRC2: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:25:31.346 1365719131346 RRC2: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:25:31.471 1365719131471 RRC2: {max_rtt, min_rtt, wait_time}: {1029, 710, 8000}
+2013-04-11_18:25:31.479 1365719131479 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:25:43.089 1365719143089 RRC2: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:25:53.506 1365719153506 RRC2: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:25:53.632 1365719153632 RRC2: {max_rtt, min_rtt, wait_time}: {1340, 725, 8500}
+2013-04-11_18:25:53.642 1365719153642 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:26:05.363 1365719165363 RRC2: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:26:16.324 1365719176324 RRC2: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:26:16.452 1365719176452 RRC2: {max_rtt, min_rtt, wait_time}: {1418, 694, 9000}
+2013-04-11_18:26:16.462 1365719176462 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:26:29.253 1365719189253 RRC2: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:26:40.344 1365719200344 RRC2: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:26:40.467 1365719200467 RRC2: {max_rtt, min_rtt, wait_time}: {2085, 271, 9500}
+2013-04-11_18:26:40.483 1365719200483 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:26:53.161 1365719213161 RRC2: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:27:05.343 1365719225343 RRC2: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:27:05.470 1365719225470 RRC2: {max_rtt, min_rtt, wait_time}: {1360, 795, 10000}
+2013-04-11_18:27:05.479 1365719225479 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:27:19.214 1365719239214 RRC2: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:27:31.747 1365719251747 RRC2: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:27:31.882 1365719251882 RRC2: {max_rtt, min_rtt, wait_time}: {1592, 673, 10500}
+2013-04-11_18:27:31.894 1365719251894 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:27:45.674 1365719265674 RRC2: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:27:59.076 1365719279076 RRC2: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:27:59.202 1365719279202 RRC2: {max_rtt, min_rtt, wait_time}: {1423, 832, 11000}
+2013-04-11_18:27:59.210 1365719279210 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:28:14.170 1365719294170 RRC2: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:28:27.676 1365719307676 RRC2: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:28:27.807 1365719307807 RRC2: {max_rtt, min_rtt, wait_time}: {1633, 780, 11500}
+2013-04-11_18:28:27.817 1365719307817 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:28:42.580 1365719322580 RRC2: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:28:56.556 1365719336556 RRC2: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:28:56.683 1365719336683 RRC2: {max_rtt, min_rtt, wait_time}: {1475, 758, 12000}
+2013-04-11_18:28:56.692 1365719336692 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:29:15.088 1365719355088 RRC2: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:29:29.865 1365719369865 RRC2: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:29:29.994 1365719369994 RRC2: {max_rtt, min_rtt, wait_time}: {4625, 777, 12500}
+2013-04-11_18:29:30.003 1365719370003 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:29:45.768 1365719385768 RRC2: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:30:00.848 1365719400848 RRC2: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:30:00.972 1365719400972 RRC2: {max_rtt, min_rtt, wait_time}: {1505, 806, 13000}
+2013-04-11_18:30:00.982 1365719400982 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:30:17.023 1365719417023 RRC2: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:30:32.715 1365719432715 RRC2: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:30:32.851 1365719432851 RRC2: {max_rtt, min_rtt, wait_time}: {1409, 801, 13500}
+2013-04-11_18:30:32.861 1365719432861 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:30:49.953 1365719449953 RRC2: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:31:05.605 1365719465605 RRC2: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:31:29.302 1365719489302 RRC2: Send 10240 receive 0 with gap: 14000 at trial 2
+2013-04-11_18:31:44.954 1365719504954 RRC2: Send 0 receive 0 with gap: 14000 at trial 2
+2013-04-11_18:31:45.093 1365719505093 RRC2: {max_rtt, min_rtt, wait_time}: {1390, 789, 14000}
+2013-04-11_18:31:45.103 1365719505103 RRC2: {pkt_loss_max, pkt_loss_min}: {1, 0}
+2013-04-11_18:32:02.296 1365719522296 RRC2: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:32:18.694 1365719538694 RRC2: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:32:18.823 1365719538823 RRC2: {max_rtt, min_rtt, wait_time}: {1509, 749, 14500}
+2013-04-11_18:32:18.832 1365719538832 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:32:36.756 1365719556756 RRC2: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:32:56.884 1365719576884 RRC2: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:32:57.008 1365719577008 RRC2: {max_rtt, min_rtt, wait_time}: {1636, 3826, 15000}
+2013-04-11_18:32:57.017 1365719577017 RRC2: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:33:00.877 1365719580877 RRC2: test No.2 ends
+2013-04-11_18:33:30.888 1365719610888 RRC3: test No.3 starts
+2013-04-11_18:33:36.848 1365719616848 RRC3: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_18:33:37.286 1365719617286 RRC3: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_18:33:37.422 1365719617422 RRC3: {max_rtt, min_rtt, wait_time}: {804, 226, 0}
+2013-04-11_18:33:37.431 1365719617431 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:33:41.907 1365719621907 RRC3: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_18:33:42.559 1365719622559 RRC3: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_18:33:43.991 1365719623991 RRC3: Send 10240 receive 0 with gap: 500 at trial 2
+2013-04-11_18:33:44.731 1365719624731 RRC3: Send 0 receive 0 with gap: 500 at trial 2
+2013-04-11_18:33:44.861 1365719624861 RRC3: {max_rtt, min_rtt, wait_time}: {280, 150, 500}
+2013-04-11_18:33:44.874 1365719624874 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:33:46.490 1365719626490 RRC3: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:33:47.619 1365719627619 RRC3: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:33:47.741 1365719627741 RRC3: {max_rtt, min_rtt, wait_time}: {113, 90, 1000}
+2013-04-11_18:33:47.749 1365719627749 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:33:49.802 1365719629802 RRC3: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:33:51.429 1365719631429 RRC3: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:33:51.552 1365719631552 RRC3: {max_rtt, min_rtt, wait_time}: {189, 89, 1500}
+2013-04-11_18:33:51.561 1365719631561 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:33:53.958 1365719633958 RRC3: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:33:56.090 1365719636090 RRC3: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:33:56.210 1365719636210 RRC3: {max_rtt, min_rtt, wait_time}: {99, 92, 2000}
+2013-04-11_18:33:56.218 1365719636218 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:33:59.117 1365719639117 RRC3: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:34:01.756 1365719641756 RRC3: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:34:04.771 1365719644771 RRC3: Send 10240 receive 0 with gap: 2500 at trial 2
+2013-04-11_18:34:07.405 1365719647405 RRC3: Send 0 receive 0 with gap: 2500 at trial 2
+2013-04-11_18:34:07.526 1365719647526 RRC3: {max_rtt, min_rtt, wait_time}: {107, 83, 2500}
+2013-04-11_18:34:07.536 1365719647536 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:34:13.807 1365719653807 RRC3: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:34:19.705 1365719659705 RRC3: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:34:19.832 1365719659832 RRC3: {max_rtt, min_rtt, wait_time}: {2678, 1685, 3000}
+2013-04-11_18:34:19.847 1365719659847 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:34:27.116 1365719667116 RRC3: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:34:33.011 1365719673011 RRC3: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:34:33.147 1365719673147 RRC3: {max_rtt, min_rtt, wait_time}: {2518, 1288, 3500}
+2013-04-11_18:34:33.158 1365719673158 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:34:40.211 1365719680211 RRC3: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:34:46.441 1365719686441 RRC3: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:34:46.570 1365719686570 RRC3: {max_rtt, min_rtt, wait_time}: {1730, 985, 4000}
+2013-04-11_18:34:46.580 1365719686580 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:34:53.433 1365719693433 RRC3: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:34:59.081 1365719699081 RRC3: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:34:59.209 1365719699209 RRC3: {max_rtt, min_rtt, wait_time}: {1255, 262, 4500}
+2013-04-11_18:34:59.218 1365719699218 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:35:06.365 1365719706365 RRC3: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:35:12.482 1365719712482 RRC3: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:35:12.611 1365719712611 RRC3: {max_rtt, min_rtt, wait_time}: {1029, 246, 5000}
+2013-04-11_18:35:12.621 1365719712621 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:35:20.418 1365719720418 RRC3: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:35:27.131 1365719727131 RRC3: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:35:27.260 1365719727260 RRC3: {max_rtt, min_rtt, wait_time}: {1047, 243, 5500}
+2013-04-11_18:35:27.269 1365719727269 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:35:35.499 1365719735499 RRC3: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:35:43.081 1365719743081 RRC3: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:35:43.210 1365719743210 RRC3: {max_rtt, min_rtt, wait_time}: {931, 268, 6000}
+2013-04-11_18:35:43.220 1365719743220 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:35:52.112 1365719752112 RRC3: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:36:00.498 1365719760498 RRC3: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:36:10.880 1365719770880 RRC3: Send 10240 receive 0 with gap: 6500 at trial 2
+2013-04-11_18:36:19.291 1365719779291 RRC3: Send 0 receive 0 with gap: 6500 at trial 2
+2013-04-11_18:36:19.430 1365719779430 RRC3: {max_rtt, min_rtt, wait_time}: {2419, 860, 6500}
+2013-04-11_18:36:19.441 1365719779441 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:36:28.692 1365719788692 RRC3: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:36:37.780 1365719797780 RRC3: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:36:37.907 1365719797907 RRC3: {max_rtt, min_rtt, wait_time}: {1207, 628, 7000}
+2013-04-11_18:36:37.916 1365719797916 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:36:47.440 1365719807440 RRC3: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:36:57.169 1365719817169 RRC3: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:36:57.299 1365719817299 RRC3: {max_rtt, min_rtt, wait_time}: {490, 730, 7500}
+2013-04-11_18:36:57.308 1365719817308 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:37:07.772 1365719827772 RRC3: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:37:17.466 1365719837466 RRC3: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:37:17.537 1365719837537 RRC3: {max_rtt, min_rtt, wait_time}: {1139, 817, 8000}
+2013-04-11_18:37:17.539 1365719837539 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:37:30.181 1365719850181 RRC3: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:37:40.908 1365719860908 RRC3: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:37:52.214 1365719872214 RRC3: Send 10240 receive 0 with gap: 8500 at trial 2
+2013-04-11_18:38:02.797 1365719882797 RRC3: Send 0 receive 0 with gap: 8500 at trial 2
+2013-04-11_18:38:14.296 1365719894296 RRC3: Send 10240 receive 0 with gap: 8500 at trial 3
+2013-04-11_18:38:25.471 1365719905471 RRC3: Send 0 receive 0 with gap: 8500 at trial 3
+2013-04-11_18:38:25.604 1365719905604 RRC3: {max_rtt, min_rtt, wait_time}: {1610, 652, 8500}
+2013-04-11_18:38:25.613 1365719905613 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:38:37.276 1365719917276 RRC3: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:38:48.246 1365719928246 RRC3: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:38:48.410 1365719928410 RRC3: {max_rtt, min_rtt, wait_time}: {1423, 774, 9000}
+2013-04-11_18:38:48.421 1365719928421 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:38:59.304 1365719939304 RRC3: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:39:10.686 1365719950686 RRC3: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:39:10.822 1365719950822 RRC3: {max_rtt, min_rtt, wait_time}: {160, 649, 9500}
+2013-04-11_18:39:10.830 1365719950830 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:39:23.515 1365719963515 RRC3: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:39:35.936 1365719975936 RRC3: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:39:36.085 1365719976085 RRC3: {max_rtt, min_rtt, wait_time}: {1288, 1262, 10000}
+2013-04-11_18:39:36.095 1365719976095 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:39:49.292 1365719989292 RRC3: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:40:01.567 1365720001567 RRC3: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:40:01.683 1365720001683 RRC3: {max_rtt, min_rtt, wait_time}: {1397, 724, 10500}
+2013-04-11_18:40:01.691 1365720001691 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:40:15.529 1365720015529 RRC3: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:40:28.606 1365720028606 RRC3: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:40:28.717 1365720028717 RRC3: {max_rtt, min_rtt, wait_time}: {1563, 760, 11000}
+2013-04-11_18:40:28.727 1365720028727 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:40:44.017 1365720044017 RRC3: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:40:57.509 1365720057509 RRC3: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:40:57.617 1365720057617 RRC3: {max_rtt, min_rtt, wait_time}: {2520, 737, 11500}
+2013-04-11_18:40:57.646 1365720057646 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:41:12.438 1365720072438 RRC3: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:41:25.956 1365720085956 RRC3: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:41:26.067 1365720086067 RRC3: {max_rtt, min_rtt, wait_time}: {1479, 728, 12000}
+2013-04-11_18:41:26.076 1365720086076 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:41:41.087 1365720101087 RRC3: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:41:55.325 1365720115325 RRC3: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:41:55.438 1365720115438 RRC3: {max_rtt, min_rtt, wait_time}: {1311, 791, 12500}
+2013-04-11_18:41:55.447 1365720115447 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:42:11.223 1365720131223 RRC3: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:42:26.243 1365720146243 RRC3: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:42:26.364 1365720146364 RRC3: {max_rtt, min_rtt, wait_time}: {1685, 807, 13000}
+2013-04-11_18:42:26.373 1365720146373 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:42:42.412 1365720162412 RRC3: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:42:58.175 1365720178175 RRC3: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:42:58.291 1365720178291 RRC3: {max_rtt, min_rtt, wait_time}: {1354, 814, 13500}
+2013-04-11_18:42:58.298 1365720178298 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:43:14.878 1365720194878 RRC3: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:43:30.824 1365720210824 RRC3: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:43:30.932 1365720210932 RRC3: {max_rtt, min_rtt, wait_time}: {1397, 776, 14000}
+2013-04-11_18:43:30.948 1365720210948 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:43:48.096 1365720228096 RRC3: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:44:07.743 1365720247743 RRC3: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:44:07.851 1365720247851 RRC3: {max_rtt, min_rtt, wait_time}: {1527, 3785, 14500}
+2013-04-11_18:44:07.860 1365720247860 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:44:25.630 1365720265630 RRC3: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:44:42.662 1365720282662 RRC3: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:44:42.781 1365720282781 RRC3: {max_rtt, min_rtt, wait_time}: {1422, 785, 15000}
+2013-04-11_18:44:42.790 1365720282790 RRC3: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:44:46.217 1365720286217 RRC3: test No.3 ends
+2013-04-11_18:45:16.229 1365720316229 RRC4: test No.4 starts
+2013-04-11_18:45:20.321 1365720320321 RRC4: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_18:45:20.447 1365720320447 RRC4: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_18:45:20.551 1365720320551 RRC4: {max_rtt, min_rtt, wait_time}: {100, 89, 0}
+2013-04-11_18:45:20.559 1365720320559 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:45:21.516 1365720321516 RRC4: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_18:45:22.168 1365720322168 RRC4: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_18:45:22.270 1365720322270 RRC4: {max_rtt, min_rtt, wait_time}: {100, 81, 500}
+2013-04-11_18:45:22.278 1365720322278 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:45:23.638 1365720323638 RRC4: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:45:24.762 1365720324762 RRC4: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:45:24.865 1365720324865 RRC4: {max_rtt, min_rtt, wait_time}: {89, 83, 1000}
+2013-04-11_18:45:24.874 1365720324874 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:45:26.717 1365720326717 RRC4: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:45:28.346 1365720328346 RRC4: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:45:28.454 1365720328454 RRC4: {max_rtt, min_rtt, wait_time}: {90, 90, 1500}
+2013-04-11_18:45:28.463 1365720328463 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:45:30.827 1365720330827 RRC4: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:45:32.957 1365720332957 RRC4: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:45:33.059 1365720333059 RRC4: {max_rtt, min_rtt, wait_time}: {98, 91, 2000}
+2013-04-11_18:45:33.068 1365720333068 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:45:35.937 1365720335937 RRC4: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:45:38.621 1365720338621 RRC4: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:45:38.727 1365720338727 RRC4: {max_rtt, min_rtt, wait_time}: {98, 129, 2500}
+2013-04-11_18:45:38.736 1365720338736 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:45:42.164 1365720342164 RRC4: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:45:49.392 1365720349392 RRC4: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:45:56.515 1365720356515 RRC4: Send 10240 receive 0 with gap: 3000 at trial 2
+2013-04-11_18:46:02.059 1365720362059 RRC4: Send 0 receive 0 with gap: 3000 at trial 2
+2013-04-11_18:46:02.152 1365720362152 RRC4: {max_rtt, min_rtt, wait_time}: {2579, 1826, 3000}
+2013-04-11_18:46:02.159 1365720362159 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:46:08.816 1365720368816 RRC4: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:46:12.739 1365720372739 RRC4: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:46:12.848 1365720372848 RRC4: {max_rtt, min_rtt, wait_time}: {2038, 249, 3500}
+2013-04-11_18:46:12.858 1365720372858 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:46:18.297 1365720378297 RRC4: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:46:24.749 1365720384749 RRC4: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:46:24.861 1365720384861 RRC4: {max_rtt, min_rtt, wait_time}: {420, 1163, 4000}
+2013-04-11_18:46:24.870 1365720384870 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:46:31.465 1365720391465 RRC4: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:46:36.382 1365720396382 RRC4: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:46:36.489 1365720396489 RRC4: {max_rtt, min_rtt, wait_time}: {886, 285, 4500}
+2013-04-11_18:46:36.498 1365720396498 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:46:42.666 1365720402666 RRC4: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:46:49.199 1365720409199 RRC4: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:46:49.309 1365720409309 RRC4: {max_rtt, min_rtt, wait_time}: {181, 269, 5000}
+2013-04-11_18:46:49.318 1365720409318 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:46:57.342 1365720417342 RRC4: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:47:03.320 1365720423320 RRC4: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:47:03.426 1365720423426 RRC4: {max_rtt, min_rtt, wait_time}: {1217, 267, 5500}
+2013-04-11_18:47:03.435 1365720423435 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:47:11.401 1365720431401 RRC4: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:47:17.964 1365720437964 RRC4: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:47:26.401 1365720446401 RRC4: Send 10240 receive 0 with gap: 6000 at trial 2
+2013-04-11_18:47:33.577 1365720453577 RRC4: Send 0 receive 0 with gap: 6000 at trial 2
+2013-04-11_18:47:33.702 1365720453702 RRC4: {max_rtt, min_rtt, wait_time}: {1010, 250, 6000}
+2013-04-11_18:47:33.711 1365720453711 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:47:43.916 1365720463916 RRC4: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:47:52.738 1365720472738 RRC4: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:47:52.871 1365720472871 RRC4: {max_rtt, min_rtt, wait_time}: {2498, 1125, 6500}
+2013-04-11_18:47:52.884 1365720472884 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:48:02.391 1365720482391 RRC4: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:48:11.206 1365720491206 RRC4: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_18:48:11.316 1365720491316 RRC4: {max_rtt, min_rtt, wait_time}: {1129, 629, 7000}
+2013-04-11_18:48:11.329 1365720491329 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:48:21.367 1365720501367 RRC4: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:48:30.877 1365720510877 RRC4: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_18:48:30.988 1365720510988 RRC4: {max_rtt, min_rtt, wait_time}: {1248, 721, 7500}
+2013-04-11_18:48:31.000 1365720511000 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:48:41.681 1365720521681 RRC4: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:48:51.036 1365720531036 RRC4: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_18:48:51.145 1365720531145 RRC4: {max_rtt, min_rtt, wait_time}: {1378, 278, 8000}
+2013-04-11_18:48:51.155 1365720531155 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:49:02.402 1365720542402 RRC4: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:49:12.397 1365720552397 RRC4: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_18:49:23.740 1365720563740 RRC4: Send 10240 receive 0 with gap: 8500 at trial 2
+2013-04-11_18:49:34.485 1365720574485 RRC4: Send 0 receive 0 with gap: 8500 at trial 2
+2013-04-11_18:49:34.605 1365720574605 RRC4: {max_rtt, min_rtt, wait_time}: {1372, 787, 8500}
+2013-04-11_18:49:34.613 1365720574613 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:49:45.507 1365720585507 RRC4: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:49:56.425 1365720596425 RRC4: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_18:50:07.963 1365720607963 RRC4: Send 10240 receive 0 with gap: 9000 at trial 2
+2013-04-11_18:50:18.706 1365720618706 RRC4: Send 0 receive 0 with gap: 9000 at trial 2
+2013-04-11_18:50:18.822 1365720618822 RRC4: {max_rtt, min_rtt, wait_time}: {1152, 1643, 9000}
+2013-04-11_18:50:18.830 1365720618830 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:50:30.773 1365720630773 RRC4: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:50:41.826 1365720641826 RRC4: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_18:50:41.936 1365720641936 RRC4: {max_rtt, min_rtt, wait_time}: {1129, 264, 9500}
+2013-04-11_18:50:41.945 1365720641945 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:50:54.861 1365720654861 RRC4: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:51:07.061 1365720667061 RRC4: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_18:51:07.173 1365720667173 RRC4: {max_rtt, min_rtt, wait_time}: {1484, 1235, 10000}
+2013-04-11_18:51:07.182 1365720667182 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:51:20.307 1365720680307 RRC4: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:51:32.736 1365720692736 RRC4: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_18:51:32.850 1365720692850 RRC4: {max_rtt, min_rtt, wait_time}: {1464, 787, 10500}
+2013-04-11_18:51:32.860 1365720692860 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:51:46.810 1365720706810 RRC4: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:51:59.656 1365720719656 RRC4: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_18:51:59.769 1365720719769 RRC4: {max_rtt, min_rtt, wait_time}: {1665, 775, 11000}
+2013-04-11_18:51:59.778 1365720719778 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:52:13.681 1365720733681 RRC4: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:52:27.175 1365720747175 RRC4: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_18:52:27.284 1365720747284 RRC4: {max_rtt, min_rtt, wait_time}: {1228, 749, 11500}
+2013-04-11_18:52:27.292 1365720747292 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:52:42.059 1365720762059 RRC4: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:52:56.153 1365720776153 RRC4: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_18:52:56.263 1365720776263 RRC4: {max_rtt, min_rtt, wait_time}: {1429, 784, 12000}
+2013-04-11_18:52:56.271 1365720776271 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:53:11.490 1365720791490 RRC4: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:53:25.955 1365720805955 RRC4: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_18:53:26.065 1365720806065 RRC4: {max_rtt, min_rtt, wait_time}: {1423, 694, 12500}
+2013-04-11_18:53:26.074 1365720806074 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:53:41.847 1365720821847 RRC4: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:53:56.892 1365720836892 RRC4: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_18:53:57.002 1365720837002 RRC4: {max_rtt, min_rtt, wait_time}: {1681, 775, 13000}
+2013-04-11_18:53:57.011 1365720837011 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:54:13.182 1365720853182 RRC4: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:54:28.613 1365720868613 RRC4: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_18:54:28.725 1365720868725 RRC4: {max_rtt, min_rtt, wait_time}: {1372, 757, 13500}
+2013-04-11_18:54:28.734 1365720868734 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:54:45.597 1365720885597 RRC4: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:55:01.522 1365720901522 RRC4: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_18:55:01.635 1365720901635 RRC4: {max_rtt, min_rtt, wait_time}: {1438, 808, 14000}
+2013-04-11_18:55:01.644 1365720901644 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:55:18.712 1365720918712 RRC4: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:55:35.301 1365720935301 RRC4: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_18:55:35.413 1365720935413 RRC4: {max_rtt, min_rtt, wait_time}: {1409, 823, 14500}
+2013-04-11_18:55:35.422 1365720935422 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:55:53.255 1365720953255 RRC4: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:56:10.350 1365720970350 RRC4: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_18:56:28.227 1365720988227 RRC4: Send 10240 receive 0 with gap: 15000 at trial 2
+2013-04-11_18:56:45.341 1365721005341 RRC4: Send 0 receive 0 with gap: 15000 at trial 2
+2013-04-11_18:56:45.454 1365721005454 RRC4: {max_rtt, min_rtt, wait_time}: {1420, 813, 15000}
+2013-04-11_18:56:45.463 1365721005463 RRC4: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:56:49.408 1365721009408 RRC4: test No.4 ends
+2013-04-11_18:57:18.916 1365721038916 RRC5: test No.5 starts
+2013-04-11_18:57:22.672 1365721042672 RRC5: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_18:57:22.889 1365721042889 RRC5: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_18:57:22.994 1365721042994 RRC5: {max_rtt, min_rtt, wait_time}: {99, 128, 0}
+2013-04-11_18:57:23.004 1365721043004 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:57:24.036 1365721044036 RRC5: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_18:57:24.721 1365721044721 RRC5: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_18:57:24.827 1365721044827 RRC5: {max_rtt, min_rtt, wait_time}: {141, 123, 500}
+2013-04-11_18:57:24.836 1365721044836 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:57:26.385 1365721046385 RRC5: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:57:27.509 1365721047509 RRC5: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_18:57:27.612 1365721047612 RRC5: {max_rtt, min_rtt, wait_time}: {180, 82, 1000}
+2013-04-11_18:57:27.621 1365721047621 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:57:29.525 1365721049525 RRC5: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:57:38.204 1365721058204 RRC5: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_18:57:38.324 1365721058324 RRC5: {max_rtt, min_rtt, wait_time}: {105, 102, 1500}
+2013-04-11_18:57:38.334 1365721058334 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 1}
+2013-04-11_18:57:41.829 1365721061829 RRC5: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:57:43.955 1365721063955 RRC5: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_18:57:46.535 1365721066535 RRC5: Send 10240 receive 0 with gap: 2000 at trial 2
+2013-04-11_18:57:48.661 1365721068661 RRC5: Send 0 receive 0 with gap: 2000 at trial 2
+2013-04-11_18:57:51.159 1365721071159 RRC5: Send 10240 receive 0 with gap: 2000 at trial 3
+2013-04-11_18:57:53.338 1365721073338 RRC5: Send 0 receive 0 with gap: 2000 at trial 3
+2013-04-11_18:57:53.484 1365721073484 RRC5: {max_rtt, min_rtt, wait_time}: {100, 124, 2000}
+2013-04-11_18:57:53.495 1365721073495 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:57:56.529 1365721076529 RRC5: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:57:59.156 1365721079156 RRC5: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_18:57:59.274 1365721079274 RRC5: {max_rtt, min_rtt, wait_time}: {198, 88, 2500}
+2013-04-11_18:57:59.283 1365721079283 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:58:05.214 1365721085214 RRC5: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:58:10.761 1365721090761 RRC5: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_18:58:10.868 1365721090868 RRC5: {max_rtt, min_rtt, wait_time}: {2597, 1677, 3000}
+2013-04-11_18:58:10.877 1365721090877 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:58:17.485 1365721097485 RRC5: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:58:23.851 1365721103851 RRC5: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_18:58:23.960 1365721103960 RRC5: {max_rtt, min_rtt, wait_time}: {1899, 1628, 3500}
+2013-04-11_18:58:23.968 1365721103968 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:58:30.895 1365721110895 RRC5: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:58:35.324 1365721115324 RRC5: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_18:58:35.430 1365721115430 RRC5: {max_rtt, min_rtt, wait_time}: {1536, 286, 4000}
+2013-04-11_18:58:35.439 1365721115439 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:58:41.102 1365721121102 RRC5: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:58:47.190 1365721127190 RRC5: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_18:58:47.287 1365721127287 RRC5: {max_rtt, min_rtt, wait_time}: {154, 1486, 4500}
+2013-04-11_18:58:47.295 1365721127295 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:58:54.472 1365721134472 RRC5: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:59:00.560 1365721140560 RRC5: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_18:59:00.670 1365721140670 RRC5: {max_rtt, min_rtt, wait_time}: {1093, 259, 5000}
+2013-04-11_18:59:00.679 1365721140679 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:59:08.410 1365721148410 RRC5: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:59:15.429 1365721155429 RRC5: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_18:59:15.536 1365721155536 RRC5: {max_rtt, min_rtt, wait_time}: {1079, 262, 5500}
+2013-04-11_18:59:15.545 1365721155545 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:59:24.015 1365721164015 RRC5: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:59:31.608 1365721171608 RRC5: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_18:59:31.720 1365721171720 RRC5: {max_rtt, min_rtt, wait_time}: {1054, 277, 6000}
+2013-04-11_18:59:31.729 1365721171729 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:59:40.589 1365721180589 RRC5: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:59:48.640 1365721188640 RRC5: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_18:59:48.747 1365721188747 RRC5: {max_rtt, min_rtt, wait_time}: {1117, 291, 6500}
+2013-04-11_18:59:48.756 1365721188756 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_18:59:58.997 1365721198997 RRC5: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:00:07.978 1365721207978 RRC5: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:00:08.086 1365721208086 RRC5: {max_rtt, min_rtt, wait_time}: {1917, 724, 7000}
+2013-04-11_19:00:08.095 1365721208095 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:00:18.490 1365721218490 RRC5: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:00:28.078 1365721228078 RRC5: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:00:28.192 1365721228192 RRC5: {max_rtt, min_rtt, wait_time}: {1523, 779, 7500}
+2013-04-11_19:00:28.201 1365721228201 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:00:42.035 1365721242035 RRC5: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:00:51.540 1365721251540 RRC5: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:00:51.646 1365721251646 RRC5: {max_rtt, min_rtt, wait_time}: {4693, 263, 8000}
+2013-04-11_19:00:51.655 1365721251655 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:01:03.037 1365721263037 RRC5: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:01:16.677 1365721276677 RRC5: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:01:28.286 1365721288286 RRC5: Send 10240 receive 0 with gap: 8500 at trial 2
+2013-04-11_19:01:38.368 1365721298368 RRC5: Send 0 receive 0 with gap: 8500 at trial 2
+2013-04-11_19:01:38.475 1365721298475 RRC5: {max_rtt, min_rtt, wait_time}: {1583, 256, 8500}
+2013-04-11_19:01:38.484 1365721298484 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:01:50.353 1365721310353 RRC5: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:02:00.958 1365721320958 RRC5: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:02:12.834 1365721332834 RRC5: Send 10240 receive 0 with gap: 9000 at trial 2
+2013-04-11_19:02:23.847 1365721343847 RRC5: Send 0 receive 0 with gap: 9000 at trial 2
+2013-04-11_19:02:23.980 1365721343980 RRC5: {max_rtt, min_rtt, wait_time}: {1704, 762, 9000}
+2013-04-11_19:02:23.989 1365721343989 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:02:36.188 1365721356188 RRC5: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:02:47.628 1365721367628 RRC5: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:02:47.735 1365721367735 RRC5: {max_rtt, min_rtt, wait_time}: {1352, 769, 9500}
+2013-04-11_19:02:47.744 1365721367744 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:03:00.489 1365721380489 RRC5: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:03:12.677 1365721392677 RRC5: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:03:12.792 1365721392792 RRC5: {max_rtt, min_rtt, wait_time}: {1369, 802, 10000}
+2013-04-11_19:03:12.800 1365721392800 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:03:25.794 1365721405794 RRC5: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:03:36.479 1365721416479 RRC5: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:03:50.763 1365721430763 RRC5: Send 10240 receive 0 with gap: 10500 at trial 2
+2013-04-11_19:04:01.426 1365721441426 RRC5: Send 0 receive 0 with gap: 10500 at trial 2
+2013-04-11_19:04:13.700 1365721453700 RRC5: Send 10240 receive 0 with gap: 10500 at trial 3
+2013-04-11_19:04:29.336 1365721469336 RRC5: Send 0 receive 0 with gap: 10500 at trial 3
+2013-04-11_19:04:29.444 1365721469444 RRC5: {max_rtt, min_rtt, wait_time}: {1327, 3826, 10500}
+2013-04-11_19:04:29.452 1365721469452 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:04:43.128 1365721483128 RRC5: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:04:56.206 1365721496206 RRC5: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:04:56.316 1365721496316 RRC5: {max_rtt, min_rtt, wait_time}: {1379, 827, 11000}
+2013-04-11_19:04:56.325 1365721496325 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:05:17.584 1365721517584 RRC5: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:05:31.236 1365721531236 RRC5: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:05:31.354 1365721531354 RRC5: {max_rtt, min_rtt, wait_time}: {1609, 839, 11500}
+2013-04-11_19:05:31.363 1365721531363 RRC5: {pkt_loss_max, pkt_loss_min}: {1, 0}
+2013-04-11_19:05:46.297 1365721546297 RRC5: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:06:00.554 1365721560554 RRC5: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:06:00.663 1365721560663 RRC5: {max_rtt, min_rtt, wait_time}: {1669, 827, 12000}
+2013-04-11_19:06:00.671 1365721560671 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:06:16.069 1365721576069 RRC5: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:06:30.704 1365721590704 RRC5: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:06:30.812 1365721590812 RRC5: {max_rtt, min_rtt, wait_time}: {1759, 793, 12500}
+2013-04-11_19:06:30.821 1365721590821 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:06:46.457 1365721606457 RRC5: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:07:01.477 1365721621477 RRC5: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:07:01.590 1365721621590 RRC5: {max_rtt, min_rtt, wait_time}: {1398, 805, 13000}
+2013-04-11_19:07:01.599 1365721621599 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:07:18.383 1365721638383 RRC5: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:07:34.014 1365721654014 RRC5: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:07:34.122 1365721654122 RRC5: {max_rtt, min_rtt, wait_time}: {1688, 782, 13500}
+2013-04-11_19:07:34.131 1365721654131 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:07:51.137 1365721671137 RRC5: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:08:07.072 1365721687072 RRC5: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:08:24.233 1365721704233 RRC5: Send 10240 receive 0 with gap: 14000 at trial 2
+2013-04-11_19:08:40.221 1365721720221 RRC5: Send 0 receive 0 with gap: 14000 at trial 2
+2013-04-11_19:08:40.334 1365721720334 RRC5: {max_rtt, min_rtt, wait_time}: {1726, 816, 14000}
+2013-04-11_19:08:40.343 1365721720343 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:08:57.677 1365721737677 RRC5: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:09:14.242 1365721754242 RRC5: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:09:14.350 1365721754350 RRC5: {max_rtt, min_rtt, wait_time}: {1524, 814, 14500}
+2013-04-11_19:09:14.359 1365721754359 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:09:32.323 1365721772323 RRC5: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:09:48.862 1365721788862 RRC5: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:09:48.973 1365721788973 RRC5: {max_rtt, min_rtt, wait_time}: {1772, 776, 15000}
+2013-04-11_19:09:48.982 1365721788982 RRC5: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:09:51.785 1365721791785 RRC5: test No.5 ends
+2013-04-11_19:10:21.492 1365721821492 RRC6: test No.6 starts
+2013-04-11_19:10:25.091 1365721825091 RRC6: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_19:10:25.218 1365721825218 RRC6: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_19:10:25.334 1365721825334 RRC6: {max_rtt, min_rtt, wait_time}: {98, 92, 0}
+2013-04-11_19:10:25.344 1365721825344 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:10:26.387 1365721826387 RRC6: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_19:10:27.009 1365721827009 RRC6: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_19:10:27.145 1365721827145 RRC6: {max_rtt, min_rtt, wait_time}: {211, 81, 500}
+2013-04-11_19:10:27.154 1365721827154 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:10:28.558 1365721828558 RRC6: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:10:29.739 1365721829739 RRC6: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:10:29.858 1365721829858 RRC6: {max_rtt, min_rtt, wait_time}: {99, 112, 1000}
+2013-04-11_19:10:29.867 1365721829867 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:10:34.533 1365721834533 RRC6: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:10:36.160 1365721836160 RRC6: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:10:36.264 1365721836264 RRC6: {max_rtt, min_rtt, wait_time}: {2758, 88, 1500}
+2013-04-11_19:10:36.273 1365721836273 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:10:38.689 1365721838689 RRC6: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:10:40.817 1365721840817 RRC6: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:10:40.932 1365721840932 RRC6: {max_rtt, min_rtt, wait_time}: {98, 91, 2000}
+2013-04-11_19:10:40.942 1365721840942 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:10:43.859 1365721843859 RRC6: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:10:46.488 1365721846488 RRC6: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:10:49.462 1365721849462 RRC6: Send 10240 receive 0 with gap: 2500 at trial 2
+2013-04-11_19:10:52.088 1365721852088 RRC6: Send 0 receive 0 with gap: 2500 at trial 2
+2013-04-11_19:10:58.696 1365721858696 RRC6: Send 10240 receive 0 with gap: 2500 at trial 3
+2013-04-11_19:11:01.478 1365721861478 RRC6: Send 0 receive 0 with gap: 2500 at trial 3
+2013-04-11_19:11:05.316 1365721865316 RRC6: Send 10240 receive 0 with gap: 2500 at trial 4
+2013-04-11_19:11:08.000 1365721868000 RRC6: Send 0 receive 0 with gap: 2500 at trial 4
+2013-04-11_19:11:08.191 1365721868191 RRC6: {max_rtt, min_rtt, wait_time}: {209, 113, 2500}
+2013-04-11_19:11:08.200 1365721868200 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:11:14.320 1365721874320 RRC6: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:11:17.732 1365721877732 RRC6: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:11:17.848 1365721877848 RRC6: {max_rtt, min_rtt, wait_time}: {2570, 236, 3000}
+2013-04-11_19:11:17.857 1365721877857 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:11:23.399 1365721883399 RRC6: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:11:28.774 1365721888774 RRC6: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:11:28.890 1365721888890 RRC6: {max_rtt, min_rtt, wait_time}: {232, 1125, 3500}
+2013-04-11_19:11:28.900 1365721888900 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:11:36.158 1365721896158 RRC6: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:11:41.464 1365721901464 RRC6: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:11:41.580 1365721901580 RRC6: {max_rtt, min_rtt, wait_time}: {1836, 676, 4000}
+2013-04-11_19:11:41.588 1365721901588 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:11:48.360 1365721908360 RRC6: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:11:54.874 1365721914874 RRC6: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:12:04.111 1365721924111 RRC6: Send 10240 receive 0 with gap: 4500 at trial 2
+2013-04-11_19:12:10.004 1365721930004 RRC6: Send 0 receive 0 with gap: 4500 at trial 2
+2013-04-11_19:12:10.119 1365721930119 RRC6: {max_rtt, min_rtt, wait_time}: {762, 563, 4500}
+2013-04-11_19:12:10.132 1365721930132 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:12:17.646 1365721937646 RRC6: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:12:24.284 1365721944284 RRC6: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:12:24.400 1365721944400 RRC6: {max_rtt, min_rtt, wait_time}: {1041, 258, 5000}
+2013-04-11_19:12:24.409 1365721944409 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:12:32.346 1365721952346 RRC6: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:12:38.934 1365721958934 RRC6: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:12:39.041 1365721959041 RRC6: {max_rtt, min_rtt, wait_time}: {1101, 258, 5500}
+2013-04-11_19:12:39.051 1365721959051 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:12:47.265 1365721967265 RRC6: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:12:54.614 1365721974614 RRC6: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:12:54.720 1365721974720 RRC6: {max_rtt, min_rtt, wait_time}: {972, 269, 6000}
+2013-04-11_19:12:54.729 1365721974729 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:13:03.547 1365721983547 RRC6: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:13:11.634 1365721991634 RRC6: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:13:11.766 1365721991766 RRC6: {max_rtt, min_rtt, wait_time}: {1021, 278, 6500}
+2013-04-11_19:13:11.775 1365721991775 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:13:21.760 1365722001760 RRC6: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:13:30.694 1365722010694 RRC6: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:13:30.812 1365722010812 RRC6: {max_rtt, min_rtt, wait_time}: {1653, 722, 7000}
+2013-04-11_19:13:30.821 1365722010821 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:13:41.113 1365722021113 RRC6: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:13:53.233 1365722033233 RRC6: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:13:53.342 1365722033342 RRC6: {max_rtt, min_rtt, wait_time}: {1607, 3692, 7500}
+2013-04-11_19:13:53.352 1365722033352 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:14:04.109 1365722044109 RRC6: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:14:12.240 1365722052240 RRC6: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:14:12.302 1365722052302 RRC6: {max_rtt, min_rtt, wait_time}: {1429, 94, 8000}
+2013-04-11_19:14:12.307 1365722052307 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:14:22.858 1365722062858 RRC6: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:14:36.392 1365722076392 RRC6: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:14:36.503 1365722076503 RRC6: {max_rtt, min_rtt, wait_time}: {1564, 3834, 8500}
+2013-04-11_19:14:36.512 1365722076512 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:14:51.304 1365722091304 RRC6: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:15:05.332 1365722105332 RRC6: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:15:05.452 1365722105452 RRC6: {max_rtt, min_rtt, wait_time}: {4506, 3767, 9000}
+2013-04-11_19:15:05.461 1365722105461 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:15:17.962 1365722117962 RRC6: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:15:29.442 1365722129442 RRC6: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:15:29.548 1365722129548 RRC6: {max_rtt, min_rtt, wait_time}: {1639, 727, 9500}
+2013-04-11_19:15:29.557 1365722129557 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:15:42.317 1365722142317 RRC6: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:15:54.401 1365722154401 RRC6: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:15:54.513 1365722154513 RRC6: {max_rtt, min_rtt, wait_time}: {1427, 805, 10000}
+2013-04-11_19:15:54.522 1365722154522 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:16:07.803 1365722167803 RRC6: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:16:20.231 1365722180231 RRC6: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:16:20.342 1365722180342 RRC6: {max_rtt, min_rtt, wait_time}: {1548, 791, 10500}
+2013-04-11_19:16:20.352 1365722180352 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:16:34.402 1365722194402 RRC6: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:16:47.091 1365722207091 RRC6: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:16:47.209 1365722207209 RRC6: {max_rtt, min_rtt, wait_time}: {1717, 659, 11000}
+2013-04-11_19:16:47.217 1365722207217 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:17:01.362 1365722221362 RRC6: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:17:14.390 1365722234390 RRC6: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:17:14.496 1365722234496 RRC6: {max_rtt, min_rtt, wait_time}: {1367, 738, 11500}
+2013-04-11_19:17:14.504 1365722234504 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:17:29.400 1365722249400 RRC6: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:17:43.363 1365722263363 RRC6: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:17:43.471 1365722263471 RRC6: {max_rtt, min_rtt, wait_time}: {1423, 764, 12000}
+2013-04-11_19:17:43.480 1365722263480 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:17:59.168 1365722279168 RRC6: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:18:13.482 1365722293482 RRC6: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:18:13.593 1365722293593 RRC6: {max_rtt, min_rtt, wait_time}: {1526, 806, 12500}
+2013-04-11_19:18:13.603 1365722293603 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:18:29.255 1365722309255 RRC6: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:18:44.222 1365722324222 RRC6: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:18:44.334 1365722324334 RRC6: {max_rtt, min_rtt, wait_time}: {1456, 800, 13000}
+2013-04-11_19:18:44.342 1365722324342 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:19:00.503 1365722340503 RRC6: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:19:15.921 1365722355921 RRC6: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:19:16.032 1365722356032 RRC6: {max_rtt, min_rtt, wait_time}: {1518, 832, 13500}
+2013-04-11_19:19:16.041 1365722356041 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:19:32.832 1365722372832 RRC6: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:19:48.521 1365722388521 RRC6: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:19:48.628 1365722388628 RRC6: {max_rtt, min_rtt, wait_time}: {1387, 713, 14000}
+2013-04-11_19:19:48.638 1365722388638 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:20:05.745 1365722405745 RRC6: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:20:22.650 1365722422650 RRC6: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:20:42.793 1365722442793 RRC6: Send 10240 receive 0 with gap: 14500 at trial 2
+2013-04-11_19:20:59.251 1365722459251 RRC6: Send 0 receive 0 with gap: 14500 at trial 2
+2013-04-11_19:20:59.378 1365722459378 RRC6: {max_rtt, min_rtt, wait_time}: {4391, 748, 14500}
+2013-04-11_19:20:59.387 1365722459387 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:21:17.221 1365722477221 RRC6: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:21:36.749 1365722496749 RRC6: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:21:54.682 1365722514682 RRC6: Send 10240 receive 0 with gap: 15000 at trial 2
+2013-04-11_19:22:11.349 1365722531349 RRC6: Send 0 receive 0 with gap: 15000 at trial 2
+2013-04-11_19:22:29.001 1365722549001 RRC6: Send 10240 receive 0 with gap: 15000 at trial 3
+2013-04-11_19:22:45.549 1365722565549 RRC6: Send 0 receive 0 with gap: 15000 at trial 3
+2013-04-11_19:22:45.655 1365722565655 RRC6: {max_rtt, min_rtt, wait_time}: {1369, 630, 15000}
+2013-04-11_19:22:45.664 1365722565664 RRC6: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:22:49.176 1365722569176 RRC6: test No.6 ends
+2013-04-11_19:23:19.187 1365722599187 RRC7: test No.7 starts
+2013-04-11_19:23:22.752 1365722602752 RRC7: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_19:23:22.860 1365722602860 RRC7: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_19:23:22.899 1365722602899 RRC7: {max_rtt, min_rtt, wait_time}: {112, 81, 0}
+2013-04-11_19:23:22.902 1365722602902 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:23:24.830 1365722604830 RRC7: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_19:23:25.701 1365722605701 RRC7: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_19:23:25.804 1365722605804 RRC7: {max_rtt, min_rtt, wait_time}: {1182, 332, 500}
+2013-04-11_19:23:25.813 1365722605813 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:23:27.640 1365722607640 RRC7: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:23:28.786 1365722608786 RRC7: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:23:28.889 1365722608889 RRC7: {max_rtt, min_rtt, wait_time}: {198, 102, 1000}
+2013-04-11_19:23:28.898 1365722608898 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:23:30.840 1365722610840 RRC7: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:23:33.376 1365722613376 RRC7: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:23:33.487 1365722613487 RRC7: {max_rtt, min_rtt, wait_time}: {109, 949, 1500}
+2013-04-11_19:23:33.496 1365722613496 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:23:36.835 1365722616835 RRC7: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:23:39.028 1365722619028 RRC7: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:23:39.141 1365722619141 RRC7: {max_rtt, min_rtt, wait_time}: {218, 107, 2000}
+2013-04-11_19:23:39.150 1365722619150 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:23:42.201 1365722622201 RRC7: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:23:44.867 1365722624867 RRC7: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:23:48.180 1365722628180 RRC7: Send 10240 receive 0 with gap: 2500 at trial 2
+2013-04-11_19:23:50.853 1365722630853 RRC7: Send 0 receive 0 with gap: 2500 at trial 2
+2013-04-11_19:23:50.964 1365722630964 RRC7: {max_rtt, min_rtt, wait_time}: {239, 100, 2500}
+2013-04-11_19:23:50.976 1365722630976 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:23:54.831 1365722634831 RRC7: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:23:58.005 1365722638005 RRC7: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:23:58.110 1365722638110 RRC7: {max_rtt, min_rtt, wait_time}: {199, 97, 3000}
+2013-04-11_19:23:58.120 1365722638120 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:24:03.817 1365722643817 RRC7: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:24:09.329 1365722649329 RRC7: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:24:09.441 1365722649441 RRC7: {max_rtt, min_rtt, wait_time}: {1880, 1332, 3500}
+2013-04-11_19:24:09.449 1365722649449 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:24:15.868 1365722655868 RRC7: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:24:21.348 1365722661348 RRC7: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:24:21.456 1365722661456 RRC7: {max_rtt, min_rtt, wait_time}: {1239, 846, 4000}
+2013-04-11_19:24:21.465 1365722661465 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:24:27.970 1365722667970 RRC7: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:24:33.518 1365722673518 RRC7: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:24:33.626 1365722673626 RRC7: {max_rtt, min_rtt, wait_time}: {938, 452, 4500}
+2013-04-11_19:24:33.635 1365722673635 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:24:40.756 1365722680756 RRC7: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:24:46.746 1365722686746 RRC7: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:24:46.838 1365722686838 RRC7: {max_rtt, min_rtt, wait_time}: {979, 242, 5000}
+2013-04-11_19:24:46.847 1365722686847 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:24:54.489 1365722694489 RRC7: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:25:00.987 1365722700987 RRC7: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:25:01.099 1365722701099 RRC7: {max_rtt, min_rtt, wait_time}: {1030, 258, 5500}
+2013-04-11_19:25:01.108 1365722701108 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:25:09.168 1365722709168 RRC7: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:25:16.097 1365722716097 RRC7: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:25:16.206 1365722716206 RRC7: {max_rtt, min_rtt, wait_time}: {1072, 231, 6000}
+2013-04-11_19:25:16.215 1365722716215 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:25:26.360 1365722726360 RRC7: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:25:34.377 1365722734377 RRC7: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:25:34.490 1365722734490 RRC7: {max_rtt, min_rtt, wait_time}: {2589, 915, 6500}
+2013-04-11_19:25:34.499 1365722734499 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:25:44.016 1365722744016 RRC7: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:25:52.526 1365722752526 RRC7: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:25:52.638 1365722752638 RRC7: {max_rtt, min_rtt, wait_time}: {1277, 926, 7000}
+2013-04-11_19:25:52.647 1365722752647 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:26:05.739 1365722765739 RRC7: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:26:17.606 1365722777606 RRC7: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:26:30.897 1365722790897 RRC7: Send 10240 receive 0 with gap: 7500 at trial 2
+2013-04-11_19:26:40.005 1365722800005 RRC7: Send 0 receive 0 with gap: 7500 at trial 2
+2013-04-11_19:26:40.112 1365722800112 RRC7: {max_rtt, min_rtt, wait_time}: {4471, 691, 7500}
+2013-04-11_19:26:40.121 1365722800121 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:26:53.912 1365722813912 RRC7: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:27:06.465 1365722826465 RRC7: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:27:06.577 1365722826577 RRC7: {max_rtt, min_rtt, wait_time}: {4512, 3815, 8000}
+2013-04-11_19:27:06.586 1365722826586 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:27:17.174 1365722837174 RRC7: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:27:30.242 1365722850242 RRC7: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:27:44.494 1365722864494 RRC7: Send 10240 receive 0 with gap: 8500 at trial 2
+2013-04-11_19:27:57.481 1365722877481 RRC7: Send 0 receive 0 with gap: 8500 at trial 2
+2013-04-11_19:28:11.735 1365722891735 RRC7: Send 10240 receive 0 with gap: 8500 at trial 3
+2013-04-11_19:28:22.071 1365722902071 RRC7: Send 0 receive 0 with gap: 8500 at trial 3
+2013-04-11_19:28:22.185 1365722902185 RRC7: {max_rtt, min_rtt, wait_time}: {4530, 707, 8500}
+2013-04-11_19:28:22.194 1365722902194 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:28:33.944 1365722913944 RRC7: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:28:44.743 1365722924743 RRC7: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:28:44.857 1365722924857 RRC7: {max_rtt, min_rtt, wait_time}: {1348, 689, 9000}
+2013-04-11_19:28:44.866 1365722924866 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:29:00.077 1365722940077 RRC7: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:29:14.131 1365722954131 RRC7: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:29:14.261 1365722954261 RRC7: {max_rtt, min_rtt, wait_time}: {4590, 3724, 9500}
+2013-04-11_19:29:14.271 1365722954271 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:29:29.824 1365722969824 RRC7: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:29:41.170 1365722981170 RRC7: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:29:41.290 1365722981290 RRC7: {max_rtt, min_rtt, wait_time}: {4366, 675, 10000}
+2013-04-11_19:29:41.299 1365722981299 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:29:54.260 1365722994260 RRC7: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:30:06.159 1365723006159 RRC7: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:30:06.287 1365723006287 RRC7: {max_rtt, min_rtt, wait_time}: {1281, 733, 10500}
+2013-04-11_19:30:06.305 1365723006305 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:30:19.975 1365723019975 RRC7: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:30:32.609 1365723032609 RRC7: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:30:32.748 1365723032748 RRC7: {max_rtt, min_rtt, wait_time}: {1359, 756, 11000}
+2013-04-11_19:30:32.758 1365723032758 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:30:47.133 1365723047133 RRC7: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:31:00.049 1365723060049 RRC7: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:31:00.232 1365723060232 RRC7: {max_rtt, min_rtt, wait_time}: {1597, 756, 11500}
+2013-04-11_19:31:00.237 1365723060237 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:31:14.925 1365723074925 RRC7: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:31:28.338 1365723088338 RRC7: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:31:28.448 1365723088448 RRC7: {max_rtt, min_rtt, wait_time}: {1409, 699, 12000}
+2013-04-11_19:31:28.457 1365723088457 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:31:44.196 1365723104196 RRC7: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:31:58.538 1365723118538 RRC7: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:31:58.653 1365723118653 RRC7: {max_rtt, min_rtt, wait_time}: {1613, 715, 12500}
+2013-04-11_19:31:58.662 1365723118662 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:32:14.455 1365723134455 RRC7: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:32:32.028 1365723152028 RRC7: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:32:32.134 1365723152134 RRC7: {max_rtt, min_rtt, wait_time}: {1475, 3753, 13000}
+2013-04-11_19:32:32.143 1365723152143 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:32:48.358 1365723168358 RRC7: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:33:03.238 1365723183238 RRC7: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:33:03.348 1365723183348 RRC7: {max_rtt, min_rtt, wait_time}: {1328, 730, 13500}
+2013-04-11_19:33:03.357 1365723183357 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:33:20.125 1365723200125 RRC7: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:33:35.628 1365723215628 RRC7: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:33:35.733 1365723215733 RRC7: {max_rtt, min_rtt, wait_time}: {1585, 683, 14000}
+2013-04-11_19:33:35.742 1365723215742 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:33:52.965 1365723232965 RRC7: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:34:08.821 1365723248821 RRC7: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:34:08.927 1365723248927 RRC7: {max_rtt, min_rtt, wait_time}: {1490, 714, 14500}
+2013-04-11_19:34:08.938 1365723248938 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:34:26.509 1365723266509 RRC7: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:34:43.667 1365723283667 RRC7: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:34:43.777 1365723283777 RRC7: {max_rtt, min_rtt, wait_time}: {1455, 850, 15000}
+2013-04-11_19:34:43.785 1365723283785 RRC7: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:34:52.277 1365723292277 RRC7: test No.7 ends
+2013-04-11_19:35:22.285 1365723322285 RRC8: test No.8 starts
+2013-04-11_19:35:26.911 1365723326911 RRC8: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_19:35:27.057 1365723327057 RRC8: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_19:35:27.159 1365723327159 RRC8: {max_rtt, min_rtt, wait_time}: {318, 105, 0}
+2013-04-11_19:35:27.167 1365723327167 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:35:28.089 1365723328089 RRC8: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_19:35:28.726 1365723328726 RRC8: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_19:35:28.866 1365723328866 RRC8: {max_rtt, min_rtt, wait_time}: {120, 100, 500}
+2013-04-11_19:35:28.875 1365723328875 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:35:30.696 1365723330696 RRC8: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:35:31.869 1365723331869 RRC8: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:35:31.977 1365723331977 RRC8: {max_rtt, min_rtt, wait_time}: {199, 103, 1000}
+2013-04-11_19:35:31.986 1365723331986 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:35:34.576 1365723334576 RRC8: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:35:36.215 1365723336215 RRC8: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:35:36.322 1365723336322 RRC8: {max_rtt, min_rtt, wait_time}: {200, 103, 1500}
+2013-04-11_19:35:36.330 1365723336330 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:35:39.136 1365723339136 RRC8: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:35:41.309 1365723341309 RRC8: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:35:41.428 1365723341428 RRC8: {max_rtt, min_rtt, wait_time}: {200, 102, 2000}
+2013-04-11_19:35:41.437 1365723341437 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:35:44.349 1365723344349 RRC8: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:35:47.026 1365723347026 RRC8: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:35:47.132 1365723347132 RRC8: {max_rtt, min_rtt, wait_time}: {109, 98, 2500}
+2013-04-11_19:35:47.141 1365723347141 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:35:51.383 1365723351383 RRC8: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:35:56.944 1365723356944 RRC8: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:36:04.565 1365723364565 RRC8: Send 10240 receive 0 with gap: 3000 at trial 2
+2013-04-11_19:36:09.324 1365723369324 RRC8: Send 0 receive 0 with gap: 3000 at trial 2
+2013-04-11_19:36:16.508 1365723376508 RRC8: Send 10240 receive 0 with gap: 3000 at trial 3
+2013-04-11_19:36:22.054 1365723382054 RRC8: Send 0 receive 0 with gap: 3000 at trial 3
+2013-04-11_19:36:22.162 1365723382162 RRC8: {max_rtt, min_rtt, wait_time}: {2700, 1798, 3000}
+2013-04-11_19:36:22.171 1365723382171 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:36:28.850 1365723388850 RRC8: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:36:34.215 1365723394215 RRC8: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:36:34.324 1365723394324 RRC8: {max_rtt, min_rtt, wait_time}: {1856, 1194, 3500}
+2013-04-11_19:36:34.333 1365723394333 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:36:41.141 1365723401141 RRC8: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:36:46.805 1365723406805 RRC8: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:36:46.917 1365723406917 RRC8: {max_rtt, min_rtt, wait_time}: {1449, 1101, 4000}
+2013-04-11_19:36:46.926 1365723406926 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:36:54.019 1365723414019 RRC8: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:36:59.614 1365723419614 RRC8: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:36:59.720 1365723419720 RRC8: {max_rtt, min_rtt, wait_time}: {1310, 467, 4500}
+2013-04-11_19:36:59.729 1365723419729 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:37:06.129 1365723426129 RRC8: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:37:12.440 1365723432440 RRC8: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:37:20.456 1365723440456 RRC8: Send 10240 receive 0 with gap: 5000 at trial 2
+2013-04-11_19:37:26.470 1365723446470 RRC8: Send 0 receive 0 with gap: 5000 at trial 2
+2013-04-11_19:37:26.548 1365723446548 RRC8: {max_rtt, min_rtt, wait_time}: {1136, 254, 5000}
+2013-04-11_19:37:26.552 1365723446552 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:37:34.215 1365723454215 RRC8: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:37:40.681 1365723460681 RRC8: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:37:40.765 1365723460765 RRC8: {max_rtt, min_rtt, wait_time}: {1000, 244, 5500}
+2013-04-11_19:37:40.768 1365723460768 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:37:48.829 1365723468829 RRC8: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:37:55.751 1365723475751 RRC8: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:37:55.966 1365723475966 RRC8: {max_rtt, min_rtt, wait_time}: {1064, 250, 6000}
+2013-04-11_19:37:55.970 1365723475970 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:38:06.668 1365723486668 RRC8: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:38:14.720 1365723494720 RRC8: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:38:14.833 1365723494833 RRC8: {max_rtt, min_rtt, wait_time}: {3047, 923, 6500}
+2013-04-11_19:38:14.842 1365723494842 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:38:24.172 1365723504172 RRC8: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:38:32.528 1365723512528 RRC8: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:38:42.110 1365723522110 RRC8: Send 10240 receive 0 with gap: 7000 at trial 2
+2013-04-11_19:38:53.439 1365723533439 RRC8: Send 0 receive 0 with gap: 7000 at trial 2
+2013-04-11_19:38:53.553 1365723533553 RRC8: {max_rtt, min_rtt, wait_time}: {1283, 3631, 7000}
+2013-04-11_19:38:53.561 1365723533561 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:39:06.614 1365723546614 RRC8: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:39:16.068 1365723556068 RRC8: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:39:26.491 1365723566491 RRC8: Send 10240 receive 0 with gap: 7500 at trial 2
+2013-04-11_19:39:38.418 1365723578418 RRC8: Send 0 receive 0 with gap: 7500 at trial 2
+2013-04-11_19:39:48.542 1365723588542 RRC8: Send 10240 receive 0 with gap: 7500 at trial 3
+2013-04-11_19:40:00.467 1365723600467 RRC8: Send 0 receive 0 with gap: 7500 at trial 3
+2013-04-11_19:40:10.880 1365723610880 RRC8: Send 10240 receive 0 with gap: 7500 at trial 4
+2013-04-11_19:40:19.907 1365723619907 RRC8: Send 0 receive 0 with gap: 7500 at trial 4
+2013-04-11_19:40:20.022 1365723620022 RRC8: {max_rtt, min_rtt, wait_time}: {1561, 698, 7500}
+2013-04-11_19:40:20.031 1365723620031 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:40:33.832 1365723633832 RRC8: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:40:43.387 1365723643387 RRC8: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:40:43.505 1365723643505 RRC8: {max_rtt, min_rtt, wait_time}: {4448, 717, 8000}
+2013-04-11_19:40:43.514 1365723643514 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:40:57.823 1365723657823 RRC8: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:41:10.777 1365723670777 RRC8: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:41:10.884 1365723670884 RRC8: {max_rtt, min_rtt, wait_time}: {4452, 3756, 8500}
+2013-04-11_19:41:10.894 1365723670894 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:41:25.395 1365723685395 RRC8: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:41:38.886 1365723698886 RRC8: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:41:38.999 1365723698999 RRC8: {max_rtt, min_rtt, wait_time}: {4469, 3680, 9000}
+2013-04-11_19:41:39.008 1365723699008 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:41:51.399 1365723711399 RRC8: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:42:05.616 1365723725616 RRC8: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:42:05.726 1365723725726 RRC8: {max_rtt, min_rtt, wait_time}: {1549, 3758, 9500}
+2013-04-11_19:42:05.736 1365723725736 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:42:21.496 1365723741496 RRC8: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:42:35.907 1365723755907 RRC8: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:42:36.021 1365723756021 RRC8: {max_rtt, min_rtt, wait_time}: {4300, 3710, 10000}
+2013-04-11_19:42:36.030 1365723756030 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:42:49.255 1365723769255 RRC8: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:43:01.246 1365723781246 RRC8: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:43:01.353 1365723781353 RRC8: {max_rtt, min_rtt, wait_time}: {1509, 742, 10500}
+2013-04-11_19:43:01.362 1365723781362 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:43:15.221 1365723795221 RRC8: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:43:27.885 1365723807885 RRC8: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:43:27.994 1365723807994 RRC8: {max_rtt, min_rtt, wait_time}: {1619, 724, 11000}
+2013-04-11_19:43:28.003 1365723808003 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:43:42.207 1365723822207 RRC8: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:43:55.125 1365723835125 RRC8: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:43:55.237 1365723835237 RRC8: {max_rtt, min_rtt, wait_time}: {1525, 703, 11500}
+2013-04-11_19:43:55.246 1365723835246 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:44:10.008 1365723850008 RRC8: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:44:23.465 1365723863465 RRC8: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:44:23.591 1365723863591 RRC8: {max_rtt, min_rtt, wait_time}: {1407, 682, 12000}
+2013-04-11_19:44:23.600 1365723863600 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:44:38.446 1365723878446 RRC8: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:44:52.344 1365723892344 RRC8: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:44:52.459 1365723892459 RRC8: {max_rtt, min_rtt, wait_time}: {1269, 753, 12500}
+2013-04-11_19:44:52.468 1365723892468 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:45:08.307 1365723908307 RRC8: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:45:22.714 1365723922714 RRC8: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:45:22.822 1365723922822 RRC8: {max_rtt, min_rtt, wait_time}: {1468, 688, 13000}
+2013-04-11_19:45:22.831 1365723922831 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:45:38.848 1365723938848 RRC8: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:45:53.814 1365723953814 RRC8: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:45:53.952 1365723953952 RRC8: {max_rtt, min_rtt, wait_time}: {1302, 726, 13500}
+2013-04-11_19:45:53.962 1365723953962 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:46:10.761 1365723970761 RRC8: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:46:26.233 1365723986233 RRC8: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_19:46:26.346 1365723986346 RRC8: {max_rtt, min_rtt, wait_time}: {1426, 772, 14000}
+2013-04-11_19:46:26.358 1365723986358 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:46:43.646 1365724003646 RRC8: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:46:59.532 1365724019532 RRC8: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_19:46:59.648 1365724019648 RRC8: {max_rtt, min_rtt, wait_time}: {1500, 745, 14500}
+2013-04-11_19:46:59.657 1365724019657 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:47:17.223 1365724037223 RRC8: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:47:33.616 1365724053616 RRC8: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_19:47:33.733 1365724053733 RRC8: {max_rtt, min_rtt, wait_time}: {1221, 687, 15000}
+2013-04-11_19:47:33.742 1365724053742 RRC8: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:47:36.991 1365724056991 RRC8: test No.8 ends
+2013-04-11_19:48:07.000 1365724087000 RRC9: test No.9 starts
+2013-04-11_19:48:10.384 1365724090384 RRC9: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_19:48:17.507 1365724097507 RRC9: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_19:48:17.613 1365724097613 RRC9: {max_rtt, min_rtt, wait_time}: {97, 89, 0}
+2013-04-11_19:48:17.622 1365724097622 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 1}
+2013-04-11_19:48:20.139 1365724100139 RRC9: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_19:48:20.757 1365724100757 RRC9: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_19:48:20.859 1365724100859 RRC9: {max_rtt, min_rtt, wait_time}: {228, 80, 500}
+2013-04-11_19:48:20.877 1365724100877 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:48:22.419 1365724102419 RRC9: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:48:23.558 1365724103558 RRC9: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_19:48:23.660 1365724103660 RRC9: {max_rtt, min_rtt, wait_time}: {119, 100, 1000}
+2013-04-11_19:48:23.669 1365724103669 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:48:25.552 1365724105552 RRC9: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:48:27.232 1365724107232 RRC9: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_19:48:27.339 1365724107339 RRC9: {max_rtt, min_rtt, wait_time}: {101, 104, 1500}
+2013-04-11_19:48:27.348 1365724107348 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:48:29.767 1365724109767 RRC9: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:48:31.918 1365724111918 RRC9: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_19:48:38.076 1365724118076 RRC9: Send 10240 receive 0 with gap: 2000 at trial 2
+2013-04-11_19:48:40.269 1365724120269 RRC9: Send 0 receive 0 with gap: 2000 at trial 2
+2013-04-11_19:48:42.952 1365724122952 RRC9: Send 10240 receive 0 with gap: 2000 at trial 3
+2013-04-11_19:48:45.121 1365724125121 RRC9: Send 0 receive 0 with gap: 2000 at trial 3
+2013-04-11_19:48:45.236 1365724125236 RRC9: {max_rtt, min_rtt, wait_time}: {227, 99, 2000}
+2013-04-11_19:48:45.247 1365724125247 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:48:48.209 1365724128209 RRC9: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:48:50.881 1365724130881 RRC9: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_19:48:50.988 1365724130988 RRC9: {max_rtt, min_rtt, wait_time}: {120, 102, 2500}
+2013-04-11_19:48:50.997 1365724130997 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:48:57.226 1365724137226 RRC9: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:49:02.765 1365724142765 RRC9: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_19:49:02.870 1365724142870 RRC9: {max_rtt, min_rtt, wait_time}: {2799, 1861, 3000}
+2013-04-11_19:49:02.879 1365724142879 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:49:09.151 1365724149151 RRC9: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:49:14.324 1365724154324 RRC9: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_19:49:14.438 1365724154438 RRC9: {max_rtt, min_rtt, wait_time}: {1723, 1035, 3500}
+2013-04-11_19:49:14.447 1365724154447 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:49:23.272 1365724163272 RRC9: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:49:27.420 1365724167420 RRC9: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_19:49:27.536 1365724167536 RRC9: {max_rtt, min_rtt, wait_time}: {784, 106, 4000}
+2013-04-11_19:49:27.545 1365724167545 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:49:35.529 1365724175529 RRC9: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:49:41.004 1365724181004 RRC9: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_19:49:41.114 1365724181114 RRC9: {max_rtt, min_rtt, wait_time}: {1166, 335, 4500}
+2013-04-11_19:49:41.123 1365724181123 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:49:48.078 1365724188078 RRC9: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:49:53.973 1365724193973 RRC9: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_19:49:54.083 1365724194083 RRC9: {max_rtt, min_rtt, wait_time}: {876, 237, 5000}
+2013-04-11_19:49:54.092 1365724194092 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:50:01.952 1365724201952 RRC9: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:50:08.413 1365724208413 RRC9: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_19:50:08.528 1365724208528 RRC9: {max_rtt, min_rtt, wait_time}: {1124, 244, 5500}
+2013-04-11_19:50:08.536 1365724208536 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:50:16.897 1365724216897 RRC9: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:50:23.793 1365724223793 RRC9: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_19:50:23.900 1365724223900 RRC9: {max_rtt, min_rtt, wait_time}: {1126, 248, 6000}
+2013-04-11_19:50:23.909 1365724223909 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:50:34.851 1365724234851 RRC9: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:50:42.903 1365724242903 RRC9: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_19:50:43.010 1365724243010 RRC9: {max_rtt, min_rtt, wait_time}: {3206, 657, 6500}
+2013-04-11_19:50:43.019 1365724243019 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:50:52.315 1365724252315 RRC9: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:51:00.602 1365724260602 RRC9: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_19:51:00.714 1365724260714 RRC9: {max_rtt, min_rtt, wait_time}: {1159, 569, 7000}
+2013-04-11_19:51:00.723 1365724260723 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:51:14.084 1365724274084 RRC9: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:51:26.072 1365724286072 RRC9: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_19:51:26.185 1365724286185 RRC9: {max_rtt, min_rtt, wait_time}: {4578, 3730, 7500}
+2013-04-11_19:51:26.200 1365724286200 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:51:39.633 1365724299633 RRC9: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:51:51.993 1365724311993 RRC9: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_19:51:52.107 1365724312107 RRC9: {max_rtt, min_rtt, wait_time}: {4268, 3652, 8000}
+2013-04-11_19:51:52.116 1365724312116 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:52:02.094 1365724322094 RRC9: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:52:15.001 1365724335001 RRC9: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_19:52:29.175 1365724349175 RRC9: Send 10240 receive 0 with gap: 8500 at trial 2
+2013-04-11_19:52:42.150 1365724362150 RRC9: Send 0 receive 0 with gap: 8500 at trial 2
+2013-04-11_19:52:56.422 1365724376422 RRC9: Send 10240 receive 0 with gap: 8500 at trial 3
+2013-04-11_19:53:09.361 1365724389361 RRC9: Send 0 receive 0 with gap: 8500 at trial 3
+2013-04-11_19:53:09.468 1365724389468 RRC9: {max_rtt, min_rtt, wait_time}: {4479, 3651, 8500}
+2013-04-11_19:53:09.477 1365724389477 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:53:23.980 1365724403980 RRC9: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:53:37.851 1365724417851 RRC9: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_19:53:37.958 1365724417958 RRC9: {max_rtt, min_rtt, wait_time}: {4250, 3693, 9000}
+2013-04-11_19:53:37.968 1365724417968 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:53:53.009 1365724433009 RRC9: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:54:07.041 1365724447041 RRC9: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_19:54:07.159 1365724447159 RRC9: {max_rtt, min_rtt, wait_time}: {4220, 3740, 9500}
+2013-04-11_19:54:07.168 1365724447168 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:54:22.739 1365724462739 RRC9: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:54:37.581 1365724477581 RRC9: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_19:54:37.687 1365724477687 RRC9: {max_rtt, min_rtt, wait_time}: {4444, 3762, 10000}
+2013-04-11_19:54:37.696 1365724477696 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:54:56.377 1365724496377 RRC9: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:55:11.410 1365724511410 RRC9: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_19:55:24.658 1365724524658 RRC9: Send 10240 receive 0 with gap: 10500 at trial 2
+2013-04-11_19:55:36.680 1365724536680 RRC9: Send 0 receive 0 with gap: 10500 at trial 2
+2013-04-11_19:55:36.790 1365724536790 RRC9: {max_rtt, min_rtt, wait_time}: {1389, 732, 10500}
+2013-04-11_19:55:36.799 1365724536799 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:55:50.509 1365724550509 RRC9: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:56:02.940 1365724562940 RRC9: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_19:56:03.048 1365724563048 RRC9: {max_rtt, min_rtt, wait_time}: {1340, 754, 11000}
+2013-04-11_19:56:03.058 1365724563058 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:56:16.655 1365724576655 RRC9: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:56:29.619 1365724589619 RRC9: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_19:56:43.844 1365724603844 RRC9: Send 10240 receive 0 with gap: 11500 at trial 2
+2013-04-11_19:56:56.748 1365724616748 RRC9: Send 0 receive 0 with gap: 11500 at trial 2
+2013-04-11_19:56:56.856 1365724616856 RRC9: {max_rtt, min_rtt, wait_time}: {1433, 765, 11500}
+2013-04-11_19:56:56.865 1365724616865 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:57:14.500 1365724634500 RRC9: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:57:28.180 1365724648180 RRC9: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_19:57:42.845 1365724662845 RRC9: Send 10240 receive 0 with gap: 12000 at trial 2
+2013-04-11_19:57:56.248 1365724676248 RRC9: Send 0 receive 0 with gap: 12000 at trial 2
+2013-04-11_19:57:56.356 1365724676356 RRC9: {max_rtt, min_rtt, wait_time}: {1442, 747, 12000}
+2013-04-11_19:57:56.364 1365724676364 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:58:11.451 1365724691451 RRC9: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:58:25.427 1365724705427 RRC9: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_19:58:25.536 1365724705536 RRC9: {max_rtt, min_rtt, wait_time}: {1370, 748, 12500}
+2013-04-11_19:58:25.545 1365724705545 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:58:41.088 1365724721088 RRC9: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:58:55.437 1365724735437 RRC9: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_19:58:55.640 1365724735640 RRC9: {max_rtt, min_rtt, wait_time}: {1236, 665, 13000}
+2013-04-11_19:58:55.649 1365724735649 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:59:12.024 1365724752024 RRC9: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:59:26.877 1365724766877 RRC9: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_19:59:26.989 1365724766989 RRC9: {max_rtt, min_rtt, wait_time}: {1525, 703, 13500}
+2013-04-11_19:59:27.017 1365724767017 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_19:59:44.984 1365724784984 RRC9: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_20:00:00.402 1365724800402 RRC9: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_20:00:00.512 1365724800512 RRC9: {max_rtt, min_rtt, wait_time}: {1697, 760, 14000}
+2013-04-11_20:00:00.521 1365724800521 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:00:17.868 1365724817868 RRC9: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_20:00:33.915 1365724833915 RRC9: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_20:00:34.028 1365724834028 RRC9: {max_rtt, min_rtt, wait_time}: {1498, 808, 14500}
+2013-04-11_20:00:34.037 1365724834037 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:00:51.655 1365724851655 RRC9: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_20:01:08.145 1365724868145 RRC9: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_20:01:08.259 1365724868259 RRC9: {max_rtt, min_rtt, wait_time}: {1383, 661, 15000}
+2013-04-11_20:01:08.268 1365724868268 RRC9: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:01:12.697 1365724872697 RRC9: test No.9 ends
+2013-04-11_20:01:42.707 1365724902707 RRC10: test No.10 starts
+2013-04-11_20:01:46.392 1365724906392 RRC10: Send 10240 receive 0 with gap: 0 at trial 1
+2013-04-11_20:01:46.522 1365724906522 RRC10: Send 0 receive 0 with gap: 0 at trial 1
+2013-04-11_20:01:46.630 1365724906630 RRC10: {max_rtt, min_rtt, wait_time}: {98, 94, 0}
+2013-04-11_20:01:46.640 1365724906640 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:01:47.624 1365724907624 RRC10: Send 10240 receive 0 with gap: 500 at trial 1
+2013-04-11_20:01:48.271 1365724908271 RRC10: Send 0 receive 0 with gap: 500 at trial 1
+2013-04-11_20:01:48.376 1365724908376 RRC10: {max_rtt, min_rtt, wait_time}: {178, 110, 500}
+2013-04-11_20:01:48.385 1365724908385 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:01:49.777 1365724909777 RRC10: Send 10240 receive 0 with gap: 1000 at trial 1
+2013-04-11_20:01:50.922 1365724910922 RRC10: Send 0 receive 0 with gap: 1000 at trial 1
+2013-04-11_20:01:51.040 1365724911040 RRC10: {max_rtt, min_rtt, wait_time}: {101, 109, 1000}
+2013-04-11_20:01:51.049 1365724911049 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:01:52.995 1365724912995 RRC10: Send 10240 receive 0 with gap: 1500 at trial 1
+2013-04-11_20:01:54.647 1365724914647 RRC10: Send 0 receive 0 with gap: 1500 at trial 1
+2013-04-11_20:01:54.751 1365724914751 RRC10: {max_rtt, min_rtt, wait_time}: {109, 109, 1500}
+2013-04-11_20:01:54.761 1365724914761 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:01:57.182 1365724917182 RRC10: Send 10240 receive 0 with gap: 2000 at trial 1
+2013-04-11_20:01:59.355 1365724919355 RRC10: Send 0 receive 0 with gap: 2000 at trial 1
+2013-04-11_20:01:59.466 1365724919466 RRC10: {max_rtt, min_rtt, wait_time}: {109, 103, 2000}
+2013-04-11_20:01:59.476 1365724919476 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:02:02.472 1365724922472 RRC10: Send 10240 receive 0 with gap: 2500 at trial 1
+2013-04-11_20:02:05.155 1365724925155 RRC10: Send 0 receive 0 with gap: 2500 at trial 1
+2013-04-11_20:02:05.263 1365724925263 RRC10: {max_rtt, min_rtt, wait_time}: {129, 110, 2500}
+2013-04-11_20:02:05.272 1365724925272 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:02:08.812 1365724928812 RRC10: Send 10240 receive 0 with gap: 3000 at trial 1
+2013-04-11_20:02:11.985 1365724931985 RRC10: Send 0 receive 0 with gap: 3000 at trial 1
+2013-04-11_20:02:18.715 1365724938715 RRC10: Send 10240 receive 0 with gap: 3000 at trial 2
+2013-04-11_20:02:24.154 1365724944154 RRC10: Send 0 receive 0 with gap: 3000 at trial 2
+2013-04-11_20:02:24.269 1365724944269 RRC10: {max_rtt, min_rtt, wait_time}: {3079, 1747, 3000}
+2013-04-11_20:02:24.278 1365724944278 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:02:30.789 1365724950789 RRC10: Send 10240 receive 0 with gap: 3500 at trial 1
+2013-04-11_20:02:36.306 1365724956306 RRC10: Send 0 receive 0 with gap: 3500 at trial 1
+2013-04-11_20:02:36.411 1365724956411 RRC10: {max_rtt, min_rtt, wait_time}: {1779, 1372, 3500}
+2013-04-11_20:02:36.421 1365724956421 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:02:42.783 1365724962783 RRC10: Send 10240 receive 0 with gap: 4000 at trial 1
+2013-04-11_20:02:48.024 1365724968024 RRC10: Send 0 receive 0 with gap: 4000 at trial 1
+2013-04-11_20:02:48.131 1365724968131 RRC10: {max_rtt, min_rtt, wait_time}: {1339, 620, 4000}
+2013-04-11_20:02:48.141 1365724968141 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:02:54.580 1365724974580 RRC10: Send 10240 receive 0 with gap: 4500 at trial 1
+2013-04-11_20:03:00.035 1365724980035 RRC10: Send 0 receive 0 with gap: 4500 at trial 1
+2013-04-11_20:03:00.232 1365724980232 RRC10: {max_rtt, min_rtt, wait_time}: {819, 243, 4500}
+2013-04-11_20:03:00.237 1365724980237 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:03:07.353 1365724987353 RRC10: Send 10240 receive 0 with gap: 5000 at trial 1
+2013-04-11_20:03:13.334 1365724993334 RRC10: Send 0 receive 0 with gap: 5000 at trial 1
+2013-04-11_20:03:13.459 1365724993459 RRC10: {max_rtt, min_rtt, wait_time}: {1177, 250, 5000}
+2013-04-11_20:03:13.467 1365724993467 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:03:20.922 1365725000922 RRC10: Send 10240 receive 0 with gap: 5500 at trial 1
+2013-04-11_20:03:27.414 1365725007414 RRC10: Send 0 receive 0 with gap: 5500 at trial 1
+2013-04-11_20:03:27.519 1365725007519 RRC10: {max_rtt, min_rtt, wait_time}: {828, 242, 5500}
+2013-04-11_20:03:27.528 1365725007528 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:03:35.818 1365725015818 RRC10: Send 10240 receive 0 with gap: 6000 at trial 1
+2013-04-11_20:03:42.714 1365725022714 RRC10: Send 0 receive 0 with gap: 6000 at trial 1
+2013-04-11_20:03:42.826 1365725022826 RRC10: {max_rtt, min_rtt, wait_time}: {989, 249, 6000}
+2013-04-11_20:03:42.835 1365725022835 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:03:51.812 1365725031812 RRC10: Send 10240 receive 0 with gap: 6500 at trial 1
+2013-04-11_20:03:59.834 1365725039834 RRC10: Send 0 receive 0 with gap: 6500 at trial 1
+2013-04-11_20:03:59.940 1365725039940 RRC10: {max_rtt, min_rtt, wait_time}: {1320, 820, 6500}
+2013-04-11_20:03:59.948 1365725039948 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:04:12.791 1365725052791 RRC10: Send 10240 receive 0 with gap: 7000 at trial 1
+2013-04-11_20:04:21.832 1365725061832 RRC10: Send 0 receive 0 with gap: 7000 at trial 1
+2013-04-11_20:04:21.940 1365725061940 RRC10: {max_rtt, min_rtt, wait_time}: {4402, 729, 7000}
+2013-04-11_20:04:21.949 1365725061949 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:04:35.090 1365725075090 RRC10: Send 10240 receive 0 with gap: 7500 at trial 1
+2013-04-11_20:04:47.093 1365725087093 RRC10: Send 0 receive 0 with gap: 7500 at trial 1
+2013-04-11_20:04:47.205 1365725087205 RRC10: {max_rtt, min_rtt, wait_time}: {4348, 3773, 7500}
+2013-04-11_20:04:47.213 1365725087213 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:04:57.991 1365725097991 RRC10: Send 10240 receive 0 with gap: 8000 at trial 1
+2013-04-11_20:05:07.533 1365725107533 RRC10: Send 0 receive 0 with gap: 8000 at trial 1
+2013-04-11_20:05:07.652 1365725107652 RRC10: {max_rtt, min_rtt, wait_time}: {1412, 684, 8000}
+2013-04-11_20:05:07.662 1365725107662 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:05:22.077 1365725122077 RRC10: Send 10240 receive 0 with gap: 8500 at trial 1
+2013-04-11_20:05:35.013 1365725135013 RRC10: Send 0 receive 0 with gap: 8500 at trial 1
+2013-04-11_20:05:35.119 1365725135119 RRC10: {max_rtt, min_rtt, wait_time}: {4572, 3705, 8500}
+2013-04-11_20:05:35.127 1365725135127 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:05:49.680 1365725149680 RRC10: Send 10240 receive 0 with gap: 9000 at trial 1
+2013-04-11_20:06:00.239 1365725160239 RRC10: Send 0 receive 0 with gap: 9000 at trial 1
+2013-04-11_20:06:00.426 1365725160426 RRC10: {max_rtt, min_rtt, wait_time}: {4438, 732, 9000}
+2013-04-11_20:06:00.432 1365725160432 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:06:15.378 1365725175378 RRC10: Send 10240 receive 0 with gap: 9500 at trial 1
+2013-04-11_20:06:29.402 1365725189402 RRC10: Send 0 receive 0 with gap: 9500 at trial 1
+2013-04-11_20:06:29.508 1365725189508 RRC10: {max_rtt, min_rtt, wait_time}: {4500, 3767, 9500}
+2013-04-11_20:06:29.517 1365725189517 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:06:43.891 1365725203891 RRC10: Send 10240 receive 0 with gap: 10000 at trial 1
+2013-04-11_20:06:58.302 1365725218302 RRC10: Send 0 receive 0 with gap: 10000 at trial 1
+2013-04-11_20:06:58.408 1365725218408 RRC10: {max_rtt, min_rtt, wait_time}: {2934, 3746, 10000}
+2013-04-11_20:06:58.416 1365725218416 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:07:14.545 1365725234545 RRC10: Send 10240 receive 0 with gap: 10500 at trial 1
+2013-04-11_20:07:25.340 1365725245340 RRC10: Send 0 receive 0 with gap: 10500 at trial 1
+2013-04-11_20:07:25.445 1365725245445 RRC10: {max_rtt, min_rtt, wait_time}: {4534, 113, 10500}
+2013-04-11_20:07:25.454 1365725245454 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:07:41.377 1365725261377 RRC10: Send 10240 receive 0 with gap: 11000 at trial 1
+2013-04-11_20:07:56.860 1365725276860 RRC10: Send 0 receive 0 with gap: 11000 at trial 1
+2013-04-11_20:07:56.967 1365725276967 RRC10: {max_rtt, min_rtt, wait_time}: {4277, 3772, 11000}
+2013-04-11_20:07:56.975 1365725276975 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:08:14.266 1365725294266 RRC10: Send 10240 receive 0 with gap: 11500 at trial 1
+2013-04-11_20:08:30.241 1365725310241 RRC10: Send 0 receive 0 with gap: 11500 at trial 1
+2013-04-11_20:08:30.353 1365725310353 RRC10: {max_rtt, min_rtt, wait_time}: {4640, 3688, 11500}
+2013-04-11_20:08:30.362 1365725310362 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:08:45.053 1365725325053 RRC10: Send 10240 receive 0 with gap: 12000 at trial 1
+2013-04-11_20:08:58.539 1365725338539 RRC10: Send 0 receive 0 with gap: 12000 at trial 1
+2013-04-11_20:08:58.645 1365725338645 RRC10: {max_rtt, min_rtt, wait_time}: {1420, 710, 12000}
+2013-04-11_20:08:58.654 1365725338654 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:09:13.955 1365725353955 RRC10: Send 10240 receive 0 with gap: 12500 at trial 1
+2013-04-11_20:09:27.858 1365725367858 RRC10: Send 0 receive 0 with gap: 12500 at trial 1
+2013-04-11_20:09:27.975 1365725367975 RRC10: {max_rtt, min_rtt, wait_time}: {1429, 754, 12500}
+2013-04-11_20:09:27.984 1365725367984 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:09:43.599 1365725383599 RRC10: Send 10240 receive 0 with gap: 13000 at trial 1
+2013-04-11_20:09:58.017 1365725398017 RRC10: Send 0 receive 0 with gap: 13000 at trial 1
+2013-04-11_20:09:58.128 1365725398128 RRC10: {max_rtt, min_rtt, wait_time}: {1312, 700, 13000}
+2013-04-11_20:09:58.137 1365725398137 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:10:14.436 1365725414436 RRC10: Send 10240 receive 0 with gap: 13500 at trial 1
+2013-04-11_20:10:36.335 1365725436335 RRC10: Send 0 receive 0 with gap: 13500 at trial 1
+2013-04-11_20:10:36.444 1365725436444 RRC10: {max_rtt, min_rtt, wait_time}: {1652, 1020, 13500}
+2013-04-11_20:10:36.453 1365725436453 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 4}
+2013-04-11_20:10:53.428 1365725453428 RRC10: Send 10240 receive 0 with gap: 14000 at trial 1
+2013-04-11_20:11:08.850 1365725468850 RRC10: Send 0 receive 0 with gap: 14000 at trial 1
+2013-04-11_20:11:08.958 1365725468958 RRC10: {max_rtt, min_rtt, wait_time}: {1449, 663, 14000}
+2013-04-11_20:11:08.971 1365725468971 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:11:24.778 1365725484778 RRC10: Send 10240 receive 0 with gap: 14500 at trial 1
+2013-04-11_20:11:40.670 1365725500670 RRC10: Send 0 receive 0 with gap: 14500 at trial 1
+2013-04-11_20:11:58.147 1365725518147 RRC10: Send 10240 receive 0 with gap: 14500 at trial 2
+2013-04-11_20:12:14.080 1365725534080 RRC10: Send 0 receive 0 with gap: 14500 at trial 2
+2013-04-11_20:12:14.194 1365725534194 RRC10: {max_rtt, min_rtt, wait_time}: {1539, 644, 14500}
+2013-04-11_20:12:14.204 1365725534204 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:12:31.915 1365725551915 RRC10: Send 10240 receive 0 with gap: 15000 at trial 1
+2013-04-11_20:12:48.418 1365725568418 RRC10: Send 0 receive 0 with gap: 15000 at trial 1
+2013-04-11_20:12:48.525 1365725568525 RRC10: {max_rtt, min_rtt, wait_time}: {1490, 766, 15000}
+2013-04-11_20:12:48.534 1365725568534 RRC10: {pkt_loss_max, pkt_loss_min}: {0, 0}
+2013-04-11_20:12:51.650 1365725571650 RRC10: test No.10 ends

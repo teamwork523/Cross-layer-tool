@@ -39,7 +39,7 @@ Packet  | GMTtime | MicroTime | CapLen | Len |  Data |
     data = ''
     # Ignore the global header
     i = 24
- 
+
     while(i+16<len(B_datastring)):
         
        #header['GMTtime'] = B_datastring[i:i+4]
@@ -88,6 +88,9 @@ def interval(time1, time2):
     microseconds = struct.unpack('I',time2[4:8])[0] - struct.unpack('I',time1[4:8])[0]
     return (seconds + microseconds/1000000)
 
+##################################################################
+####################### IP Fields ################################
+##################################################################
 def dst_ip(packet_data, i, link_len):
 	base = link_len + 16
 	return get_ip(packet_data, i, base)
@@ -101,6 +104,10 @@ def get_ip(packet_data, i, base):
 		   str(ord(packet_data[i][1][base+1:base+2])) + "." + \
 		   str(ord(packet_data[i][1][base+2:base+3])) + "." + \
 		   str(ord(packet_data[i][1][base+3:base+4]))
+
+##################################################################
+###################### TCP Fields ################################
+##################################################################
 
 def dst_port(packet_data, i, link_len):
 	base = link_len + 20
@@ -217,24 +224,35 @@ def display_hexdata(frame_data):
     display_data.append(temp1)
     return display_data
 
+##################################################################
+###################### UDP Fields ################################
+##################################################################
+# notice: src/dst port locate the same location as TCP, so directly borrow from TCP
+def udp_seg_size(packet_data, i, link_len):
+    return ip_length(packet_data, i, link_len) - 8 - 20
+
+# udp payload
+def udp_payload(packet_data, i, link_len):
+    # adapt to the hex version that QXDM use
+    payload = ""
+
+    for byte in packet_data[i][1][link_len + 20 + 8:]:
+        payload += hex(ord(byte))[2:].upper()
+    return payload
+
+##################################################################
 
 def main():
-	header, data = read_Pcap(sys.argv[1])
-	print len(data)
-	"""
-	print packet_time(data, 0)
-	print src_port(data, 0, 14)
-	print dst_port(data, 0, 14)
-	print sequence_num(data, 1, 14)
-	print ack_num(data, 1, 14)
-	print window_size_server(data, 1, 14)
-	for i in range(5000, 5079):
-		print tcp_flag_bit(data, i, 14, 4)
-	"""
-	for i in range(5000, 5079):
-		#print ip_length(data, i, 14)
-		#print tcp_header_size(data, i, 14)
-		print tcp_seg_size(data, i, 14)
+    # A sample usage for getting UDP payload, 14 is the ethernet header length
+    # data is in the format of (wireshark_header, layer2-4_header+payload)
+    header, data = read_Pcap(sys.argv[1])
+    print len(data)
+    for i in range(10):
+        # print ip_length(data, i, 14)
+        # print tcp_header_size(data, i, 14)
+        # print tcp_seg_size(data, i, 14)
+        print "%dth payload:" % i
+        print udp_payload(data, i, 14)
 	
 if __name__ == "__main__":
     main()

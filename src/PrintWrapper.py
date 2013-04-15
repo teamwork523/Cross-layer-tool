@@ -33,6 +33,38 @@ def printIPaddressPair(entries, threshold):
     print "Not finding proper source ip. Please figure out manually"
 
 #######################################################################
+########################### Loss Related ##############################
+#######################################################################
+# print loss rate based on each RRC state
+def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_map):
+    total_loss_udp= sum(loss_count_per_state_map.values())
+    total_udp = sum(loss_total_per_state_map.values())
+    loss_result = ""
+    per_state_loss_result = ""
+    per_state_loss_ratio_result = ""
+
+    if total_udp:
+        for k,v in loss_count_per_state_map.items():
+            loss_result += str(v / total_udp) + "\t"
+            per_state_loss_result += str(v) + "\t"
+            per_state_loss_ratio = 0
+            if loss_total_per_state_map[k]:
+                per_state_loss_ratio = v/loss_total_per_state_map[k]
+            per_state_loss_ratio_result += str(per_state_loss_ratio) + "\t"
+    else: 
+        loss_result = "0\t" * len(loss_total_per_state_map)
+    
+    print "Total UDP: %d" % total_udp
+    print "Total loss UDP: %d" % total_loss_udp
+    print "Overall loss Ratio: %f" % (total_loss_udp / total_udp)
+    print "Overall loss per state Ratio:"
+    print loss_result
+    print "Per state Loss Count:"
+    print per_state_loss_result
+    print "Per state Loss Ratio:"
+    print per_state_loss_ratio_result
+
+#######################################################################
 ########################### Retx Related ##############################
 #######################################################################
 # Print RLC retransmission Map
@@ -609,6 +641,12 @@ def printTCPEntry(entry):
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
 	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"], \
                         const.RRC_MAP[entry.rrcID], util.meanValue(entry.sig["RSCP"]))
+
+# print a UDP entry information
+def printUDPEntry(entry):
+    print "%s\t%s\t%s\t%s\t%s\t%s" % (util.convert_ts_in_human(entry.timestamp), entry.ip["src_ip"], \
+                                      entry.ip["dst_ip"], entry.udp["src_port"], entry.udp["dst_port"], \
+                                      entry.udp["seg_size"])
 
 # print a RLC entry information
 def printRLCEntry(entry, dir_type):

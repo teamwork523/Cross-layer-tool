@@ -8,6 +8,7 @@ It could optionally map the packets from PCAP with the RRC states in the log
 """
 
 import os, sys, re
+import hashlib, base64
 import const
 import QCATEntry as qe
 import PCAPPacket as pp
@@ -455,3 +456,10 @@ def sycTimeLine(entries, tsDict):
 
 def convert_ts_in_human(ts):
 	return datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")
+
+# compute md5 hash
+def md5_hash(data):
+    # have to put it here to avoid inconsistent hash
+    MD5 = hashlib.md5(data)
+    return base64.b64encode(MD5.digest(), '._').strip('=')
+    # return data

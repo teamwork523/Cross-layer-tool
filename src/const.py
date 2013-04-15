@@ -87,6 +87,7 @@ TLPtoID_MAP = {"TCP": TCP_ID,
 Payload_Header_Len = 8
 IP_Header_Len = 20
 TCP_Header_Len = 20 + 12 # include option
+UDP_Header_Len = 8
 
 # Retransmission mapping (heuristics)
 MAX_ENTRIES_LIST = 10000

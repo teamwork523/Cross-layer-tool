@@ -10,40 +10,109 @@ import sys, struct
 from datetime import datetime
 import DecodePcapFunc as dp
 import const
-import Util as util
+import Util as util 
 
 class PCAPParser:
-	def __init__(self, filename, direction):
-		self.filename = filename
-		# each element contains a flow of packets
-		self.packets = []
-		self.global_header = []
-		self.data = []
-		self.is_uplink = (direction.lower() == "up")
-		# Retransmission packets
-		self.retx_pkts = []
-		# Fast retransmission due to 3 DUP ACKs
-		self.fast_retx_pkts = []
-		
-	def read_pcap(self):
-		if self.filename:
-			self.global_header, self.data = dp.read_Pcap(self.filename)
-		else:
-			print >> sys.stderr, "Empty pcap filename"
-			sys.exit(1)
+    def __init__(self, filename, direction, protocol):
+        self.filename = filename
+        # each element contains a flow of packets
+        self.packets = []
+        self.global_header = []
+        self.data = []
+        self.is_uplink = (direction.lower() == "up")
+        # Retransmission packets
+        self.retx_pkts = []
+        # Fast retransmission due to 3 DUP ACKs
+        self.fast_retx_pkts = []
+        # protocol could be either TCP or UDP
+        self.protocol = protocol
+        # A hash table to store UDP packets
+        # key = hashed UDP payload
+        # value = list of UDP payload
+        self.udp_lookup_table = {}
 	
+    def read_pcap(self):
+        if self.filename:
+            self.global_header, self.data = dp.read_Pcap(self.filename)
+        else:
+	        print >> sys.stderr, "Empty pcap filename"
+	        sys.exit(1)
+	
+    ####################################################################
+    ##################### Flow based Analysis ##########################
+    ####################################################################
+    def parse_pcap(self):
+        if self.protocol == "tcp":
+            # parse based on input length
+            self.create_tcp_flows(const.LINK_HEADER_LEN[self.global_header["linktype"]])
+        elif self.protocol == "udp":
+            self.create_udp_trace(const.LINK_HEADER_LEN[self.global_header["linktype"]])
+
+    ####################################################################
+    ####################### UDP trace Analysis #########################
+    ####################################################################
+    # generate a UDP trace
+    def create_udp_trace(self, link_len):
+        self.udp_trace = []
+        for i in range(len(self.data)):
+            new_datagram = self.init_udp_pkt()
+            new_datagram["ts"] = dp.packet_time(self.data, i)
+            # identical to TCP
+            new_datagram["src_ip"] = dp.src_ip(self.data, i, link_len)
+            new_datagram["dst_ip"] = dp.dst_ip(self.data, i, link_len)
+            new_datagram["src_port"] = dp.src_port(self.data, i, link_len)
+            new_datagram["dst_port"] = dp.dst_port(self.data, i, link_len)
+            new_datagram["seg_size"] = dp.udp_seg_size(self.data, i, link_len)
+            new_datagram["hashed_payload"] = util.md5_hash(dp.udp_payload(self.data, i, link_len))
+            """            
+            payload = dp.udp_payload(self.data, i, link_len)
+            print "Payload with length %d:" % len(payload)
+            print payload
+            print "Hashed Result %s" % new_datagram["hashed_payload"]
+            print "@" * 50
+            """
+            self.udp_trace.append(new_datagram)
+
+    def init_udp_pkt(self):
+        """
+        Every UDP packet contain
+        1. Timestamp
+        2. Src/dst ip/port (4)
+        3. segment size (length_in_header - header_len)
+        4. hashed_payload (md5 hash of the payload)
+        """
+        return {"ts": None, "src_ip": None, "dst_ip": None, \
+				"src_port": None, "dst_port": None, \
+                "seg_size": None, "hashed_payload": None}
+
+    # filter based on condition
+    def filter_based_on_cond(self, kw, cond):
+        new_trace = []
+        for datagram in self.udp_trace:
+            if kw == "srv_ip":
+                # filter both src_ip and dst_ip for srv_ip
+                if datagram["src_ip"] == cond or datagram["dst_ip"] == cond:
+                    new_trace.append(datagram)
+            elif datagram[kw] == cond:
+                new_trace.append(datagram)
+        self.udp_trace = new_trace
+
+    # create UDP table
+    def build_udp_lookup_table(self):
+        for datagram in self.udp_trace:
+            if not self.udp_lookup_table.has_key(datagram["hashed_payload"]):
+                self.udp_lookup_table[datagram["hashed_payload"]] = [datagram]
+            else:
+                self.udp_lookup_table[datagram["hashed_payload"]].append(datagram)
+
+    ####################################################################
+	####################### TCP Flow Analysis ##########################
 	####################################################################
-	##################### Flow based Analysis ##########################
-	####################################################################
-	def parse_pcap(self):
-		# parse based on input length
-		self.create_flows(const.LINK_HEADER_LEN[self.global_header["linktype"]])
-		
-	def create_flows(self, link_len):
+	def create_tcp_flows(self, link_len):
 		local_flow = []
 		# parse the data into list of flow of packets
 		for i in range(len(self.data)):
-			new_packet = self.init_pkt()
+			new_packet = self.init_tcp_pkt()
 			new_packet["ts"] = dp.packet_time(self.data, i)
 			new_packet["src_ip"] = dp.src_ip(self.data, i, link_len)
 			new_packet["dst_ip"] = dp.dst_ip(self.data, i, link_len)
@@ -69,8 +138,8 @@ class PCAPParser:
 		
 		if local_flow:
 			self.packets.append(local_flow)
-	
-	def init_pkt(self):
+
+	def init_tcp_pkt(self):
 		# Each packet should contain:
 		# 1. timestamp
 		# 2. src / dst ip
@@ -83,7 +152,7 @@ class PCAPParser:
 				"flags": {"urg": None, "ack": None, "psh": None, "rst": None, "syn":None, "fin": None},\
 				"ack_num": None, "seq_num": None, "win_size": None, "seg_len": None, \
 				"throughput": None}
-	
+
 	def retx_analysis(self):
 		# Match the retransmission packets base on sequence number
 		for flow in self.packets:
@@ -156,13 +225,16 @@ class PCAPParser:
 									 util.convert_ts_in_human(packet["ts"])))
 
 						
-	def debug(self):
-		print "Number of flows: %d" % (len(self.packets))
-		print "~~~~~~~~~~~~ Retx ~~~~~~~~~~~~~~~~"
-		self.printFlowsWithTime(self.retx_pkts)
-		print "~~~~~~~~~~~~ Fast retx ~~~~~~~~~~~~~~~"
-		self.printFlowsWithTime(self.fast_retx_pkts)
-		
+    def debug(self):
+        if self.protocol == "tcp":
+            print "Number of flows: %d" % (len(self.packets))
+            print "~~~~~~~~~~~~ Retx ~~~~~~~~~~~~~~~~"
+            self.printFlowsWithTime(self.retx_pkts)
+            print "~~~~~~~~~~~~ Fast retx ~~~~~~~~~~~~~~~"
+            self.printFlowsWithTime(self.fast_retx_pkts)
+        elif self.protocol == "udp":
+            print "UDP lookup table: "
+            print self.udp_lookup_table
 
 	####################################################################
 	####################### Helper Function ############################
@@ -249,15 +321,17 @@ class PCAPParser:
 				
 # Sample of usage			
 def main():
-	pcap = PCAPParser(sys.argv[1], "up")
-	pcap.read_pcap()
-	pcap.parse_pcap()
-	# pcap.throughput_analysis()
-	pcap.retx_analysis()
-	#pcap.debug()
+    pcap = PCAPParser(sys.argv[1], "up", "udp")
+    pcap.read_pcap()
+    pcap.parse_pcap()
+    print "trace length before filter is %d" % len(pcap.udp_trace)
+    pcap.filter_based_on_cond("dst_ip", "141.212.113.208")
+    print "trace length after filter is %d" % len(pcap.udp_trace)
+    pcap.build_udp_lookup_table()
+    # pcap.throughput_analysis()
+    # pcap.retx_analysis()
+    pcap.debug()
 	
 if __name__ == "__main__":
-    main()
-	
-			
+    main()		
 			

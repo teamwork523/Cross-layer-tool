@@ -21,6 +21,7 @@ import contextWorker as cw
 import crossLayerWorker as clw
 import retxWorker as rw
 import delayWorker as dw
+import lossWorker as lw
 
 DEBUG = False
 DUP_DEBUG = True
@@ -343,7 +344,16 @@ def main():
     # Loss ratio is essentially the retransmission ratio
     # use the old retransmission ratio map and the RTT calculation map
     if options.is_loss_analysis:
+        udp_lookup_table = None
+        if options.inPCAPFile and options.direction:
+            udp_lookup_table = lw.get_UDP_lookup_table(options.inPCAPFile, options.direction, options.server_ip)
         pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
+
+        # map the UDP trace on the client side to the server side
+        # NOTICE that we use filtered QCAT Entries
+        if udp_lookup_table and options.server_ip:
+            loss_state_map, loss_total_map, loss_index_list = lw.UDP_loss_analysis(QCATEntries, udp_lookup_table, options.server_ip)
+            pw.print_loss_ratio_per_state(loss_state_map, loss_total_map)
 
     #################################################################
     ######################## Result Display #########################
@@ -470,8 +480,8 @@ def main():
         print "DCH state rate is %f"%((float)(countMap[const.DCH_ID])/(float)(len(PCAPPackets)))
         print "FACH state rate is %f"%((float)(countMap[const.FACH_ID])/(float)(len(PCAPPackets)))
         print "PCH state rate is %f"%((float)(countMap[const.PCH_ID])/(float)(len(PCAPPackets)))
-    elif options.isMapping == False and options.inPCAPFile != "":
-        optParser.error("Include -m is you want to map PCAP file to QCAT log file")
+    #elif options.isMapping == False and options.inPCAPFile != "":
+        #optParser.error("Include -m if you want to map PCAP file to QCAT log file")
 
     # create map between ts and rssi
     """

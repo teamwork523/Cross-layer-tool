@@ -72,7 +72,7 @@ class QCATEntry:
         # UDP fields
         self.udp = {"src_port": None, \
                     "dst_port": None, \
-                    "total_len": None}
+                    "seg_size": None}
         # TODO: Link layer state info parse
         #       1. Retransmission rate
         #       2. Row bits
@@ -472,7 +472,7 @@ class QCATEntry:
                         start = const.Payload_Header_Len + self.ip["header_len"] 
                         self.udp["src_port"] = int("".join(self.hex_dump["payload"][start:start+2]), 16)
                         self.udp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
-                        self.udp["total_len"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16)
+                        self.udp["seg_size"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16) - const.UDP_Header_Len
                         # self.__debugUDP()
                         
 ################################################################################   

@@ -205,7 +205,7 @@ def findEntireIPPacket (entries, index):
 
     # if current IP is already the last segment, then return directly
     if entries[index].custom_header["final_seg"]:
-        return payload 
+        return payload
 
     index += 1
     entryLen = len(entries)
@@ -926,7 +926,6 @@ def err_demotion_analysis(QCATEntries, entryIndexMap, topLevelMaps):
 # analyze the best poll_timer configuration to fix the best retransmission
 # @return
 #   {time:[time_between_poll_err_fatch, ...], poll_timer:[whether_poll_timer_enabled, ...], ...}
-
 def figure_out_best_timer(QCATEntries, FACH_state_list, logID):
     extra_timer = {"time":[], "poll_timer":[]}
 
