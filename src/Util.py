@@ -253,7 +253,7 @@ def removeQXDMDupIP(entries):
     # filter all the potential deleted entries
     for i in range(len(entries)):
         if entries[i].logID == const.PROTOCOL_ID:
-            if entries[i].ip["tlp_id"] == const.TCP_ID:
+            if entries[i].ip["tlp_id"] == const.TCP_ID or entries[i].ip["tlp_id"] == const.UDP_ID:
                 # We need to times 2 here, since two hex is a byte
                 # Also we only check the first half of the service data header
                 # since the SNs are always different

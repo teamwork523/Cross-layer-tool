@@ -47,6 +47,7 @@ def map_SDU_to_PDU(entries, tcp_index, logID, hint_index = -1):
     if DEBUG:
         print "#" * 40
         print "Index is %d" % tcp_index
+        print "Segemenation info is %s" % entries[tcp_index].custom_header
         print "Length of real payload is %d" % len(tcp_payload)
         print entries[tcp_index].ip
         print entries[tcp_index].tcp

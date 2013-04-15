@@ -352,8 +352,14 @@ def main():
         # map the UDP trace on the client side to the server side
         # NOTICE that we use filtered QCAT Entries
         if udp_lookup_table and options.server_ip:
-            loss_state_map, loss_total_map, loss_index_list = lw.UDP_loss_analysis(QCATEntries, udp_lookup_table, options.server_ip)
-            pw.print_loss_ratio_per_state(loss_state_map, loss_total_map)
+            loss_state_stats, loss_total_stats, loss_index_list = lw.UDP_loss_stats(QCATEntries, udp_lookup_table, options.server_ip)
+            # print the loss statistics
+            pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
+            
+            # UDP cross analysis
+            # TODO: uplink only
+            #if options.direction.lower() == "up":
+                #lw.UDP_loss_cross_analysis(QCATEntries, loss_index_list, const.UL_PDU_ID)
 
     #################################################################
     ######################## Result Display #########################

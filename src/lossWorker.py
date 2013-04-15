@@ -33,12 +33,12 @@ def get_UDP_lookup_table (pcap_filename, direction, srv_ip = None):
     
     return pcap.udp_lookup_table
 
-# Calculate the UDP loss rate per RRC state
+# Calculate the UDP loss rate per RRC state statistics
 # @ return
 #   1. UDP loss per RRC state break down map
 #   2. UDP total RRC state break down map
 #   3. A list of UDP loss index
-def UDP_loss_analysis (QCATEntries, udp_lookup_table, srv_ip):
+def UDP_loss_stats (QCATEntries, udp_lookup_table, srv_ip):
     # Statistic result
     udp_loss_per_rrc_map = rw.initFullRRCMap(0.0)
     udp_total_per_rrc_map = rw.initFullRRCMap(0.0)
@@ -65,7 +65,20 @@ def UDP_loss_analysis (QCATEntries, udp_lookup_table, srv_ip):
 
     return udp_loss_per_rrc_map, udp_total_per_rrc_map, udp_loss_list
 
-                  
+# UDP loss cross layer loss analysis
+def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
+    for loss_index in loss_index_list:
+        cur_entry = QCATEntries[loss_index]
+        pw.printUDPEntry(cur_entry) 
+        mapped_rlc_tuple_list, mapped_sn_list = clw.map_SDU_to_PDU(QCATEntries, loss_index, logID)
+        if mapped_rlc_tuple_list:
+            # investigate high PCH loss rate
+            if cur_entry.rrcID and cur_entry.rrcID == const.PCH_TO_FACH_ID:
+                print "%"* 160
+                print "%"* 70 + "Curious Case:" + "%"* 70
+                
+                print "%"* 160
+                print "%"* 160
             
     
 
