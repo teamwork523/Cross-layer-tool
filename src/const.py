@@ -91,6 +91,7 @@ UDP_Header_Len = 8
 
 # Retransmission mapping (heuristics)
 MAX_ENTRIES_LIST = 10000
+MIN_MAPPING_THRESHOLD = 0.5
 
 # maximum lookup ahead in search for the polling bit
 MAX_LOOK_AHEAD_INDEX = 200

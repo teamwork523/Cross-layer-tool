@@ -15,8 +15,8 @@ import retxWorker as rw
 import Util as util
 from datetime import datetime
 
-DEBUG = True
-DETAIL_DEBUG = True
+DEBUG = False
+DETAIL_DEBUG = False
 CUR_DEBUG = False
 CONFIG_DEBUG = False
 DUP_DEBUG = True
@@ -115,7 +115,18 @@ def map_SDU_to_PDU(entries, tcp_index, logID, hint_index = -1):
                 elif cur_seq_num_li[j] > priv_seq_num:
                     factor = cur_seq_num_li[j] - priv_seq_num - 1
                 if factor > 0:
+                    prev_matched_index = cur_match_index
                     cur_match_index += factor * priv_len
+                    # so if the next match exceeding the length and 
+                    # the current mapping exceeds the threshold, we called it a Mapping
+                    if cur_match_index > tcp_len and prev_matched_index >= tcp_len * const.MIN_MAPPING_THRESHOLD:
+                        if DEBUG:
+                            print "@" * 50
+                            print "!!!!!! Partical Mapped !!!!!! Find at index %d, return directly" % (i)
+                            pw.printRLCEntry(return_entries[0][0], "up")
+                            print return_entries
+                        return (return_entries, mapped_seq_num_list)
+                    
             elif cur_seq_num_li[j] % const.MAX_RLC_UL_SEQ_NUM < (priv_seq_num + 1) % const.MAX_RLC_UL_SEQ_NUM:
                 continue
             priv_seq_num = cur_seq_num_li[j]  
@@ -157,7 +168,7 @@ def map_SDU_to_PDU(entries, tcp_index, logID, hint_index = -1):
                 if DEBUG:
                     print "@" * 50
                     print "!!!!!! Great!!!!!! Find match at index %d" % (i)
-                    pw.printRLCEntry    (return_entries[0][0], "up")
+                    pw.printRLCEntry(return_entries[0][0], "up")
                     print return_entries
                 return (return_entries, mapped_seq_num_list)
             # reset the index if not match at the end (HE == 2)
@@ -641,17 +652,16 @@ def rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, win_size, retx_b
                             cost_count = 0.0
                             for sn in retx_seq_num_li:
                                 if sn not in set(target_seq_num_li):
-                                    sn_index = sn_to_index_map_within_dup_acks[sn]
-                                    if QCATEntries[sn_index].rtt["rlc"]:
-                                        # draw_cost_time += QCATEntries[sn_index].rtt["rlc"]
-                                        draw_cost_time += last_dup_ack_rtt
-                                        cost_count += 1
+                                    draw_cost_time += last_dup_ack_rtt
+                                    cost_count += 1
                                 else:
-                                    sn_index = sn_to_index_map_after_dup_acks[sn]
-                                    # only append positive time here
-                                    if QCATEntries[sn_index].rtt["rlc"] and QCATEntries[sn_index].rtt["rlc"] > last_dup_ack_rtt:
-                                        draw_benefit_time += (QCATEntries[sn_index].rtt["rlc"] - last_dup_ack_rtt)
-                                        benefit_count += 1
+                                    # Improved benefit calculation: if multiple retx packet later
+                                    # then count multiple duplications
+                                    for sn_index in sn_to_index_map_after_dup_acks[sn]:
+                                        # only append positive time here
+                                        if QCATEntries[sn_index].rtt["rlc"] and QCATEntries[sn_index].rtt["rlc"] > last_dup_ack_rtt:
+                                            draw_benefit_time += (QCATEntries[sn_index].rtt["rlc"] - last_dup_ack_rtt)
+                                            benefit_count += 1
                             if DUP_DEBUG:
                                 print "Draw_benefit_time is %f" % (draw_benefit_time)
                                 print "Draw_cost_time is %f" % (draw_cost_time)
@@ -1000,7 +1010,8 @@ def find_RLC_PDU_within_interval (QCATEntries, startIndex, endIndex):
     return listOfRLC            
 
 # RLC_FAST_RETX_ANALYSIS
-# return a map between sequence number on corresponding entry index
+# return a map between sequence number on corresponding entry indexes
+#        {seq: [index1, index2, ...]}
 def find_SN_within_interval (QCATEntries, startIndex, endIndex):
     sn_to_entryIndex_map = {}
     if endIndex > len(QCATEntries):
@@ -1009,7 +1020,10 @@ def find_SN_within_interval (QCATEntries, startIndex, endIndex):
         sn_list = QCATEntries[index].ul_pdu[0]["sn"]
         if QCATEntries[index].logID == const.UL_PDU_ID and sn_list:
             for sn in sn_list:
-                sn_to_entryIndex_map[sn] = index
+                if sn in sn_to_entryIndex_map:
+                    sn_to_entryIndex_map[sn].append(index)
+                else:
+                    sn_to_entryIndex_map[sn] = [index]
     return sn_to_entryIndex_map    
 
 # RLC_FAST_RETX_ANALYSIS
@@ -1079,6 +1093,39 @@ def find_begin_TCP_retx (bit_map, startIndex):
         if not bit_map[index]:
             return index - 1
     return None
+
+# UDP_LOSS_ANALYSIS
+# find the nearest ACK / NACK with index greater or equal to the given SN
+def find_nearest_status (QCATEntries, startIndex, min_sn):
+    last_index = len(QCATEntries)
+    for index in range(startIndex, last_index):
+        curEntry = QCATEntries[index]
+        if curEntry.dl_ctrl["chan"]:
+            if (curEntry.dl_ctrl["ack"] and curEntry.dl_ctrl["ack"] >= min_sn) or \
+               curEntry.dl_ctrl["reset"]:
+                return index
+    return last_index - 1
+
+# UDP_LOSS_ANALYSIS
+# produce a map that check all the SN in range whether exist in target list
+# return
+#   1. map: {sn: [list of index]}
+#   2. list of index that has the duplicate SN
+def loss_analysis_with_rlc_retx(QCATEntries, startIndex, endIndex, target_sn_set):
+    dup_sn_map = {}
+    index_li = set([])
+    for index in range(startIndex, endIndex+1):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.UL_PDU_ID:
+            for sn in cur_entry.ul_pdu[0]["sn"]:
+                if sn in target_sn_set:
+                    index_li.add(index)
+                    if sn in dup_sn_map:
+                        dup_sn_map[sn].append(index)
+                    else:
+                        dup_sn_map[sn] = [index]
+    return dup_sn_map, index_li
+            
 
 # Select a group with best for demo purpose 
 # return the best mapped TCP entry

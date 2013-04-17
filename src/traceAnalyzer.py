@@ -334,8 +334,10 @@ def main():
 
                 if DUP_DEBUG:
                     pw.print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list, total_retx_rtt, detailed_benefit_cost_time_map, total_retx_count, detailed_benefit_cost_count_map)
-                    print "RLC retx ratio is %f" % (total_retx_rtt / total_rtt)
-                    print "RLC count ratio is %f" % (total_retx_count / total_count)
+                    # NOTICE: We exclude the retransmission part when we count the total retransmission
+                    print "*" * 30 + " Retx RTT fraction and Retx Count fraction:"
+                    print "RLC retx RTT ratio is %f" % max(total_retx_rtt / (total_rtt - total_retx_rtt), 1)
+                    print "RLC count ratio is %f" % max(total_retx_count / (total_count - total_retx_count), 1)
                     
 
     #################################################################
@@ -358,8 +360,8 @@ def main():
             
             # UDP cross analysis
             # TODO: uplink only
-            #if options.direction.lower() == "up":
-                #lw.UDP_loss_cross_analysis(QCATEntries, loss_index_list, const.UL_PDU_ID)
+            if options.direction.lower() == "up":
+                lw.UDP_loss_cross_analysis(QCATEntries, loss_index_list, const.UL_PDU_ID)
 
     #################################################################
     ######################## Result Display #########################

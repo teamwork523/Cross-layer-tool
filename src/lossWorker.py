@@ -68,17 +68,24 @@ def UDP_loss_stats (QCATEntries, udp_lookup_table, srv_ip):
 # UDP loss cross layer loss analysis
 def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
     for loss_index in loss_index_list:
-        cur_entry = QCATEntries[loss_index]
-        pw.printUDPEntry(cur_entry) 
+        cur_entry = QCATEntries[loss_index] 
         mapped_rlc_tuple_list, mapped_sn_list = clw.map_SDU_to_PDU(QCATEntries, loss_index, logID)
         if mapped_rlc_tuple_list:
             # investigate high PCH loss rate
-            if cur_entry.rrcID and cur_entry.rrcID == const.PCH_TO_FACH_ID:
-                print "%"* 160
-                print "%"* 70 + "Curious Case:" + "%"* 70
+            #if cur_entry.rrcID and cur_entry.rrcID == const.PCH_TO_FACH_ID:
+            print "%"* 100
+            print "%"* 40 + "Curious Case:" + "%"* 40
+            pw.printUDPEntry(cur_entry)
+            print "%"* 100
+            print "%"* 100
+            # find the lower bound of the range
+            max_index = clw.find_nearest_status(QCATEntries, loss_index, max(mapped_sn_list))
+            print "is max index correct %s" % (max_index > loss_index)
+            target_sn_set = set(mapped_sn_list)
+            dup_sn_map, rlc_retx_index_list = clw.loss_analysis_with_rlc_retx(QCATEntries, loss_index, max_index, target_sn_set)
+            print "max # of retx is %d" % max([len(i) for i in dup_sn_map.values()])
+            pw.print_loss_case(QCATEntries, loss_index, rlc_retx_index_list)
                 
-                print "%"* 160
-                print "%"* 160
             
     
 

@@ -64,6 +64,16 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
     print "Per state Loss Ratio:"
     print per_state_loss_ratio_result
 
+# print a loss case
+def print_loss_case(QCATEntries, loss_index, rlc_retx_index_list):
+    UDP_entry = QCATEntries[loss_index]
+    baseTime = UDP_entry.timestamp
+    print "%f\t%f\t%f" % (0,UDP_entry.rrcID,0)
+    for index in rlc_retx_index_list:
+        cur_entry = QCATEntries[index]
+        diff_time = cur_entry.timestamp -baseTime                                                                                                                                                                                                                                                                                      
+        print "%f\t%f\t%f" % (diff_time, 0, cur_entry.rrcID)
+
 #######################################################################
 ########################### Retx Related ##############################
 #######################################################################
@@ -394,20 +404,24 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
     print "Win\tdraw_plus\tdraw\tloss"
     print "%f\t%f\t%f\t%f" % (win, draw_plus, draw, loss)
     print "%f\t%f\t%f\t%f" % (win_ratio, draw_plus_ratio, draw_ratio, loss_ratio)
+    print "*" * 30 + " Avg Transmission Delay Benefit/Cost:"
     print "Win Trans benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["win"])
     print "Draw Trans Plus benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["draw_plus"])
     print "Draw Trans overhead is %f" % util.meanValue(trans_time_benefit_cost_map["draw"])
     print "Loss Trans overhead is %f" % util.meanValue(trans_time_benefit_cost_map["loss"])
+    print "*" * 30 + " Avg RTT Benefit/Cost:"
     print "Win avg RTT benefit time is %f" % util.meanValue(rtt_benefit_cost_time_map["win"])
     print "Draw Plus avg RTT benefit time is %f" % util.meanValue(rtt_benefit_cost_time_map["draw_plus"])
     print "Draw avg RTT overhead is %f" % util.meanValue(rtt_benefit_cost_time_map["draw"])
     print "Loss avg RTT overhead is %f" % util.meanValue(rtt_benefit_cost_time_map["loss"])
+    print "*" * 30 + " Avg Count Benefit/Cost:"
     print "Win benefit count is %f" % util.meanValue(rtt_benefit_cost_count_map["win"])
     print "Draw Plus benefit count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw_plus"])
     print "Draw overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw"])
     print "Loss overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["loss"])
 
     # Overall RTT benefit calculation
+    print "*" * 30 + " Overall RTT ratio:"
     reduced_rtt = detailed_benefit_cost_rtt_map["win"] + detailed_benefit_cost_rtt_map["draw_plus"]
     incr_rtt = detailed_benefit_cost_rtt_map["loss"] + detailed_benefit_cost_rtt_map["draw"]
     correct_ratio = (reduced_rtt - incr_rtt) / total_retx_rtt
@@ -415,14 +429,15 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
 
     print "Correct Benefit RTT ratio: (%f - %f) / %f = \n>>>>>>>> %f" % (reduced_rtt, incr_rtt, total_retx_rtt, correct_ratio)
     print "'Improved Benefit' RTT ratio: %f / %f = \n<<<<<<<< %f" % (reduced_rtt, total_retx_rtt, improved_ratio)
-    print "Win improved ratio: %f " % (detailed_benefit_cost_rtt_map["win"] / total_retx_rtt)
-    print "Draw Plus improved ratio: %f" % (detailed_benefit_cost_rtt_map["draw_plus"] / total_retx_rtt)
-    print "Draw overhead ratio: %f" % (detailed_benefit_cost_rtt_map["draw"] / total_retx_rtt)
-    print "Loss overhead ratio: %f" % (detailed_benefit_cost_rtt_map["loss"] / total_retx_rtt)
+    print "Win improved RTT ratio: %f " % (detailed_benefit_cost_rtt_map["win"] / total_retx_rtt)
+    print "Draw Plus improved RTT ratio: %f" % (detailed_benefit_cost_rtt_map["draw_plus"] / total_retx_rtt)
+    print "Draw overhead RTT ratio: %f" % (detailed_benefit_cost_rtt_map["draw"] / total_retx_rtt)
+    print "Loss overhead RTT ratio: %f" % (detailed_benefit_cost_rtt_map["loss"] / total_retx_rtt)
     
     # Count overhead
+    print "*" * 30 + " Count Overhead Ratio:"
     overhead_count = detailed_benefit_cost_count_map["draw"] + detailed_benefit_cost_count_map["loss"]
-    print "Cost count overhead ratio: %f" % (overhead_count/total_retx_count)
+    print "Cost count (draw+loss) overhead ratio: %f" % (overhead_count/total_retx_count)
 
     """
     print "!"*50 + "Win" + "!"*50
