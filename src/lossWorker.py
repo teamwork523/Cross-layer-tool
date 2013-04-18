@@ -115,7 +115,7 @@ def assign_udp_rtt(QCATEntries, direction, server_ip):
             if echo_index:
                 cur_entry.rtt["udp"] = QCATEntries[echo_index].timestamp - cur_entry.timestamp
                 if DEBUG:
-                    print "UDP RTT is : %d" % cur_entry.rtt["udp"]
+                    print "UDP RTT is : %f" % cur_entry.rtt["udp"]
 
 
 #################################################################
