@@ -98,7 +98,7 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
 ######################### UDP RTT ###############################
 #################################################################            
 # assign UDP rtt over
-def assign_udp_rtt(QCATEntries, options.direction, options.server_ip): 
+def assign_udp_rtt(QCATEntries, direction, server_ip): 
     for index in range(len(QCATEntries)):
         cur_entry = QCATEntries[index]
         if cur_entry.logID == const.PROTOCOL_ID and \
@@ -106,10 +106,10 @@ def assign_udp_rtt(QCATEntries, options.direction, options.server_ip):
            cur_entry.udp["seq_num"]:
             echo_src_ip = None
             echo_dst_ip = None
-            if options.direction.lower() == "up":
-                echo_src_ip = options.server_ip
+            if direction.lower() == "up":
+                echo_src_ip = server_ip
             else:
-                echo_dst_ip = options.server_ip
+                echo_dst_ip = server_ip
             echo_index = find_echo_udp_index (QCATEntries, index, cur_entry.udp["seq_num"], \
                                               echo_src_ip, echo_dst_ip)
             if echo_index:
