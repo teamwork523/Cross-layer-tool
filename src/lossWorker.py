@@ -18,6 +18,8 @@ import PCAPParser as pp
 import Util as util
 from datetime import datetime
 
+DEBUG = True
+
 #################################################################
 ##################### UDP Loss Analysis #########################
 #################################################################
@@ -92,9 +94,46 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             print "max # of retx is %d" % max([len(i) for i in dup_sn_map.values()])
             pw.print_loss_case(QCATEntries, loss_index, rlc_retx_index_list)
                 
-            
-    
+#################################################################
+######################### UDP RTT ###############################
+#################################################################            
+# assign UDP rtt over
+def assign_udp_rtt(QCATEntries, options.direction, options.server_ip): 
+    for index in range(len(QCATEntries)):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.PROTOCOL_ID and \
+           cur_entry.ip["tlp_id"] == const.UDP_ID and \
+           cur_entry.udp["seq_num"]:
+            echo_src_ip = None
+            echo_dst_ip = None
+            if options.direction.lower() == "up":
+                echo_src_ip = options.server_ip
+            else:
+                echo_dst_ip = options.server_ip
+            echo_index = find_echo_udp_index (QCATEntries, index, cur_entry.udp["seq_num"], \
+                                              echo_src_ip, echo_dst_ip)
+            if echo_index:
+                cur_entry.rtt["udp"] = QCATEntries[echo_index].timestamp - cur_entry.timestamp
+                if DEBUG:
+                    print "UDP RTT is : %d" % cur_entry.rtt["udp"]
 
+
+#################################################################
+######################### Helper function #######################
+#################################################################
+# find the echo UDP packet by sequence number and ip address
+def find_echo_udp_index (QCATEntries, startIndex, seq_num, src_ip = None, dst_ip = None):
+    for index in range(startIndex, len(QCATEntries)):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.PROTOCOL_ID and \
+           cur_entry.ip["tlp_id"] == const.UDP_ID:
+            if cur_entry.udp["seq_num"] == seq_num:
+                if src_ip and cur_entry.ip["src_ip"] == src_ip:
+                    return index
+                if dst_ip and cur_entry.ip["dst_ip"] == dst_ip:
+                    return index
+    return None
+        
 
 
 

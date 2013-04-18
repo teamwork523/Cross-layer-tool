@@ -163,7 +163,9 @@ class QCATEntry:
         # TCP Throughput information based on ACK calculation
         self.throughput = -1
         # TCP / RLC RTT based on ARQ mechanism
-        self.rtt = {"tcp": None, "rlc": None}
+        # UDP RTT is calculated based on the sequence number that manually
+        # assigned in the application
+        self.rtt = {"tcp": None, "udp": None, "rlc": None}
         # order matters
         self.__procTitle()
         self.__procDetail()

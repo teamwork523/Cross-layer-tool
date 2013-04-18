@@ -349,6 +349,10 @@ def main():
     # use the old retransmission ratio map and the RTT calculation map
     if options.is_loss_analysis:
         udp_srv_lookup_table = None
+        # calculate the RTT for each UDP packet based on the sequence number
+        if options.server_ip and options.direction:
+            lw.assign_udp_rtt(QCATEntries, options.direction, options.server_ip)
+
         if options.inPCAPFile and options.direction:
             options.hash_target = options.hash_target.lower()
             if options.hash_target != "hash" and \
@@ -361,7 +365,7 @@ def main():
         # map the UDP trace on the client side to the server side
         # NOTICE that we use filtered QCAT Entries
         if udp_srv_lookup_table and options.server_ip:
-            loss_state_stats, loss_total_stats, loss_index_list = lw.UDP_loss_stats(QCATEntries, udp_srv_lookup_table, options.server_ip)
+            loss_state_stats, loss_total_stats, loss_index_list = lw.UDP_loss_stats(QCATEntries, udp_srv_lookup_table, options.hash_target, options.server_ip)
             # print the loss statistics
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
 
