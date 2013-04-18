@@ -64,6 +64,7 @@ class PCAPParser:
             new_datagram["dst_port"] = dp.dst_port(self.data, i, link_len)
             new_datagram["seg_size"] = dp.udp_seg_size(self.data, i, link_len)
             new_datagram["hashed_payload"] = util.md5_hash(dp.udp_payload(self.data, i, link_len))
+            new_datagram["seq_num"] = dp.udp_seq_num(self.data, i, link_len)
             """            
             payload = dp.udp_payload(self.data, i, link_len)
             print "Payload with length %d:" % len(payload)
@@ -80,10 +81,12 @@ class PCAPParser:
         2. Src/dst ip/port (4)
         3. segment size (length_in_header - header_len)
         4. hashed_payload (md5 hash of the payload)
+        5. manually assigned seq_num at first 4 bytes in the payload
         """
         return {"ts": None, "src_ip": None, "dst_ip": None, \
 				"src_port": None, "dst_port": None, \
-                "seg_size": None, "hashed_payload": None}
+                "seg_size": None, "hashed_payload": None, \
+                "seq_num": None}
 
     # filter based on condition
     def filter_based_on_cond(self, kw, cond):
@@ -97,13 +100,23 @@ class PCAPParser:
                 new_trace.append(datagram)
         self.udp_trace = new_trace
 
-    # create UDP table
-    def build_udp_lookup_table(self):
+    # create UDP hashed table with options of hashed payload or seq_num
+    # @input:
+    #   1. options: "hash" or "seq"
+    def build_udp_lookup_table(self, hash_type):
+        udp_keying_field = None
+        if hash_type == "hash":
+            udp_keying_field = "hashed_payload"
+        elif hash_type == "seq":
+            udp_keying_field = "seq_num"
+        else:
+            print >> sys.stderr, "ERROR: UDP hashed type not supported!"
+
         for datagram in self.udp_trace:
-            if not self.udp_lookup_table.has_key(datagram["hashed_payload"]):
-                self.udp_lookup_table[datagram["hashed_payload"]] = [datagram]
+            if not self.udp_lookup_table.has_key(datagram[udp_keying_field]):
+                self.udp_lookup_table[datagram[udp_keying_field]] = [datagram]
             else:
-                self.udp_lookup_table[datagram["hashed_payload"]].append(datagram)
+                self.udp_lookup_table[datagram[udp_keying_field]].append(datagram)
 
     ####################################################################
 	####################### TCP Flow Analysis ##########################
@@ -235,6 +248,11 @@ class PCAPParser:
         elif self.protocol == "udp":
             print "UDP lookup table: "
             print self.udp_lookup_table
+            """
+            for i in self.udp_trace:
+                if i["seq_num"]:
+                    print "Sequence Number is %d" % (i["seq_num"])
+            """
 
 	####################################################################
 	####################### Helper Function ############################
@@ -327,7 +345,7 @@ def main():
     print "trace length before filter is %d" % len(pcap.udp_trace)
     pcap.filter_based_on_cond("dst_ip", "141.212.113.208")
     print "trace length after filter is %d" % len(pcap.udp_trace)
-    pcap.build_udp_lookup_table()
+    pcap.build_udp_lookup_table("seq")
     # pcap.throughput_analysis()
     # pcap.retx_analysis()
     pcap.debug()

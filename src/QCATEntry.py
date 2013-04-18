@@ -70,9 +70,11 @@ class QCATEntry:
                     "header_len": None,\
                     "seg_size": None}
         # UDP fields
+        # include manually injected sequence number in the first four bytes in payload
         self.udp = {"src_port": None, \
                     "dst_port": None, \
-                    "seg_size": None}
+                    "seg_size": None, \
+                    "seq_num":  None}
         # TODO: Link layer state info parse
         #       1. Retransmission rate
         #       2. Row bits
@@ -474,7 +476,9 @@ class QCATEntry:
                         self.udp["src_port"] = int("".join(self.hex_dump["payload"][start:start+2]), 16)
                         self.udp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                         self.udp["seg_size"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16) - const.UDP_Header_Len
-                        # self.__debugUDP()
+                        if self.udp["seg_size"] >= 4:
+                            self.udp["seq_num"]  = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
+                        #self.__debugUDP()
                         # Use IP and transport layer header as signature
                         self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+const.UDP_Header_Len])
                     
@@ -558,7 +562,9 @@ class QCATEntry:
     def __debugUDP(self):
         print "UDP src port is %d" % (self.udp["src_port"])
         print "UDP dst prot is %d" % (self.udp["dst_port"])
-        print "UDP total length is %d" % (self.udp["total_len"])
+        print "UDP total length is %d" % (self.udp["seg_size"])
+        if self.udp["seq_num"]:
+            print "UDP sequence number is %d" % (self.udp["seq_num"])
         
     def __debugEUL(self):
         print "*"* 40

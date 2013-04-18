@@ -22,14 +22,14 @@ from datetime import datetime
 ##################### UDP Loss Analysis #########################
 #################################################################
 # acquire the UDP lookup table 
-def get_UDP_lookup_table (pcap_filename, direction, srv_ip = None):
+def get_UDP_lookup_table (pcap_filename, direction, hash_target, srv_ip = None):
     pcap = pp.PCAPParser(pcap_filename, direction, "udp")
     pcap.read_pcap()
     pcap.parse_pcap()
     # if server ip specified, then apply the filter
     if srv_ip:
         pcap.filter_based_on_cond("srv_ip", srv_ip)
-    pcap.build_udp_lookup_table()
+    pcap.build_udp_lookup_table(hash_target)
     
     return pcap.udp_lookup_table
 
@@ -38,7 +38,7 @@ def get_UDP_lookup_table (pcap_filename, direction, srv_ip = None):
 #   1. UDP loss per RRC state break down map
 #   2. UDP total RRC state break down map
 #   3. A list of UDP loss index
-def UDP_loss_stats (QCATEntries, udp_lookup_table, srv_ip):
+def UDP_loss_stats (QCATEntries, udp_lookup_table, hash_target, srv_ip):
     # Statistic result
     udp_loss_per_rrc_map = rw.initFullRRCMap(0.0)
     udp_total_per_rrc_map = rw.initFullRRCMap(0.0)
@@ -57,8 +57,14 @@ def UDP_loss_stats (QCATEntries, udp_lookup_table, srv_ip):
                 udp_payload = []
             
             # count the UDP packet
-            udp_total_per_rrc_map[cur_entry.rrcID] += 1            
-            udp_payload_key = util.md5_hash("".join(udp_payload[-udp_payload_len:]))
+            udp_total_per_rrc_map[cur_entry.rrcID] += 1
+            # handle different hash types            
+            udp_payload_key = None
+            if hash_target == "hash":
+                udp_payload_key = util.md5_hash("".join(udp_payload[-udp_payload_len:]))
+            elif hash_target == "seq":
+                udp_payload_key = cur_entry.udp["seq_num"]
+            # TODO: handle diff hash target
             if cur_entry.ip["dst_ip"] == srv_ip and not udp_lookup_table.has_key(udp_payload_key):
                 udp_loss_per_rrc_map[cur_entry.rrcID] += 1
                 udp_loss_list.append(entryIndex)

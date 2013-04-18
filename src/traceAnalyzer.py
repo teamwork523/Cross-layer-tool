@@ -37,7 +37,7 @@ def init_optParser():
                             " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
                             " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
                             " "*extraspace + "[--verify_cross_analysis], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
-                            " "*extraspace + "[--draw_percent] draw, [--loss_analysis]")
+                            " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -84,6 +84,8 @@ def init_optParser():
                          help="Filter out entries with source port number")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
     					  help="Used combined with direction option to filter useful retransmission packets")
+    optParser.add_option("--udp_hash_target", dest="hash_target", default="hash", \
+    					  help="Hash UDP based on hashed payload, sequence number or more. Current support hash or seq. Useful if you want to use UDP server trace to sync with client side QxDM trace.")
     optParser.add_option("--verify_cross_analysis", action="store_true", dest="verify_cross_analysis", default=False, \
     					  help="Print out each TCP packets and mapped RLC PDU")
 
@@ -222,7 +224,7 @@ def main():
         #dw.extractFACHStatePktDelayInfo(FACH_delay_analysis_entries, options.direction)
     
     #################################################################
-    #################### Retransmission Analysis #####################
+    #################### Retransmission Analysis ####################
     #################################################################
     tcpReTxMap = tcpFastReTxMap = None
     # TCP retransmission process
@@ -256,7 +258,7 @@ def main():
     retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
     #################################################################
-    ######################## Cross Layer Analysis ###################
+    #################### TCP Cross Layer Analysis ###################
     #################################################################
     # Apply the one-to-one crosss layer analysis
     # TODO: uplink analysis only right now
@@ -341,23 +343,28 @@ def main():
                     
 
     #################################################################
-    ######################## Loss Analysis ##########################
-    #################################################################        
+    ################## UDP Loss + Cross layer Analysis ##############
+    #################################################################  
     # Loss ratio is essentially the retransmission ratio
     # use the old retransmission ratio map and the RTT calculation map
     if options.is_loss_analysis:
-        udp_lookup_table = None
+        udp_srv_lookup_table = None
         if options.inPCAPFile and options.direction:
-            udp_lookup_table = lw.get_UDP_lookup_table(options.inPCAPFile, options.direction, options.server_ip)
+            options.hash_target = options.hash_target.lower()
+            if options.hash_target != "hash" or \
+               options.hash_target != "seq":
+                optParser.error("--udp_hash_target, only support hash or seq type")
+            udp_srv_lookup_table = lw.get_UDP_lookup_table(options.inPCAPFile, options.direction, options.hash_target, options.server_ip)
+
         pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
 
         # map the UDP trace on the client side to the server side
         # NOTICE that we use filtered QCAT Entries
-        if udp_lookup_table and options.server_ip:
-            loss_state_stats, loss_total_stats, loss_index_list = lw.UDP_loss_stats(QCATEntries, udp_lookup_table, options.server_ip)
+        if udp_srv_lookup_table and options.server_ip:
+            loss_state_stats, loss_total_stats, loss_index_list = lw.UDP_loss_stats(QCATEntries, udp_srv_lookup_table, options.server_ip)
             # print the loss statistics
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
-            
+
             # UDP cross analysis
             # TODO: uplink only
             if options.direction.lower() == "up":
@@ -377,7 +384,7 @@ def main():
             cw.calThrouhgput(filteredQCATEntries, options.direction)
         else:
             print >> sys.stderr, "Must specifiy trace direction!!!"
-    
+
     # Print RLC mapping to RRC (timestamp based heuristic)
     # Deprecated
     """
@@ -412,7 +419,6 @@ def main():
                 pw.printRLCRetxCountAndRSCP(DLReTxCountMap)
         else:
             print >> sys.stderr, "Direction is required to print retransmission count vs signal s   trength"
-
     
     
     # print timeseries plot

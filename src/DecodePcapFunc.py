@@ -240,6 +240,16 @@ def udp_payload(packet_data, i, link_len):
         payload += hex(ord(byte))[2:].upper()
     return payload
 
+# extract the sequence number if there is one in the data
+# Assume the UDP sequence number resides in the first four bytes in the UDP payload
+def udp_seq_num(packet_data, i, link_len):
+    # assume the first 4 bytes are seq_num
+    max_lookup_byte_len = 4
+    start_index = link_len + 20 + 8
+    if len(packet_data[i][1]) <= start_index:
+        return None
+    return struct.unpack(">i", packet_data[i][1][start_index:start_index+max_lookup_byte_len])[0]
+    
 ##################################################################
 
 def main():
