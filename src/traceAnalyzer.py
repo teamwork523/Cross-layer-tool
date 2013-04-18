@@ -351,7 +351,7 @@ def main():
         udp_srv_lookup_table = None
         if options.inPCAPFile and options.direction:
             options.hash_target = options.hash_target.lower()
-            if options.hash_target != "hash" or \
+            if options.hash_target != "hash" and \
                options.hash_target != "seq":
                 optParser.error("--udp_hash_target, only support hash or seq type")
             udp_srv_lookup_table = lw.get_UDP_lookup_table(options.inPCAPFile, options.direction, options.hash_target, options.server_ip)
