@@ -425,7 +425,7 @@ def main():
             srv_hash_len = float(len(udp_clt_lookup_table))
             clt_hash_len = float(len(udp_srv_lookup_table))
             clt_no_log_len = float(len(clt_no_log_list))
-            print "Client no log ratio is %f / %f = %f" % (clt_no_log_len, lt_hash_len, clt_no_log_len/clt_hash_len)
+            print "Client no log ratio is %f / %f = %f" % (clt_no_log_len, clt_hash_len, clt_no_log_len/clt_hash_len)
             # print the loss statistics
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
             
