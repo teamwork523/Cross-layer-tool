@@ -139,6 +139,7 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
 ######################### UDP RTT ###############################
 #################################################################            
 # use both direction lookup table to assign RTT
+# if UDP lost, then RTT is -1
 def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table):
     src_table = clt_uplink_table
     dst_table = clt_downlink_table
@@ -159,6 +160,8 @@ def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table)
                         if cur_diff > 0:
                             if not cur_entry.rtt["udp"] or cur_entry.rtt["udp"] > cur_diff:
                                 cur_entry.rtt["udp"] = cur_diff
+                else:
+                    cur_entry.rtt["udp"] = -1.0
 
                     if DEBUG:
                         print "UDP RTT is %f" % cur_entry.rtt["udp"]
