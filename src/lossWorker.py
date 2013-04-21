@@ -18,7 +18,7 @@ import PCAPParser as pp
 import Util as util
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
 
 #################################################################
 ##################### UDP Loss Analysis #########################
