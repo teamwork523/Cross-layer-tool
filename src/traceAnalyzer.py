@@ -391,7 +391,7 @@ def main():
 
         # calculate the RTT for each UDP packet based on the sequence number
         if options.server_ip and options.direction:
-           lw.assign_udp_rtt(QCATEntries, options.direction, options.server_ip)
+            lw.assign_udp_rtt(QCATEntries, options.direction, options.server_ip)
             udp_clt_lookup_table = lw.get_UDP_clt_lookup_table(QCATEntries, \
                                    options.direction, options.server_ip, options.hash_target)
 
