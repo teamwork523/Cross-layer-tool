@@ -153,11 +153,11 @@ def main():
     #TODO: delete the parameters
     #cw.assignRRCState(QCATEntries, float(options.ptof_timer), float(options.ftod_timer))
     cw.assignRRCState(QCATEntries)
-    #cw.assignEULState(QCATEntries)
+    cw.assignEULState(QCATEntries)
     cw.assignSignalStrengthValue(QCATEntries)
     # assign the RLC configuration information
-    #cw.assignPrivConfiguration(QCATEntries, const.DL_CONFIG_PDU_ID)
-    #cw.assignPrivConfiguration(QCATEntries, const.UL_CONFIG_PDU_ID)
+    cw.assignPrivConfiguration(QCATEntries, const.DL_CONFIG_PDU_ID)
+    cw.assignPrivConfiguration(QCATEntries, const.UL_CONFIG_PDU_ID)
 
     """
     # verify configuration assignment

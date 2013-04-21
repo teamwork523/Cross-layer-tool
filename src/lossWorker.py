@@ -162,7 +162,7 @@ def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table)
 
                     if DEBUG:
                         print "UDP RTT is %d" % cur_entry.rtt["udp"]
-                        pw.printUDPEntry(echo_index)
+                        pw.printUDPEntry(QCATEntries[echo_index])
                          
 
     """
