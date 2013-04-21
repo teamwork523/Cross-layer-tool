@@ -426,9 +426,9 @@ def main():
             clt_hash_len = float(len(udp_srv_lookup_table))
             clt_no_log_len = float(len(clt_no_log_list))
             print "Client no log ratio is %f / %f = %f" % (clt_no_log_len, clt_hash_len, clt_no_log_len/clt_hash_len)
-            # print the loss statistics
+            # loss ratio per state
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
-            
+
             if TIME_DEBUG:
                 print "UDP: print loss ratio takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()

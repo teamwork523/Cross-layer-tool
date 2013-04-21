@@ -115,11 +115,48 @@ def UDP_loss_stats (QCATEntries, udp_clt_lookup_table, udp_srv_lookup_table, has
     return udp_loss_per_rrc_map, udp_total_per_rrc_map, udp_srv_fail_recv_list, udp_clt_fail_log_list
 
 # UDP loss cross layer loss analysis
+# determine whether packet lost over the internet or the cellular network
 def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
+    # Loss over cellular network if 
+    # 1. exceeding max Retx count
+    # 2. there is a reset PDU in between the mapped RLC list and the next control message
+    udp_loss_in_cellular = {"reset": rw.initFullRRCMap(0.0), "max_retx": rw.initFullRRCMap(0.0)}
+    udp_loss_in_internet = rw.initFullRRCMap(0.0)
+
     for loss_index in loss_index_list:
         cur_entry = QCATEntries[loss_index] 
         mapped_rlc_tuple_list, mapped_sn_list = clw.map_SDU_to_PDU(QCATEntries, loss_index, logID)
-        if mapped_rlc_tuple_list:
+        
+        if mapped_rlc_tuple_list and cur_entry.rrcID:
+            first_mapped_rlc_index = mapped_rlc_tuple_list[0][1]
+            last_mapped_rlc_index = mapped_rlc_tuple_list[-1][1]
+            max_tx_config = cur_entry.ul_config["max_tx"]
+            next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack", cur_seq = last_mapped_rlc_index)
+            next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list", cur_seq = last_mapped_rlc_index)
+            ctrl_index = min(next_ack_index, next_list_index)
+            
+            # check reset
+            reset_index = clw.find_reset_ack(QCATEntries, last_mapped_rlc_index+1, ctrl_index)
+            # check for exceeding retx count
+            rlc_tx_map = find_SN_within_interval(QCATEntries, first_mapped_rlc_index+1, ctrl_index)
+            max_tx_count_num = 0
+            if rlc_tx_map:
+                max_tx_count_num = max([len(i) for i in rlc_tx_map.values()])
+
+            if reset_index:
+                udp_loss_in_cellular["reset"][cur_entry.rrcID] += 1
+                if DEBUG:
+                    print "-------------- Detect Reset --------------"
+            elif max_tx_config and max_tx_count_num >= max_tx_config):
+                udp_loss_in_cellular["max_retx"][cur_entry.rrcID] += 1
+                if DEBUG:
+                    print "%%%%%%%%%%%% Max retx configued: " , max_tx_config
+                    print "%%%%%%%%%%%% Cur retx configued: " , max_tx_count_num
+            else:
+                udp_loss_in_internet[cur_entry.rrcID] += 1
+           
+            """
+            # print out retransmission over PCH promotion
             # investigate high PCH loss rate
             #if cur_entry.rrcID and cur_entry.rrcID == const.PCH_TO_FACH_ID:
             print "%"* 100
@@ -131,10 +168,11 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             max_index = clw.find_nearest_status(QCATEntries, loss_index, max(mapped_sn_list))
             print "is max index correct %s" % (max_index > loss_index)
             target_sn_set = set(mapped_sn_list)
-            dup_sn_map, rlc_retx_index_list = clw.loss_analysis_with_rlc_retx(QCATEntries, loss_index, max_index, target_sn_set)
+            dup_sn_map, rlc_tx_index_list = clw.loss_analysis_with_rlc_retx(QCATEntries, loss_index, max_index, target_sn_set)
             print "max # of retx is %d" % max([len(i) for i in dup_sn_map.values()])
-            pw.print_loss_case(QCATEntries, loss_index, rlc_retx_index_list)
-                
+            pw.print_loss_case(QCATEntries, loss_index, rlc_tx_index_list)
+            """
+
 #################################################################
 ######################### UDP RTT ###############################
 #################################################################            
