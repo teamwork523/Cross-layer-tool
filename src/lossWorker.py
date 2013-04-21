@@ -18,7 +18,7 @@ import PCAPParser as pp
 import Util as util
 from datetime import datetime
 
-DEBUG = False
+DEBUG = True
 
 #################################################################
 ##################### UDP Loss Analysis #########################
@@ -149,14 +149,20 @@ def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table)
     for index_list in src_table.values():
         for index in index_list:
             cur_entry = QCATEntries[index]
+            cur_seq_num = cur_entry.udp["seq_num"]
             # find the corresponding entry, and assign UDP RTT
-            if cur_entry.udp["seq_num"]:
-                echo_index_list = dst_table[cur_entry.udp["seq_num"]]
-                for echo_index in echo_index_list:
-                    cur_diff = QCATEntries[echo_index].timestamp - cur_entry.timestamp
-                    if cur_diff > 0:
-                        if not cur_entry.rtt["udp"] or cur_entry.rtt["udp"] > cur_diff:
-                            cur_entry.rtt["udp"] = cur_diff
+            if cur_seq_num:
+                if dst_table.has_key(cur_seq_num):
+                    echo_index_list = dst_table[cur_seq_num]
+                    for echo_index in echo_index_list:
+                        cur_diff = QCATEntries[echo_index].timestamp - cur_entry.timestamp
+                        if cur_diff > 0:
+                            if not cur_entry.rtt["udp"] or cur_entry.rtt["udp"] > cur_diff:
+                                cur_entry.rtt["udp"] = cur_diff
+
+                    if DEBUG:
+                        print "UDP RTT is %d" % cur_entry.rtt["udp"]
+                        pw.printUDPEntry(echo_index)
                          
 
     """
