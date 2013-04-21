@@ -147,7 +147,7 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
                 udp_loss_in_cellular["reset"][cur_entry.rrcID] += 1
                 if DEBUG:
                     print "-------------- Detect Reset --------------"
-            elif max_tx_config and max_tx_count_num >= max_tx_config):
+            elif max_tx_config and max_tx_count_num >= max_tx_config:
                 udp_loss_in_cellular["max_retx"][cur_entry.rrcID] += 1
                 if DEBUG:
                     print "%%%%%%%%%%%% Max retx configued: " , max_tx_config
