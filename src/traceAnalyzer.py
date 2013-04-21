@@ -424,7 +424,7 @@ def main():
             loss_state_stats, loss_total_stats, srv_not_recv_list, clt_no_log_list = lw.UDP_loss_stats(QCATEntries, udp_clt_lookup_table, udp_srv_lookup_table, options.hash_target, options.server_ip)
             srv_hash_len = float(len(udp_clt_lookup_table))
             clt_hash_len = float(len(udp_srv_lookup_table))
-            clt_no_log_len = float(len(clt_not_log_list))
+            clt_no_log_len = float(len(clt_no_log_list))
             print "Client no log ratio is %f / %f = %f" % (clt_no_log_len, lt_hash_len, clt_no_log_len/clt_hash_len)
             # print the loss statistics
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
