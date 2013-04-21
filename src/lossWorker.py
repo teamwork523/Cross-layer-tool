@@ -23,21 +23,26 @@ DEBUG = False
 #################################################################
 ##################### UDP Loss Analysis #########################
 #################################################################
-# generate the client lookup table based on QxDM trace
+# generate two the client lookup tables
+#   1. uplink table
+#   2. downlink table
 # key: sequence number
 # value: entry index
 def get_UDP_clt_lookup_table (QCATEntries, direction, srv_ip, dst_iphash_target = "seq"):
-    ip_kw = "dst_ip"
+    clt_ip_kw = "src_ip"
+    srv_ip_kw = "dst_ip"
     if direction.lower() != "up":
-        ip_kw = "src_ip"
+        clt_ip_kw = "dst_ip"
+        srv_ip_kw = "src_ip"
     
     # TODO: test why slow
-    clt_lookup_table = {}
+    clt_uplink_lookup_table = {}
+    clt_downlink_lookup_table = {}
     for entryIndex in range(len(QCATEntries)):
         cur_entry = QCATEntries[entryIndex]
         if cur_entry.logID == const.PROTOCOL_ID and \
            cur_entry.ip["tlp_id"] == const.UDP_ID and \
-           cur_entry.ip[ip_kw] == srv_ip and \
+           (cur_entry.ip[clt_ip_kw] == srv_ip or cur_entry.ip[srv_ip_kw] == srv_ip) and \
            cur_entry.rrcID:
             hash_key = None
             if hash_target == "seq":
@@ -51,12 +56,18 @@ def get_UDP_clt_lookup_table (QCATEntries, direction, srv_ip, dst_iphash_target 
                     udp_payload = []
                 hash_key = util.md5_hash("".join(udp_payload[-udp_payload_len:]))
             if hash_key:
-                if clt_lookup_table.has_key(hash_key):
-                    clt_lookup_table[hash_key].append(entryIndex)
-                else:
-                    clt_lookup_table[hash_key] = [entryIndex]
+                if cur_entry.ip[srv_ip_kw] == srv_ip:
+                    if clt_uplink_lookup_table.has_key(hash_key):
+                        clt_uplink_lookup_table[hash_key].append(entryIndex)
+                    else:
+                        clt_uplink_lookup_table[hash_key] = [entryIndex]
+                elif cur_entry.ip[clt_ip_kw] == srv_ip:
+                    if clt_downlink_lookup_table.has_key(hash_key):
+                        clt_downlink_lookup_table[hash_key].append(entryIndex)
+                    else:
+                        clt_downlink_lookup_table[hash_key] = [entryIndex]
 
-    return clt_lookup_table
+    return (clt_uplink_lookup_table, clt_downlink_lookup_table)
 
 # acquire server side UDP lookup table base on PCAP trace
 def get_UDP_srv_lookup_table (pcap_filename, direction, hash_target, srv_ip = None):
@@ -127,8 +138,28 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
 #################################################################
 ######################### UDP RTT ###############################
 #################################################################            
-# assign UDP rtt over
-def assign_udp_rtt(QCATEntries, direction, server_ip): 
+# use both direction lookup table to assign RTT
+def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table):
+    src_table = clt_uplink_table
+    dst_table = clt_downlink_table
+    if direction.lower() != "up":
+        src_table = clt_downlink_table
+        dst_table = clt_uplink_table
+    
+    for index_list in src_table.values():
+        for index in index_list:
+            cur_entry = QCATEntries[index]
+            # find the corresponding entry, and assign UDP RTT
+            if cur_entry.udp["seq_num"]:
+                echo_index_list = dst_table[cur_entry.udp["seq_num"]]
+                for echo_index in echo_index_list:
+                    cur_diff = QCATEntries[echo_index].timestamp - cur_entry.timestamp
+                    if cur_diff > 0:
+                        if not cur_entry.rtt["udp"] or cur_entry.rtt["udp"] > cur_diff:
+                            cur_entry.rtt["udp"] = cur_diff
+                         
+
+    """
     for index in range(len(QCATEntries)):
         cur_entry = QCATEntries[index]
         if cur_entry.logID == const.PROTOCOL_ID and \
@@ -148,6 +179,7 @@ def assign_udp_rtt(QCATEntries, direction, server_ip):
                     if cur_entry.rtt["udp"] > 3:
                         print "UDP RTT is : %f" % cur_entry.rtt["udp"]
                         pw.printUDPEntry(cur_entry)
+     """
 
 # TODO: calculate the average RTT over each state
 
@@ -157,7 +189,8 @@ def assign_udp_rtt(QCATEntries, direction, server_ip):
 #################################################################
 # find the echo UDP packet by sequence number and ip address
 def find_echo_udp_index (QCATEntries, startIndex, seq_num, src_ip = None, dst_ip = None):
-    for index in range(startIndex, len(QCATEntries)):
+    entry_len = len(QCATEntries)
+    for index in range(startIndex, entry_len):
         cur_entry = QCATEntries[index]
         if cur_entry.logID == const.PROTOCOL_ID and \
            cur_entry.ip["tlp_id"] == const.UDP_ID:

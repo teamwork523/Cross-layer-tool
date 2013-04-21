@@ -391,13 +391,19 @@ def main():
 
         # calculate the RTT for each UDP packet based on the sequence number
         if options.server_ip and options.direction:
-            lw.assign_udp_rtt(QCATEntries, options.direction, options.server_ip)
-            udp_clt_lookup_table = lw.get_UDP_clt_lookup_table(QCATEntries, \
-                                   options.direction, options.server_ip, options.hash_target)
+            udp_clt_lookup_table, udp_srv_echo_lookup_table = lw.get_UDP_clt_lookup_table(QCATEntries, \
+                                                              options.direction, options.server_ip, options.hash_target)
+            if TIME_DEBUG:
+                print "UDP: gen clt table ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
 
-        if TIME_DEBUG:
-            print "UDP: assign RTT and gen clt table ", time.time() - check_point_time, "sec"
-            check_point_time = time.time()
+            # TODO: only assign RTT if use sequence number for hashing
+            if options.hash_target == "seq":
+                lw.assign_udp_rtt(QCATEntries, options.direction, udp_clt_lookup_table, udp_srv_echo_lookup_table)
+
+            if TIME_DEBUG:
+                print "UDP: Assign RTT takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
 
         if options.inPCAPFile and options.direction:
             options.hash_target = options.hash_target.lower()
