@@ -388,7 +388,8 @@ def print_rlc_fast_retx_case (QCATEntries, rlc_fast_retx_map):
         print "%f\t%f\t%f" % (cur_time, 0, cur_entry.ul_pdu[0]["sn"][i])
 
 # print RLC fast retx benefit/cost detail
-def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map, total_retx_rtt, detailed_benefit_cost_rtt_map, total_retx_count, detailed_benefit_cost_count_map):
+def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map, total_rtt, total_benefit_cost_rtt_map, total_count, total_benefit_cost_count_map):
+    # rtt_benefit_cost_time indicate for per round trip
     win = float(len(retx_map["win"]))
     draw = float(len(retx_map["draw"]))
     draw_plus = float(len(retx_map["draw_plus"]))
@@ -404,6 +405,8 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
     print "Win\tdraw_plus\tdraw\tloss"
     print "%f\t%f\t%f\t%f" % (win, draw_plus, draw, loss)
     print "%f\t%f\t%f\t%f" % (win_ratio, draw_plus_ratio, draw_ratio, loss_ratio)
+    """
+    # not useful since the avg only apply to each case alone
     print "*" * 30 + " Avg Transmission Delay Benefit/Cost:"
     print "Win Trans benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["win"])
     print "Draw Trans Plus benefit time is %f" % util.meanValue(trans_time_benefit_cost_map["draw_plus"])
@@ -419,25 +422,43 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
     print "Draw Plus benefit count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw_plus"])
     print "Draw overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["draw"])
     print "Loss overhead count is %f" % util.meanValue(rtt_benefit_cost_count_map["loss"])
+    """
+
+    # Avg RTT = total RTT diff per case / total count
+    print "*" * 30 + " RTT improved time:"
+    print "Win avg improved RTT: %f" % (total_benefit_cost_rtt_map["win"] / total_count)
+    print "Draw Plus avg improved RTT: %f" % (total_benefit_cost_rtt_map["draw_plus"] / total_count)
+    print "Draw avg cost RTT: %f" % (total_benefit_cost_rtt_map["draw"] / total_count)
+    print "Loss avg cost RTT: %f" % (total_benefit_cost_rtt_map["loss"] / total_count)
+    print "Orignal RTT: %f" % (total_rtt / total_count)
+
+    # Count break down ratio = count_per_case / total count
+    print "*" * 30 + " Count Ratio:"
+    print "Win avg count percent: %f" % (total_benefit_cost_count_map["win"] / total_count)
+    print "Draw Plus avg count percent: %f" % (total_benefit_cost_count_map["draw_plus"] / total_count)
+    print "Draw avg count percent: %f" % (total_benefit_cost_count_map["draw"] / total_count)
+    print "Loss avg count percent: %f" % (total_benefit_cost_count_map["loss"] / total_count)
+    print "Total Count is %f" % total_count
 
     # Overall RTT benefit calculation
     print "*" * 30 + " Overall RTT ratio:"
-    reduced_rtt = detailed_benefit_cost_rtt_map["win"] + detailed_benefit_cost_rtt_map["draw_plus"]
-    incr_rtt = detailed_benefit_cost_rtt_map["loss"] + detailed_benefit_cost_rtt_map["draw"]
-    correct_ratio = (reduced_rtt - incr_rtt) / total_retx_rtt
-    improved_ratio = reduced_rtt / total_retx_rtt
+    reduced_rtt = total_benefit_cost_rtt_map["win"] + total_benefit_cost_rtt_map["draw_plus"]
+    incr_rtt = total_benefit_cost_rtt_map["loss"] + total_benefit_cost_rtt_map["draw"]
+    correct_ratio = (reduced_rtt - incr_rtt) / total_rtt
+    improved_ratio = reduced_rtt / total_rtt
 
-    print "Correct Benefit RTT ratio: (%f - %f) / %f = \n>>>>>>>> %f" % (reduced_rtt, incr_rtt, total_retx_rtt, correct_ratio)
-    print "'Improved Benefit' RTT ratio: %f / %f = \n<<<<<<<< %f" % (reduced_rtt, total_retx_rtt, improved_ratio)
-    print "Win improved RTT ratio: %f " % (detailed_benefit_cost_rtt_map["win"] / total_retx_rtt)
-    print "Draw Plus improved RTT ratio: %f" % (detailed_benefit_cost_rtt_map["draw_plus"] / total_retx_rtt)
-    print "Draw overhead RTT ratio: %f" % (detailed_benefit_cost_rtt_map["draw"] / total_retx_rtt)
-    print "Loss overhead RTT ratio: %f" % (detailed_benefit_cost_rtt_map["loss"] / total_retx_rtt)
-    
+    print "Correct Benefit RTT ratio: (%f - %f) / %f = \n>>>>>>>> %f" % (reduced_rtt, incr_rtt, total_rtt, correct_ratio)
+    print "'Improved Benefit' RTT ratio: %f / %f = \n<<<<<<<< %f" % (reduced_rtt, total_rtt, improved_ratio)
+    print "Win improved RTT ratio: %f " % (total_benefit_cost_rtt_map["win"] / total_rtt)
+    print "Draw Plus improved RTT ratio: %f" % (total_benefit_cost_rtt_map["draw_plus"] / total_rtt)
+    print "Draw overhead RTT ratio: %f" % (total_benefit_cost_rtt_map["draw"] / total_rtt)
+    print "Loss overhead RTT ratio: %f" % (total_benefit_cost_rtt_map["loss"] / total_rtt)
+    print "Total RTT is: %f" % total_rtt
+
     # Count overhead
     print "*" * 30 + " Count Overhead Ratio:"
-    overhead_count = detailed_benefit_cost_count_map["draw"] + detailed_benefit_cost_count_map["loss"]
-    print "Cost count (draw+loss) overhead ratio: %f" % (overhead_count/total_retx_count)
+    overhead_count = total_benefit_cost_count_map["draw"] + total_benefit_cost_count_map["loss"]
+    print "Cost count (draw+loss) overhead ratio: %f / %f = \n!!!!!!! %f" % (overhead_count, total_count, overhead_count/total_count)
 
     """
     print "!"*50 + "Win" + "!"*50
@@ -457,6 +478,43 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
         target_index = clw.findLongestRLCSeq(retx_map["loss"])
         pw.print_rlc_fast_retx_case(QCATEntries, retx_map["loss"][target_index])
     """
+
+# print the fast retransmission statistics based on RRC state
+def print_rlc_fast_retx_states_per_RRC_state(status_pdu_count_map):
+    total_status_pdu = sum(status_pdu_count_map["total"].values())
+    total_fast_retx = sum(status_pdu_count_map["dup_ack"].values())
+    dup_ack_ratio_per_rrc_result = ""
+    dup_ack_ratio_overall_result = ""
+    
+    
+    for k, v in status_pdu_count_map["dup_ack"].items():
+        if status_pdu_count_map["total"][k] == 0:
+            cur_dup_ack_ratio_per_rrc = 0
+        else:
+            cur_dup_ack_ratio_per_rrc = status_pdu_count_map["dup_ack"][k] / status_pdu_count_map["total"][k] 
+        dup_ack_ratio_per_rrc_result += str(cur_dup_ack_ratio_per_rrc) + "\t"
+        dup_ack_ratio_overall_result += str(status_pdu_count_map["dup_ack"][k] / total_status_pdu) + "\t"
+
+    print "*" * 30 + " RLC fast retx VS RRC:"
+    print "RLC Fast Retx Ratio per state: %s" % dup_ack_ratio_per_rrc_result
+    print "RLC Fast Retx Ratio overall: %s" % dup_ack_ratio_overall_result
+    print status_pdu_count_map["total"]
+    print status_pdu_count_map["dup_ack"]
+    
+# print the detail information about the win case
+def print_real_win(rlc_fast_retx_map, real_win_count, tcp_received_num_case):
+    real_win_ratio = 0
+    total_win_sum = float(len(rlc_fast_retx_map["win"]))
+    real_win_sum = sum(real_win_count.values())
+    if total_win_sum:
+        real_win_ratio = real_win_sum / total_win_sum
+    print "Real win ratio is %f / %f = \n))))))) %f" % (real_win_sum, total_win_sum, real_win_ratio)
+    count_result = ""
+    for i in real_win_count.values():
+        count_result += str(i) + "\t"
+    count_result += str(tcp_received_num_case) + "\t"
+    count_result += str(total_win_sum)
+    print "True win detail: %s\n%s" % (str(real_win_count.keys())+ "\tTCP_received\tTotal", count_result)
 
 #######################################################################
 ####################### Loss Analysis #################################
@@ -652,9 +710,10 @@ def printDLCount(entries):
 
 # print a TCP entry information
 def printTCPEntry(entry):
-	print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp),\
+	print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp),\
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
 	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"], \
+                        entry.custom_header, \
                         const.RRC_MAP[entry.rrcID], util.meanValue(entry.sig["RSCP"]))
 
 # print a UDP entry information
@@ -671,7 +730,11 @@ def printRLCEntry(entry, dir_type):
     elif dir_type.lower() == "down":
         print "RLC AM DL Detail: " + str(entry.dl_pdu[0])
     elif dir_type.lower() == "down_ctrl":
-        print "RLC DL Ctrl Detail: " + str(entry.dl_ctrl)
+        print "RLC DL Ctrl Detail and RRC: %s\t%s" % (str(entry.dl_ctrl), entry.rrcID)
+
+# print a RLC STATUS PDU
+def printSTATUSEntry(entry):
+    print "%s\t%s" % (util.convert_ts_in_human(entry.timestamp), entry.dl_ctrl)
 
 # print a general entry
 def printEntry(entry):

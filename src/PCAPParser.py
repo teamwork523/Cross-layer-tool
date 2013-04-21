@@ -26,8 +26,13 @@ class PCAPParser:
         self.fast_retx_pkts = []
         # protocol could be either TCP or UDP
         self.protocol = protocol
+        # A hash table to store the TCP packets
+        # key = hashed TCP payload or TCP sequence number
+        # value = list of TCP payload
+        self.tcp_lookup_table = {}
+
         # A hash table to store UDP packets
-        # key = hashed UDP payload
+        # key = hashed UDP payload or manually injected sequence number
         # value = list of UDP payload
         self.udp_lookup_table = {}
 	
@@ -121,50 +126,76 @@ class PCAPParser:
     ####################################################################
 	####################### TCP Flow Analysis ##########################
 	####################################################################
-	def create_tcp_flows(self, link_len):
-		local_flow = []
-		# parse the data into list of flow of packets
-		for i in range(len(self.data)):
-			new_packet = self.init_tcp_pkt()
-			new_packet["ts"] = dp.packet_time(self.data, i)
-			new_packet["src_ip"] = dp.src_ip(self.data, i, link_len)
-			new_packet["dst_ip"] = dp.dst_ip(self.data, i, link_len)
-			new_packet["src_port"] = dp.src_port(self.data, i, link_len)
-			new_packet["dst_port"] = dp.dst_port(self.data, i, link_len)
-			new_packet["flags"]["urg"] = dp.tcp_flag_bit(self.data, i, link_len, 5)
-			new_packet["flags"]["ack"] = dp.tcp_flag_bit(self.data, i, link_len, 4)
-			new_packet["flags"]["psh"] = dp.tcp_flag_bit(self.data, i, link_len, 3)
-			new_packet["flags"]["rst"] = dp.tcp_flag_bit(self.data, i, link_len, 2)
-			new_packet["flags"]["syn"] = dp.tcp_flag_bit(self.data, i, link_len, 1)
-			new_packet["flags"]["fin"] = dp.tcp_flag_bit(self.data, i, link_len, 0)
-			new_packet["ack_num"] = dp.ack_num(self.data, i, link_len)
-			new_packet["seq_num"] = dp.sequence_num(self.data, i, link_len)
-			new_packet["win_size"] = dp.window_size_server(self.data, i, link_len)	# size match
-			new_packet["seg_len"] = dp.tcp_seg_size(self.data, i, link_len)
-			
-			# check new flow
-			if new_packet["flags"]["syn"] and not new_packet["flags"]["ack"] and local_flow:
-				self.packets.append(local_flow)
-				local_flow = [new_packet]
-			else:
-				local_flow.append(new_packet)
-		
-		if local_flow:
-			self.packets.append(local_flow)
+    def create_tcp_flows(self, link_len):
+        local_flow = []
+        trace_index = 0
 
-	def init_tcp_pkt(self):
-		# Each packet should contain:
-		# 1. timestamp
-		# 2. src / dst ip
-		# 3. src / dst port
-		# 4. TCP flags (use another dict to record)
-		# 5. ACK / SEQ number
-		# 6. Window size
-		return {"ts": None, "src_ip": None, "dst_ip": None, \
-				"src_port": None, "dst_port": None, \
-				"flags": {"urg": None, "ack": None, "psh": None, "rst": None, "syn":None, "fin": None},\
-				"ack_num": None, "seq_num": None, "win_size": None, "seg_len": None, \
-				"throughput": None}
+        # parse the data into list of flow of packets
+        for i in range(len(self.data)):
+            new_packet = self.init_tcp_pkt()
+            new_packet["ts"] = dp.packet_time(self.data, i)
+            new_packet["src_ip"] = dp.src_ip(self.data, i, link_len)
+            new_packet["dst_ip"] = dp.dst_ip(self.data, i, link_len)
+            new_packet["src_port"] = dp.src_port(self.data, i, link_len)
+            new_packet["dst_port"] = dp.dst_port(self.data, i, link_len)
+            new_packet["flags"]["urg"] = dp.tcp_flag_bit(self.data, i, link_len, 5)
+            new_packet["flags"]["ack"] = dp.tcp_flag_bit(self.data, i, link_len, 4)
+            new_packet["flags"]["psh"] = dp.tcp_flag_bit(self.data, i, link_len, 3)
+            new_packet["flags"]["rst"] = dp.tcp_flag_bit(self.data, i, link_len, 2)
+            new_packet["flags"]["syn"] = dp.tcp_flag_bit(self.data, i, link_len, 1)
+            new_packet["flags"]["fin"] = dp.tcp_flag_bit(self.data, i, link_len, 0)
+            new_packet["ack_num"] = dp.ack_num(self.data, i, link_len)
+            new_packet["seq_num"] = dp.sequence_num(self.data, i, link_len)
+            new_packet["win_size"] = dp.window_size_server(self.data, i, link_len)	# size match
+            new_packet["seg_len"] = dp.tcp_seg_size(self.data, i, link_len)
+            new_packet["hashed_payload"] = util.md5_hash(dp.udp_payload(self.data, i, link_len))
+            new_packet["trace_index"] = trace_index
+
+	        # check new flow
+            if new_packet["flags"]["syn"] and not new_packet["flags"]["ack"] and local_flow:
+                self.packets.append(local_flow)
+                local_flow = [new_packet]
+                trace_index += 1
+            else:
+                local_flow.append(new_packet)
+
+        if local_flow:
+            self.packets.append(local_flow)
+
+    def init_tcp_pkt(self):
+        # Each packet should contain:
+        # 1. timestamp
+        # 2. src / dst ip
+        # 3. src / dst port
+        # 4. TCP flags (use another dict to record)
+        # 5. ACK / SEQ number
+        # 6. Window size
+        # 7. hashed payload using uniformed hash function
+        # 8. trace index keeps track of the position in the trace
+        return {"ts": None, "src_ip": None, "dst_ip": None, \
+                "src_port": None, "dst_port": None, \
+                "flags": {"urg": None, "ack": None, "psh": None, "rst": None, "syn":None, "fin": None},\
+                "ack_num": None, "seq_num": None, "win_size": None, "seg_len": None, \
+                "throughput": None, "hashed_payload": None, "trace_index": None}
+
+    # create TCP hashed table with options of seq_num or hashed payload
+    # @input:
+    #   1. options: "hash" or "seq"
+    def build_tcp_lookup_table(self, hash_type):
+        tcp_keying_field = None
+        if hash_type == "hash":
+            tcp_keying_field = "hashed_payload"
+        elif hash_type == "seq":
+            tcp_keying_field = "seq_num"
+        else:
+            print >> sys.stderr, "ERROR: TCP hashed type not supported!"
+
+        for trace in self.packets:
+            for packet in trace:
+                if not self.tcp_lookup_table.has_key(packet[tcp_keying_field]):
+                    self.tcp_lookup_table[packet[tcp_keying_field]] = [packet]
+                else:
+                    self.tcp_lookup_table[packet[tcp_keying_field]].append(packet)
 
 	def retx_analysis(self):
 		# Match the retransmission packets base on sequence number
@@ -206,8 +237,7 @@ class PCAPParser:
 				self.retx_pkts.append(local_retx_li)
 			if local_fast_retx_li:
 				self.fast_retx_pkts.append(local_fast_retx_li)
-				
-	
+
 	def throughput_analysis(self):
 		# Assume that we are on the server side and 3-way handshke initialize on from the client side
 		# Uplink trace
@@ -236,15 +266,18 @@ class PCAPParser:
 				if packet["throughput"] > const.UPPER_BOUND_TP:
 					raise Exception("TP result %f larger than %f at %s" % (packet["throughput"], const.UPPER_BOUND_TP, \
 									 util.convert_ts_in_human(packet["ts"])))
-
-						
+					
     def debug(self):
         if self.protocol == "tcp":
+            """
             print "Number of flows: %d" % (len(self.packets))
             print "~~~~~~~~~~~~ Retx ~~~~~~~~~~~~~~~~"
             self.printFlowsWithTime(self.retx_pkts)
             print "~~~~~~~~~~~~ Fast retx ~~~~~~~~~~~~~~~"
             self.printFlowsWithTime(self.fast_retx_pkts)
+            """
+            print "TCP lookup table:"
+            print self.tcp_lookup_table
         elif self.protocol == "udp":
             print "UDP lookup table: "
             print self.udp_lookup_table
@@ -339,13 +372,14 @@ class PCAPParser:
 				
 # Sample of usage			
 def main():
-    pcap = PCAPParser(sys.argv[1], "up", "udp")
+    pcap = PCAPParser(sys.argv[1], "up", "tcp")
     pcap.read_pcap()
     pcap.parse_pcap()
-    print "trace length before filter is %d" % len(pcap.udp_trace)
-    pcap.filter_based_on_cond("dst_ip", "141.212.113.208")
-    print "trace length after filter is %d" % len(pcap.udp_trace)
-    pcap.build_udp_lookup_table("seq")
+    # UDP example
+    #pcap.filter_based_on_cond("dst_ip", "141.212.113.208")
+    #pcap.build_udp_lookup_table("seq")
+    # TPC example
+    pcap.build_tcp_lookup_table("seq")
     # pcap.throughput_analysis()
     # pcap.retx_analysis()
     pcap.debug()

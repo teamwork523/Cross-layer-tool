@@ -224,6 +224,20 @@ def display_hexdata(frame_data):
     display_data.append(temp1)
     return display_data
 
+# payload calculation
+def payload(packet_data, i, link_len, header_size):
+    # adapt to the hex version that QXDM use
+    payload = ""
+    for byte in packet_data[i][1][link_len + 20 + header_size:]:
+        # exclude "\x"
+        payload += hex(ord(byte))[2:].upper()
+    return payload
+
+# TCP payload
+def tcp_payload(packet_data, i, link_len):
+    header_len = tcp_header_size(packet_data, i, link_len)
+    return payload(packet_data, i, link_len, header_len)
+
 ##################################################################
 ###################### UDP Fields ################################
 ##################################################################
@@ -231,14 +245,9 @@ def display_hexdata(frame_data):
 def udp_seg_size(packet_data, i, link_len):
     return ip_length(packet_data, i, link_len) - 8 - 20
 
-# udp payload
+# UDP payload
 def udp_payload(packet_data, i, link_len):
-    # adapt to the hex version that QXDM use
-    payload = ""
-
-    for byte in packet_data[i][1][link_len + 20 + 8:]:
-        payload += hex(ord(byte))[2:].upper()
-    return payload
+    return payload(packet_data, i, link_len, 8)
 
 # extract the sequence number if there is one in the data
 # Assume the UDP sequence number resides in the first four bytes in the UDP payload

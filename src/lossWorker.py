@@ -23,14 +23,50 @@ DEBUG = True
 #################################################################
 ##################### UDP Loss Analysis #########################
 #################################################################
-# acquire the UDP lookup table 
-def get_UDP_lookup_table (pcap_filename, direction, hash_target, srv_ip = None):
+# generate the client lookup table based on QxDM trace
+# key: sequence number
+# value: entry index
+def get_UDP_clt_lookup_table (QCATEntries, direction, srv_ip, dst_iphash_target = "seq"):
+    ip_kw = "dst_ip"
+    if direction.lower() != "up":
+        ip_kw = "src_ip"
+        
+    clt_lookup_table = {}
+    for entryIndex in range(len(QCATEntries)):
+        cur_entry = QCATEntries[entryIndex]
+        if cur_entry.logID == const.PROTOCOL_ID and \
+           cur_entry.ip["tlp_id"] == const.UDP_ID and \
+           cur_entry.ip[ip_kw] == srv_ip and \
+           cur_entry.rrcID:
+            hash_key = None
+            if hash_target == "seq":
+                # hash the sequence number
+                hash_key = cur_entry.udp["seq_num"]
+            elif hash_target == "hash":
+                # hash the payload
+                udp_payload = clw.findEntireIPPacket(QCATEntries, entryIndex)
+                udp_payload_len = cur_entry.udp["seg_size"]
+                if not udp_payload_len:
+                    udp_payload = []
+                hash_key = util.md5_hash("".join(udp_payload[-udp_payload_len:]))
+            if hash_key:
+                if clt_lookup_table.has_key(hash_key):
+                    clt_lookup_table[hash_key].append(entryIndex)
+                else:
+                    clt_lookup_table[hash_key] = [entryIndex]
+
+    return clt_lookup_table
+
+# acquire server side UDP lookup table base on PCAP trace
+def get_UDP_srv_lookup_table (pcap_filename, direction, hash_target, srv_ip = None):
     pcap = pp.PCAPParser(pcap_filename, direction, "udp")
     pcap.read_pcap()
     pcap.parse_pcap()
     # if server ip specified, then apply the filter
-    if srv_ip:
-        pcap.filter_based_on_cond("srv_ip", srv_ip)
+    if direction == "up":
+        pcap.filter_based_on_cond("dst_ip", srv_ip)
+    elif direction == "down":
+        pcap.filter_based_on_cond("src_ip", srv_ip)
     pcap.build_udp_lookup_table(hash_target)
     
     return pcap.udp_lookup_table
@@ -39,39 +75,32 @@ def get_UDP_lookup_table (pcap_filename, direction, hash_target, srv_ip = None):
 # @ return
 #   1. UDP loss per RRC state break down map
 #   2. UDP total RRC state break down map
-#   3. A list of UDP loss index
-def UDP_loss_stats (QCATEntries, udp_lookup_table, hash_target, srv_ip):
+#   3. A list of UDP index that server didn't receive
+#   4. A list of server keys that client didn't log
+def UDP_loss_stats (QCATEntries, udp_clt_lookup_table, udp_srv_lookup_table, hash_target, srv_ip):
     # Statistic result
     udp_loss_per_rrc_map = rw.initFullRRCMap(0.0)
     udp_total_per_rrc_map = rw.initFullRRCMap(0.0)
-    udp_loss_list = []
+    udp_srv_fail_recv_list = []  # list of UDP dropped over the internet
+    udp_clt_fail_log_list = []
 
     # parse each UDP entry to check whether if appears on the server side table
     # use server ip to script the direction
-    for entryIndex in range(len(QCATEntries)):
-        cur_entry = QCATEntries[entryIndex]
-        if cur_entry.logID == const.PROTOCOL_ID and \
-           cur_entry.ip["tlp_id"] == const.UDP_ID and \
-           cur_entry.rrcID:
-            udp_payload = clw.findEntireIPPacket(QCATEntries, entryIndex)
-            udp_payload_len = cur_entry.udp["seg_size"]
-            if not udp_payload_len:
-                udp_payload = []
-            
-            # count the UDP packet
+    for hash_key, indexList in udp_clt_lookup_table.items():
+        for entryIndex in indexList:
+            cur_entry = QCATEntries[entryIndex]
+            # count the src UDP packet
             udp_total_per_rrc_map[cur_entry.rrcID] += 1
-            # handle different hash types            
-            udp_payload_key = None
-            if hash_target == "hash":
-                udp_payload_key = util.md5_hash("".join(udp_payload[-udp_payload_len:]))
-            elif hash_target == "seq":
-                udp_payload_key = cur_entry.udp["seq_num"]
-            # TODO: handle diff hash target
-            if cur_entry.ip["dst_ip"] == srv_ip and not udp_lookup_table.has_key(udp_payload_key):
+            if not udp_srv_lookup_table.has_key(hash_key):
                 udp_loss_per_rrc_map[cur_entry.rrcID] += 1
-                udp_loss_list.append(entryIndex)
+                udp_srv_fail_recv_list.append(entryIndex)
 
-    return udp_loss_per_rrc_map, udp_total_per_rrc_map, udp_loss_list
+    # reverse map server side to the client side to check whether mis-log 
+    for hash_key in udp_srv_lookup_table.keys():
+        if not udp_clt_lookup_table.has_key(hash_key):
+            udp_clt_fail_log_list.append(hash_key)
+
+    return udp_loss_per_rrc_map, udp_total_per_rrc_map, udp_srv_fail_recv_list, udp_clt_fail_log_list
 
 # UDP loss cross layer loss analysis
 def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
@@ -110,12 +139,14 @@ def assign_udp_rtt(QCATEntries, direction, server_ip):
                 echo_src_ip = server_ip
             else:
                 echo_dst_ip = server_ip
-            echo_index = find_echo_udp_index (QCATEntries, index, cur_entry.udp["seq_num"], \
+            echo_index = find_echo_udp_index (QCATEntries, index+1, cur_entry.udp["seq_num"], \
                                               echo_src_ip, echo_dst_ip)
             if echo_index:
                 cur_entry.rtt["udp"] = QCATEntries[echo_index].timestamp - cur_entry.timestamp
                 if DEBUG:
                     print "UDP RTT is : %f" % cur_entry.rtt["udp"]
+
+# TODO: calculate the average RTT over each state
 
 
 #################################################################

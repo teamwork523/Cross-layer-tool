@@ -112,6 +112,7 @@ class QCATEntry:
         self.dl_ctrl = {"chan": None,
                         "ack": None,
                         "reset": None, # boolean
+                        "reset_ack": None, # boolean
                         "list": [] # [(seq_num1, len1), (seq_num2, len2), ...], while the log got cut off, so not all SNs included
                        }
         # TODO: currently hard configure the channel ID should be 19
@@ -273,6 +274,8 @@ class QCATEntry:
                         self.dl_ctrl["chan"] = int(info[0])
                         if info[-1].split()[-1] == "RESET":
                             self.dl_ctrl["reset"] = True
+                        elif info[-1].split()[-1] == "ACK":
+                            self.dl_ctrl["reset_ack"] = True
                         elif info[-1].split()[-1] == "STATUS":
                             if index + 2 < len(self.detail):
                                 status_line = self.detail[index+2]
@@ -330,6 +333,8 @@ class QCATEntry:
                                 self.dl_ctrl["list"].append((cur_sn, cur_len))
                         elif ctrl_type == "RESET":
                             self.dl_ctrl["reset"] = True
+                        elif ctrl_type == "ACK":
+                            self.dl_ctrl["reset_ack"] = True
                         break
             # parse the UL AM log and extract the configuration
             elif self.logID == const.UL_CONFIG_PDU_ID:

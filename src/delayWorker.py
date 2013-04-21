@@ -3,7 +3,7 @@
 """
 @Author Haokun Luo
 @Date   03/17/2013
-Functions related to delay 
+Functions related to delay, TCP RTT calculation
 """
 
 import os, sys, re
@@ -12,6 +12,16 @@ import QCATEntry as qe
 import PrintWrapper as pw
 import Util as util
 
+#################################################################
+##################### TCP RTT releated ##########################
+#################################################################
+# calculate the TCP RTT result
+
+
+
+#################################################################
+##################### Packet delay Info #########################
+#################################################################
 # Determine delays of packets around 
 # extracted the packet delay before or after FACH state if previous state is DCH 
 # @Return: a map between 
@@ -57,8 +67,9 @@ def extractFACHStatePktDelayInfo(entries, direction):
     for i in TCP_delay_map.values():
         print i
    
-
-################# helper function #######################
+#################################################################
+################# helper function ###############################
+#################################################################
 # Return difference for nearest entries in both directions
 def findDelayPair(entries, index, logType):
     beforeTime = 0

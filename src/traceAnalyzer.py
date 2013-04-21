@@ -84,7 +84,7 @@ def init_optParser():
                          help="Filter out entries with source port number")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
     					  help="Used combined with direction option to filter useful retransmission packets")
-    optParser.add_option("--udp_hash_target", dest="hash_target", default="hash", \
+    optParser.add_option("--udp_hash_target", dest="hash_target", default="seq", \
     					  help="Hash UDP based on hashed payload, sequence number or more. Current support hash or seq. Useful if you want to use UDP server trace to sync with client side QxDM trace.")
     optParser.add_option("--verify_cross_analysis", action="store_true", dest="verify_cross_analysis", default=False, \
     					  help="Print out each TCP packets and mapped RLC PDU")
@@ -157,7 +157,7 @@ def main():
         print "%d is %s" % (index, QCATEntries[index].dl_config)
         print "%d is %s" % (index, QCATEntries[index].ul_config)
     """
-    # assign flow information
+    # assign flow information (deprecated)
     # cw.assignFlowInfo(QCATEntries)
     # use to calculate the buffer range in between two packets
     # TODO: only use for studying FACH state transition delays
@@ -231,6 +231,8 @@ def main():
     if options.enable_tcp_retx_test:
         if options.direction and options.server_ip:
             tcpflows = rw.extractFlows(filteredQCATEntries)
+
+
             if DEBUG:
                 print "Filtered QCAT Entry # is %d" % len(filteredQCATEntries)
                 print "TCP flow length is %d" % len(tcpflows)
@@ -306,12 +308,17 @@ def main():
 
                 # Percentage of dup ack inside the retx range
                 # TODO: currently set win_size to be 200 as heuristic
-                # TODO: combine the retx_bit_map
-                # total_dup_ack, retx_map, trans_time_benefit_cost_map = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
-                total_dup_ack, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, all_Retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
+                # status_pdu_map, retx_map, trans_time_benefit_cost_map = clw.rlc_fast_retx_overhead_analysis(QCATEntries, entryIndexMap, 400, retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent))
 
-                # overall benefit calculation
-                detailed_benefit_cost_time_map, detailed_benefit_cost_count_map = clw.rlc_fast_retx_overall_benefit(rtt_benefit_cost_time_list, rtt_benefit_cost_count_list)
+                # Create the tcp lookup table for true benefit analysis
+                tcp_lookup_table = None
+                if options.inPCAPFile:
+                    tcp_lookup_table = clw.get_TCP_lookup_table(options.inPCAPFile, hash_target = "seq")
+
+                status_pdu_map, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list = clw.rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, 400, all_Retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent), tcp_lookup_table)
+
+                # Calculate the total increase or decrease RTT
+                total_benefit_cost_time_map, total_benefit_cost_count_map = clw.rlc_fast_retx_overall_benefit(rtt_benefit_cost_time_list, rtt_benefit_cost_count_list)
                 total_retx_rtt = float(sum(retxRTTMap["rlc_ul"].values()))
                 total_retx_count = float(sum(retxCountMap["rlc_ul"].values()))
                 total_rtt = float(sum(totalRTTMap["rlc_ul"].values()))
@@ -335,11 +342,12 @@ def main():
                     print "$"*60
 
                 if DUP_DEBUG:
-                    pw.print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list, total_retx_rtt, detailed_benefit_cost_time_map, total_retx_count, detailed_benefit_cost_count_map)
+                    pw.print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list, total_rtt, total_benefit_cost_time_map, total_count, total_benefit_cost_count_map)
                     # NOTICE: We exclude the retransmission part when we count the total retransmission
-                    print "*" * 30 + " Retx RTT fraction and Retx Count fraction:"
-                    print "RLC retx RTT ratio is %f" % max(total_retx_rtt / (total_rtt - total_retx_rtt), 1)
-                    print "RLC count ratio is %f" % max(total_retx_count / (total_count - total_retx_count), 1)
+                    # print "*" * 30 + " Retx RTT fraction and Retx Count fraction:"
+                    # print "RLC retx RTT ratio is %f" % max(total_retx_rtt / (total_rtt - total_retx_rtt), 1)
+                    # print "RLC count ratio is %f" % max(total_retx_count / (total_count - total_retx_count), 1)
+                    pw.print_rlc_fast_retx_states_per_RRC_state(status_pdu_map)
                     
 
     #################################################################
@@ -348,31 +356,40 @@ def main():
     # Loss ratio is essentially the retransmission ratio
     # use the old retransmission ratio map and the RTT calculation map
     if options.is_loss_analysis:
+        # hash table contains only one side traffic
+        udp_clt_lookup_table = None
         udp_srv_lookup_table = None
+
         # calculate the RTT for each UDP packet based on the sequence number
         if options.server_ip and options.direction:
             lw.assign_udp_rtt(QCATEntries, options.direction, options.server_ip)
+            udp_clt_lookup_table = lw.get_UDP_clt_lookup_table(QCATEntries, \
+                                   options.direction, options.server_ip, options.hash_target)
 
         if options.inPCAPFile and options.direction:
             options.hash_target = options.hash_target.lower()
             if options.hash_target != "hash" and \
                options.hash_target != "seq":
                 optParser.error("--udp_hash_target, only support hash or seq type")
-            udp_srv_lookup_table = lw.get_UDP_lookup_table(options.inPCAPFile, options.direction, options.hash_target, options.server_ip)
+            udp_srv_lookup_table = lw.get_UDP_srv_lookup_table(options.inPCAPFile, options.direction, options.hash_target, options.server_ip)
 
         pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
 
         # map the UDP trace on the client side to the server side
         # NOTICE that we use filtered QCAT Entries
-        if udp_srv_lookup_table and options.server_ip:
-            loss_state_stats, loss_total_stats, loss_index_list = lw.UDP_loss_stats(QCATEntries, udp_srv_lookup_table, options.hash_target, options.server_ip)
+        if udp_clt_lookup_table and udp_srv_lookup_table and options.server_ip:
+            loss_state_stats, loss_total_stats, srv_not_recv_list, clt_no_log_list = lw.UDP_loss_stats(QCATEntries, udp_clt_lookup_table, udp_srv_lookup_table, options.hash_target, options.server_ip)
+            srv_hash_len = float(len(udp_clt_lookup_table))
+            clt_hash_len = float(len(udp_srv_lookup_table))
+            clt_no_log_len = float(len(clt_not_log_list))
+            print "Client no log ratio is %f / %f = %f" % (clt_no_log_len, lt_hash_len, clt_no_log_len/clt_hash_len)
             # print the loss statistics
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
 
             # UDP cross analysis
             # TODO: uplink only
             if options.direction.lower() == "up":
-                lw.UDP_loss_cross_analysis(QCATEntries, loss_index_list, const.UL_PDU_ID)
+                lw.UDP_loss_cross_analysis(QCATEntries, srv_not_recv_list, const.UL_PDU_ID)
 
     #################################################################
     ######################## Result Display #########################
