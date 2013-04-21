@@ -280,6 +280,10 @@ def main():
     # collect statistic information
     retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
+    if TIME_DEBUG:
+        print "Retx analysis takes ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()
+
     #################################################################
     #################### TCP Cross Layer Analysis ###################
     #################################################################
@@ -373,7 +377,11 @@ def main():
 
     #################################################################
     ################## UDP Loss + Cross layer Analysis ##############
-    #################################################################  
+    #################################################################
+    if TIME_DEBUG:
+        print "Start UDP loss Analysis ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()
+
     # Loss ratio is essentially the retransmission ratio
     # use the old retransmission ratio map and the RTT calculation map
     if options.is_loss_analysis:

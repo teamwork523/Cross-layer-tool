@@ -286,6 +286,7 @@ def removeQXDMDupIP(entries):
     
     # Actuall elimination
     rtEntries = []
+    dupIndex = set(dupIndex)
     for i in range(len(entries)):
         if i not in dupIndex:
             rtEntries.append(entries[i])
