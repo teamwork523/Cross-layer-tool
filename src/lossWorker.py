@@ -28,7 +28,7 @@ DEBUG = False
 #   2. downlink table
 # key: sequence number
 # value: entry index
-def get_UDP_clt_lookup_table (QCATEntries, direction, srv_ip, dst_iphash_target = "seq"):
+def get_UDP_clt_lookup_table (QCATEntries, direction, srv_ip, hash_target = "seq"):
     clt_ip_kw = "src_ip"
     srv_ip_kw = "dst_ip"
     if direction.lower() != "up":
