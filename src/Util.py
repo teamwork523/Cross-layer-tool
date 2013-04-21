@@ -7,7 +7,7 @@ This program analyze the Data Set generated from QXDM filtered log file
 It could optionally map the packets from PCAP with the RRC states in the log
 """
 
-import os, sys, re
+import os, sys, re, time
 import hashlib, base64
 import const
 import QCATEntry as qe
@@ -16,6 +16,7 @@ import PrintWrapper as pw
 from datetime import datetime
 
 DEBUG = False
+TIME_DEBUG = True
 
 ###############################################################################################
 ########################################### I/O Related #######################################
@@ -247,6 +248,10 @@ def mapRLCReTxOverTime (entries, interval):
 
 # Remove duplicated IP packets generated from QXDM
 def removeQXDMDupIP(entries):
+    check_point_time = time.time()
+    if TIME_DEBUG:
+        print "Start delete dup IP"
+
     dupIndex = []
     privEntryIndex = None
     privSignature = None
@@ -274,6 +279,10 @@ def removeQXDMDupIP(entries):
                 else:
                     privSignature = entries[i].ip["signature"]
                     privEntryIndex = i
+    
+    if TIME_DEBUG:
+        print "Delete entries takes ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()   
     
     # Actuall elimination
     rtEntries = []

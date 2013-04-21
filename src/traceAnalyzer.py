@@ -142,6 +142,10 @@ def main():
     QCATEntries = util.removeQXDMDupIP(QCATEntries)
     #sprint "After remove dup: %d entries" % (len(QCATEntries))
 
+    if TIME_DEBUG:
+        print "Delete Dup IP takes ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()
+
     #################################################################
     ###################### Mapping Context Info #####################
     #################################################################
@@ -149,11 +153,11 @@ def main():
     #TODO: delete the parameters
     #cw.assignRRCState(QCATEntries, float(options.ptof_timer), float(options.ftod_timer))
     cw.assignRRCState(QCATEntries)
-    cw.assignEULState(QCATEntries)
+    #cw.assignEULState(QCATEntries)
     cw.assignSignalStrengthValue(QCATEntries)
     # assign the RLC configuration information
-    cw.assignPrivConfiguration(QCATEntries, const.DL_CONFIG_PDU_ID)
-    cw.assignPrivConfiguration(QCATEntries, const.UL_CONFIG_PDU_ID)
+    #cw.assignPrivConfiguration(QCATEntries, const.DL_CONFIG_PDU_ID)
+    #cw.assignPrivConfiguration(QCATEntries, const.UL_CONFIG_PDU_ID)
 
     """
     # verify configuration assignment
