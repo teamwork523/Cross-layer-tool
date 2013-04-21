@@ -144,7 +144,9 @@ def assign_udp_rtt(QCATEntries, direction, server_ip):
             if echo_index:
                 cur_entry.rtt["udp"] = QCATEntries[echo_index].timestamp - cur_entry.timestamp
                 if DEBUG:
-                    print "UDP RTT is : %f" % cur_entry.rtt["udp"]
+                    if cur_entry.rtt["udp"] > 3:
+                        print "UDP RTT is : %f" % cur_entry.rtt["udp"]
+                        pw.printUDPEntry(cur_entry)
 
 # TODO: calculate the average RTT over each state
 
