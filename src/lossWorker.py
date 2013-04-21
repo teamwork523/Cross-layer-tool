@@ -148,7 +148,7 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             # check reset
             reset_index = clw.find_reset_ack(QCATEntries, last_mapped_rlc_index+1, ctrl_index)
             # check for exceeding retx count
-            rlc_tx_map = find_SN_within_interval(QCATEntries, first_mapped_rlc_index+1, ctrl_index)
+            rlc_tx_map = clw.find_SN_within_interval(QCATEntries, first_mapped_rlc_index+1, ctrl_index)
             max_tx_count_num = 0
             if rlc_tx_map:
                 max_tx_count_num = max([len(i) for i in rlc_tx_map.values()])
