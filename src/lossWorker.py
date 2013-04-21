@@ -30,7 +30,8 @@ def get_UDP_clt_lookup_table (QCATEntries, direction, srv_ip, dst_iphash_target 
     ip_kw = "dst_ip"
     if direction.lower() != "up":
         ip_kw = "src_ip"
-        
+    
+    # TODO: test why slow
     clt_lookup_table = {}
     for entryIndex in range(len(QCATEntries)):
         cur_entry = QCATEntries[entryIndex]

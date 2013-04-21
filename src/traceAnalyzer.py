@@ -10,7 +10,7 @@ retransmission behavior and investigate the correlation between TCP RTO/Fast ret
 with RLC retransmission.
 """
 
-import os, sys
+import os, sys, time
 import const
 import QCATEntry as qe
 import PCAPPacket as pp
@@ -25,6 +25,7 @@ import lossWorker as lw
 
 DEBUG = False
 DUP_DEBUG = True
+TIME_DEBUG = True
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
@@ -99,6 +100,10 @@ def init_optParser():
     return optParser
 
 def main():
+    # start to measure time
+    start_time = time.time()
+    check_point_time = start_time
+
     # read lines from input file
     optParser = init_optParser()
     (options, args) = optParser.parse_args()
@@ -124,7 +129,11 @@ def main():
     if options.pkts_examined:
         pw.printIPaddressPair(QCATEntries, options.pkts_examined)
         sys.exit(0)
-    
+
+    if TIME_DEBUG:
+        print "Read QxDM takes ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()
+
     #################################################################
     ########################## Pre-process ##########################
     #################################################################
@@ -177,6 +186,10 @@ def main():
     cw.calc_rlc_rtt(QCATEntries)
     cw.assign_rlc_rtt(QCATEntries)
 
+    if TIME_DEBUG:
+        print "Assign Context takes ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()
+
 	#################################################################
     ######################## Protocol Filter ########################
     #################################################################
@@ -216,6 +229,10 @@ def main():
     filteredQCATEntries = util.packetFilter(QCATEntries, cond)
     # create a map between Filtered entries and its index
     filteredEntryToIndexMap = util.createEntryMap(filteredQCATEntries)
+
+    if TIME_DEBUG:
+        print "Filter packets takes ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()
 
     #################################################################
     #################### FACH State delay Process ###################
@@ -373,6 +390,10 @@ def main():
                 optParser.error("--udp_hash_target, only support hash or seq type")
             udp_srv_lookup_table = lw.get_UDP_srv_lookup_table(options.inPCAPFile, options.direction, options.hash_target, options.server_ip)
 
+        if TIME_DEBUG:
+            print "UDP: assign RTT and gen lookup table takes ", time.time() - check_point_time, "sec"
+            check_point_time = time.time()
+
         pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
 
         # map the UDP trace on the client side to the server side
@@ -385,6 +406,10 @@ def main():
             print "Client no log ratio is %f / %f = %f" % (clt_no_log_len, lt_hash_len, clt_no_log_len/clt_hash_len)
             # print the loss statistics
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
+            
+            if TIME_DEBUG:
+                print "UDP: print loss ratio takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
 
             # UDP cross analysis
             # TODO: uplink only
