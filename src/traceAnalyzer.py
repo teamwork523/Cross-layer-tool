@@ -391,9 +391,13 @@ def main():
 
         # calculate the RTT for each UDP packet based on the sequence number
         if options.server_ip and options.direction:
-            lw.assign_udp_rtt(QCATEntries, options.direction, options.server_ip)
+           lw.assign_udp_rtt(QCATEntries, options.direction, options.server_ip)
             udp_clt_lookup_table = lw.get_UDP_clt_lookup_table(QCATEntries, \
                                    options.direction, options.server_ip, options.hash_target)
+
+        if TIME_DEBUG:
+            print "UDP: assign RTT and gen clt table ", time.time() - check_point_time, "sec"
+            check_point_time = time.time()
 
         if options.inPCAPFile and options.direction:
             options.hash_target = options.hash_target.lower()
@@ -403,7 +407,7 @@ def main():
             udp_srv_lookup_table = lw.get_UDP_srv_lookup_table(options.inPCAPFile, options.direction, options.hash_target, options.server_ip)
 
         if TIME_DEBUG:
-            print "UDP: assign RTT and gen lookup table takes ", time.time() - check_point_time, "sec"
+            print "UDP: gen srv Table ", time.time() - check_point_time, "sec"
             check_point_time = time.time()
 
         pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
