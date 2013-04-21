@@ -116,12 +116,17 @@ def UDP_loss_stats (QCATEntries, udp_clt_lookup_table, udp_srv_lookup_table, has
 
 # UDP loss cross layer loss analysis
 # determine whether packet lost over the internet or the cellular network
+# return
+# 1. udp loss in cellular network map
+# 2. udp loss over internet map
 def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
     # Loss over cellular network if 
     # 1. exceeding max Retx count
     # 2. there is a reset PDU in between the mapped RLC list and the next control message
     udp_loss_in_cellular = {"reset": rw.initFullRRCMap(0.0), "max_retx": rw.initFullRRCMap(0.0)}
     udp_loss_in_internet = rw.initFullRRCMap(0.0)
+
+    entry_len = len(QCATEntries)
 
     for loss_index in loss_index_list:
         cur_entry = QCATEntries[loss_index] 
@@ -133,7 +138,12 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             max_tx_config = cur_entry.ul_config["max_tx"]
             next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack", cur_seq = last_mapped_rlc_index)
             next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list", cur_seq = last_mapped_rlc_index)
-            ctrl_index = min(next_ack_index, next_list_index)
+            
+            ctrl_index = entry_len
+            if next_ack_index:
+                ctrl_index = min(next_ack_index, ctrl_index)
+            if next_list_index:
+                ctrl_index = min(next_list_index, ctrl_index)
             
             # check reset
             reset_index = clw.find_reset_ack(QCATEntries, last_mapped_rlc_index+1, ctrl_index)
@@ -172,6 +182,12 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             print "max # of retx is %d" % max([len(i) for i in dup_sn_map.values()])
             pw.print_loss_case(QCATEntries, loss_index, rlc_tx_index_list)
             """
+    if DEBUG:
+        for k, v in udp_loss_in_cellular.items():
+            print "%s: %s" % (k, v)
+        print udp_loss_in_internet
+
+    return udp_loss_in_cellular, udp_loss_in_internet
 
 #################################################################
 ######################### UDP RTT ###############################

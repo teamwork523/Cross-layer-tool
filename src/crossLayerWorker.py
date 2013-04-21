@@ -1223,6 +1223,7 @@ def detect_real_win (QCATEntries, first_mapped_RLCs, last_mapped_RLCs, orig_tcp_
                     if TRUE_WIN_DEBUG:
                         print "+++++++++++++ Detect still ACK +++++++++++++"
                     return True, "rlc_delay"
+
     return False, None
 
 # RLC_FAST_RETX_ANALYSIS
