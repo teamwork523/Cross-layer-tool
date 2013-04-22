@@ -441,7 +441,7 @@ def main():
                 pw.print_loss_cause_and_rrc_state(udp_loss_in_cellular, udp_loss_in_internet)
 
             # UDP RTT analysis
-            udp_per_state_rtt_map = lw.cal_UDP_RTT_per_state(QCATEntrie, options.direction, udp_clt_lookup_table, udp_srv_echo_lookup_table)
+            udp_per_state_rtt_map = lw.cal_UDP_RTT_per_state(QCATEntries, options.direction, udp_clt_lookup_table, udp_srv_echo_lookup_table)
             pw.UDP_RTT_state_information(udp_per_state_rtt_map)
 
     #################################################################
