@@ -60,6 +60,7 @@ class PCAPParser:
     def create_udp_trace(self, link_len):
         self.udp_trace = []
         for i in range(len(self.data)):
+            print i, len(self.data)
             new_datagram = self.init_udp_pkt()
             new_datagram["ts"] = dp.packet_time(self.data, i)
             # identical to TCP
@@ -360,7 +361,7 @@ class PCAPParser:
 			if ack_count >= const.FAST_RETX_COUNT:
 				return True
 		return False
-	
+
 	def printFlowsWithTime(self, flows):
 		for flow in flows:
 			print "#" * 50
