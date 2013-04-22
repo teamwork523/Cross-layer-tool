@@ -60,7 +60,6 @@ class PCAPParser:
     def create_udp_trace(self, link_len):
         self.udp_trace = []
         for i in range(len(self.data)):
-            print i, len(self.data)
             new_datagram = self.init_udp_pkt()
             new_datagram["ts"] = dp.packet_time(self.data, i)
             # identical to TCP
