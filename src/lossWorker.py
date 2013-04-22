@@ -18,7 +18,7 @@ import PCAPParser as pp
 import Util as util
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
 
 #################################################################
 ##################### UDP Loss Analysis #########################
@@ -135,9 +135,12 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
         if mapped_rlc_tuple_list and cur_entry.rrcID:
             first_mapped_rlc_index = mapped_rlc_tuple_list[0][1]
             last_mapped_rlc_index = mapped_rlc_tuple_list[-1][1]
+            first_mapped_rlc_sn = min(QCATEntries[first_mapped_rlc_index].ul_pdu[0]["sn"])
+            last_mapped_rlc_sn = min(QCATEntries[last_mapped_rlc_index].ul_pdu[0]["sn"])
+            
             max_tx_config = cur_entry.ul_config["max_tx"]
-            next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack")
-            next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list")
+            next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack", cur_seq = first_mapped_rlc_sn)
+            next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list", cur_seq = first_mapped_rlc_sn)
             
             ctrl_index = entry_len
             if next_ack_index:
@@ -146,9 +149,9 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
                 ctrl_index = min(next_list_index, ctrl_index)
             
             # check reset
-            reset_index = clw.find_reset_ack(QCATEntries, last_mapped_rlc_index+1, ctrl_index)
+            reset_index = clw.find_reset_ack(QCATEntries, last_mapped_rlc_index + 1, ctrl_index)
             # check for exceeding retx count
-            rlc_tx_map = clw.find_SN_within_interval(QCATEntries, first_mapped_rlc_index+1, ctrl_index)
+            rlc_tx_map = clw.find_SN_within_interval(QCATEntries, first_mapped_rlc_index + 1, ctrl_index)
             max_tx_count_num = 0
             if rlc_tx_map:
                 max_tx_count_num = max([len(i) for i in rlc_tx_map.values()])

@@ -64,6 +64,8 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
     print "Per state Loss Ratio:"
     print per_state_loss_ratio_result
 
+# print the loss rate for the
+
 # print a loss case
 def print_loss_case(QCATEntries, loss_index, rlc_retx_index_list):
     UDP_entry = QCATEntries[loss_index]
