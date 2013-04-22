@@ -51,6 +51,9 @@ LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                UL_CONFIG_PDU_ID: "Uplink RLC configuration",
                DL_CTRL_PDU_ID: "Downlink control PDU"}
 
+############ UDP packet
+UDP_RTT_LIMIT = 5
+
 # Include data configuration settings
 # TODO: hard configured, to be changed
 DATA_LOGIC_CHANNEL_ID = 19

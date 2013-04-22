@@ -221,11 +221,11 @@ def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table)
                                 cur_entry.rtt["udp"] = cur_diff
                 else:
                     cur_entry.rtt["udp"] = -1.0
-
+                if cur_entry.rtt["udp"] > const.UDP_RTT_LIMIT:
+                    cur_entry.rtt["udp"] = -1.0
                 if False:
                     print "UDP RTT is %f" % cur_entry.rtt["udp"]
                     pw.printUDPEntry(QCATEntries[echo_index])
-                         
 
     """
     for index in range(len(QCATEntries)):
@@ -258,11 +258,11 @@ def cal_UDP_RTT_per_state (QCATEntries, direction, clt_up_table, clt_down_table)
     lookup_table = clt_up_table
     if direction.lower() != "up":
         lookup_table = clt_down_table
-    
+
     for index_list in lookup_table.values():
         for index in index_list:
             cur_entry = QCATEntries[index]
-            if cur_entry.rrcID and cur_entry.rtt["udp"]:
+            if cur_entry.rrcID and cur_entry.rtt["udp"] and cur_entry.rtt["udp"] > 0:
                 udp_rtt_per_state[cur_entry.rrcID].append(cur_entry.rtt["udp"])
 
     return udp_rtt_per_state    
