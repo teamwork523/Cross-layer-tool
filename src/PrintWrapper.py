@@ -93,9 +93,9 @@ def print_loss_cause_and_rrc_state (udp_loss_in_cellular, udp_loss_in_internet):
             if total_loss_over_net:
                 loss_over_net_ratio = udp_loss_in_internet[k] / total_loss_over_net
                 
-            reset_result += reset_ratio + "\t" 
-            exceed_max_retx_result += exceed_max_retx_ratio + "\t"
-            loss_over_net_result += loss_over_net_ratio + "\t"
+            reset_result += str(reset_ratio) + "\t" 
+            exceed_max_retx_result += str(exceed_max_retx_ratio) + "\t"
+            loss_over_net_result += str(loss_over_net_ratio) + "\t"
 
     print "(Reset / total reset) per RRC:\n%s" % reset_result
     print "(Exceeding max retx / total exceed max) per RRC:\n%s" % exceed_max_retx_result
