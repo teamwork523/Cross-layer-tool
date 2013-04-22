@@ -1049,7 +1049,7 @@ def findNextCtrlMsg (QCATEntries, startIndex, ctrl_type = None, cur_seq = None):
             elif ctrl_type == "list":
                 if QCATEntries[index].dl_ctrl["list"]:
                     list_seq = QCATEntries[index].dl_ctrl["list"][-1][0]
-                    if list_seq >= cur_seq:
+                    if list_seq > cur_seq:
                         return index
     return None
 

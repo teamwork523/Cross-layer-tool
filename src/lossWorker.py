@@ -136,8 +136,8 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             first_mapped_rlc_index = mapped_rlc_tuple_list[0][1]
             last_mapped_rlc_index = mapped_rlc_tuple_list[-1][1]
             max_tx_config = cur_entry.ul_config["max_tx"]
-            next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack", cur_seq = last_mapped_rlc_index)
-            next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list", cur_seq = last_mapped_rlc_index)
+            next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack")
+            next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list")
             
             ctrl_index = entry_len
             if next_ack_index:
@@ -263,7 +263,7 @@ def find_echo_udp_index (QCATEntries, startIndex, seq_num, src_ip = None, dst_ip
                 if dst_ip and cur_entry.ip["dst_ip"] == dst_ip:
                     return index
     return None
-        
+    
 
 
 
