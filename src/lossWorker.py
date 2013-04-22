@@ -18,7 +18,8 @@ import PCAPParser as pp
 import Util as util
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
+CUR_DEBUG = True
 
 #################################################################
 ##################### UDP Loss Analysis #########################
@@ -187,7 +188,8 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             print "max # of retx is %d" % max([len(i) for i in dup_sn_map.values()])
             pw.print_loss_case(QCATEntries, loss_index, rlc_tx_index_list)
             """
-    if DEBUG:
+
+    if CUR_DEBUG:
         print "Max RLC retx is ", max_retx_count_overall
 
     return udp_loss_in_cellular, udp_loss_in_internet
@@ -247,8 +249,23 @@ def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table)
                         pw.printUDPEntry(cur_entry)
      """
 
-# TODO: calculate the average RTT over each state
+# calculate the average RTT over each state
+def cal_UDP_RTT_per_state (QCATEntries, direction, clt_up_table, clt_down_table):
+    udp_rtt_per_state = rw.initFullRRCMap(0.0)
+    for k in udp_rtt_per_state:
+        udp_rtt_per_state[k] = []
 
+    lookup_table = clt_up_table
+    if direction.lower() != "up":
+        lookup_table = clt_down_table
+    
+    for index_list in lookup_table.values():
+        for index in index_list:
+            cur_entry = QCATEntries[index]
+            if cur_entry.rrcID and cur_entry.rtt["udp"]:
+                udp_rtt_per_state[cur_entry.rrcID].append(cur_entry.rtt["udp"])
+
+    return udp_rtt_per_state    
 
 #################################################################
 ######################### Helper function #######################

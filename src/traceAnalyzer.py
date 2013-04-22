@@ -25,7 +25,7 @@ import lossWorker as lw
 
 DEBUG = False
 DUP_DEBUG = True
-TIME_DEBUG = True
+TIME_DEBUG = False
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
@@ -415,7 +415,8 @@ def main():
         if TIME_DEBUG:
             print "UDP: gen srv Table ", time.time() - check_point_time, "sec"
             check_point_time = time.time()
-
+        
+        print "Start UDP data: >>>>>>"
         pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
 
         # map the UDP trace on the client side to the server side
@@ -438,6 +439,10 @@ def main():
             if options.direction.lower() == "up":
                 udp_loss_in_cellular, udp_loss_in_internet = lw.UDP_loss_cross_analysis(QCATEntries, srv_not_recv_list, const.UL_PDU_ID)
                 pw.print_loss_cause_and_rrc_state(udp_loss_in_cellular, udp_loss_in_internet)
+
+            # UDP RTT analysis
+            udp_per_state_rtt_map = lw.cal_UDP_RTT_per_state(QCATEntrie, options.direction, udp_clt_lookup_table, udp_srv_echo_lookup_table)
+            pw.UDP_RTT_state_information(udp_per_state_rtt_map)
 
     #################################################################
     ######################## Result Display #########################

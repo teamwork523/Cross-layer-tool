@@ -112,6 +112,18 @@ def print_loss_case(QCATEntries, loss_index, rlc_retx_index_list):
         print "%f\t%f\t%f" % (diff_time, 0, cur_entry.rrcID)
 
 #######################################################################
+########################### RTT Related ###############################
+#######################################################################
+# print UDP per state RTT information
+def UDP_RTT_state_information(udp_rtt_map):
+    udp_rtt_result = ""
+
+    for rtt_list in udp_rtt_map.values():
+        udp_rtt_result += str(util.meanValue(rtt_list)) + "\t"
+
+    print "UDP RTT result is \n%s" % udp_rtt_result
+
+#######################################################################
 ########################### Retx Related ##############################
 #######################################################################
 # Print RLC retransmission Map
@@ -229,9 +241,10 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxTyp
         return
     print "Retx Count Ratio for %s:" % retxType
     print count_result
-    print "RTT Ratio %s:" %     retxType
+    print "RTT Ratio %s:" % retxType
     print rtt_result
     if DEBUG:
+        print "*"*40
         print "Retx_Count: Total_count is %d" % total_count
         print "Retx_Count: Per State count is %s" % per_state_count
         print "Retx_Count: Per state ratio is %s" % per_state_ratio
