@@ -66,7 +66,7 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
 
 # print the UDP loss cause and RRC state
 def print_loss_cause_and_rrc_state (udp_loss_in_cellular, udp_loss_in_internet):
-    total_loss = float(sum(udp_loss_in_internet.values()) + sum([sum(i.values()) for i in udp_loss_in_cellular]))
+    total_loss = float(sum(udp_loss_in_internet.values()) + sum([sum(i.values()) for i in udp_loss_in_cellular.values()]))
     total_reset = float(sum(udp_loss_in_cellular["reset"].values()))
     total_exceed_max_retx = float(sum(udp_loss_in_cellular["max_retx"].values()))
     total_loss_over_net = float(sum(udp_loss_in_internet.values()))
