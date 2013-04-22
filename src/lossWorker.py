@@ -18,7 +18,7 @@ import PCAPParser as pp
 import Util as util
 from datetime import datetime
 
-DEBUG = False
+DEBUG = True
 
 #################################################################
 ##################### UDP Loss Analysis #########################
@@ -139,8 +139,8 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             last_mapped_rlc_sn = min(QCATEntries[last_mapped_rlc_index].ul_pdu[0]["sn"])
             
             max_tx_config = cur_entry.ul_config["max_tx"]
-            next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack", cur_seq = first_mapped_rlc_sn)
-            next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list", cur_seq = first_mapped_rlc_sn)
+            next_ack_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "ack", cur_seq = last_mapped_rlc_sn)
+            next_list_index = clw.findNextCtrlMsg(QCATEntries, loss_index, ctrl_type = "list", cur_seq = last_mapped_rlc_sn)
             
             ctrl_index = entry_len
             if next_ack_index:
@@ -220,7 +220,7 @@ def assign_udp_rtt(QCATEntries, direction, clt_uplink_table, clt_downlink_table)
                 else:
                     cur_entry.rtt["udp"] = -1.0
 
-                if DEBUG:
+                if False:
                     print "UDP RTT is %f" % cur_entry.rtt["udp"]
                     pw.printUDPEntry(QCATEntries[echo_index])
                          
