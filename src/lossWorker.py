@@ -127,6 +127,7 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
     udp_loss_in_internet = rw.initFullRRCMap(0.0)
 
     entry_len = len(QCATEntries)
+    max_retx_count_overall = 0.0
 
     for loss_index in loss_index_list:
         cur_entry = QCATEntries[loss_index] 
@@ -155,7 +156,8 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             max_tx_count_num = 0
             if rlc_tx_map:
                 max_tx_count_num = max([len(i) for i in rlc_tx_map.values()])
-
+                if max_tx_count_num > max_retx_count_overall:
+                    max_retx_count_overall = max_tx_count_num
             if reset_index:
                 udp_loss_in_cellular["reset"][cur_entry.rrcID] += 1
                 if DEBUG:
@@ -186,9 +188,7 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
             pw.print_loss_case(QCATEntries, loss_index, rlc_tx_index_list)
             """
     if DEBUG:
-        for k, v in udp_loss_in_cellular.items():
-            print "%s: %s" % (k, v)
-        print udp_loss_in_internet
+        print "Max RLC retx is ", max_retx_count_overall
 
     return udp_loss_in_cellular, udp_loss_in_internet
 

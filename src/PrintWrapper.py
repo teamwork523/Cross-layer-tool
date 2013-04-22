@@ -64,7 +64,42 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
     print "Per state Loss Ratio:"
     print per_state_loss_ratio_result
 
-# print the loss rate for the
+# print the UDP loss cause and RRC state
+def print_loss_cause_and_rrc_state (udp_loss_in_cellular, udp_loss_in_internet):
+    total_loss = float(sum(udp_loss_in_internet.values()) + sum([sum(i.values()) for i in udp_loss_in_cellular]))
+    total_reset = float(sum(udp_loss_in_cellular["reset"].values()))
+    total_exceed_max_retx = float(sum(udp_loss_in_cellular["max_retx"].values()))
+    total_loss_over_net = float(sum(udp_loss_in_internet.values()))
+
+    reset_result = ""
+    exceed_max_retx_result = ""
+    loss_over_net_result = ""   
+ 
+    print "Reset ratio is %f / %f \n = %f" % (total_reset, total_loss, total_reset / total_loss)
+    print "Exceeding max retx ratio is %f / %f \n = %f" % (total_exceed_max_retx, total_loss, total_exceed_max_retx / total_loss)
+    print "Loss over Internet ratio is %f / %f \n = %f" % (total_loss_over_net, total_loss, total_loss_over_net / total_loss)
+
+    # only display per state ratio, can time the each case ratio to get the total ratio
+    if total_loss:
+        for k, v in udp_loss_in_internet.items():
+            reset_ratio = 0
+            exceed_max_retx_ratio = 0
+            loss_over_net_ratio = 0
+
+            if total_reset:
+                reset_ratio = udp_loss_in_cellular["reset"][k] / total_reset
+            if total_exceed_max_retx:
+                exceed_max_retx_ratio = udp_loss_in_cellular["max_retx"][k] / total_exceed_max_retx
+            if total_loss_over_net:
+                loss_over_net_ratio = udp_loss_in_internet[k] / total_loss_over_net
+                
+            reset_result += reset_ratio + "\t" 
+            exceed_max_retx_result += exceed_max_retx_ratio + "\t"
+            loss_over_net_result += loss_over_net_ratio + "\t"
+
+    print "(Reset / total reset) per RRC:\n%s" % reset_result
+    print "(Exceeding max retx / total exceed max) per RRC:\n%s" % exceed_max_retx_result
+    print "(Loss Over net / total loss over net) per RRC:\n%s" % loss_over_net_result
 
 # print a loss case
 def print_loss_case(QCATEntries, loss_index, rlc_retx_index_list):

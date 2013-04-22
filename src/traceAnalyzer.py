@@ -436,7 +436,8 @@ def main():
             # UDP cross analysis
             # TODO: uplink only
             if options.direction.lower() == "up":
-                lw.UDP_loss_cross_analysis(QCATEntries, srv_not_recv_list, const.UL_PDU_ID)
+                udp_loss_in_cellular, udp_loss_in_internet = lw.UDP_loss_cross_analysis(QCATEntries, srv_not_recv_list, const.UL_PDU_ID)
+                pw.print_loss_cause_and_rrc_state(udp_loss_in_cellular, udp_loss_in_internet)
 
     #################################################################
     ######################## Result Display #########################
