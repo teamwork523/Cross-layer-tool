@@ -18,6 +18,8 @@ def main():
         sys.exit(1)
 
     num_col = int(sys.argv[1]) - 1
+    if num_col < 1:
+        num_col = 1
     inject_data = INJECT_DEFAULT.split()
     if len(sys.argv) == 3:
         inject_data = str(sys.argv[2]).split()
@@ -25,7 +27,9 @@ def main():
     for data in inject_data:
         line = sys.stdin.readline()
         if not line: break
-        print DEL.join(line.strip().split().insert(num_col, data))
+        cur_data = line.strip().split()
+        cur_data.insert(num_col, data)
+        print DEL.join(cur_data)
 
 if __name__ == "__main__":
     main()    
