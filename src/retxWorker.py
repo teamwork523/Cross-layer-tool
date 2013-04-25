@@ -14,7 +14,7 @@ import PrintWrapper as pw
 import Util as util
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
 CUR_DEBUG = False
 ############################################################################
 ############################# TCP Retx #####################################

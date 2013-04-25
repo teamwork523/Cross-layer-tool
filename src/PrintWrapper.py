@@ -446,6 +446,7 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
     loss = float(len(retx_map["loss"]))
     totalCount = win + draw + draw_plus + loss
     win_ratio = draw_ratio = draw_plus_ratio = loss_ratio = 0
+
     if totalCount:
         win_ratio = win / totalCount
         draw_ratio = draw / totalCount
@@ -530,12 +531,15 @@ def print_rlc_fast_retx_cost_benefit(QCATEntries, retx_map, trans_time_benefit_c
     """
 
 # print the fast retransmission statistics based on RRC state
-def print_rlc_fast_retx_states_per_RRC_state(status_pdu_count_map):
+def print_rlc_fast_retx_states_per_RRC_state(status_pdu_count_map, totalRTTMap, totCountStatsMap, rtt_benefit_cost_time_list_per_state, rtt_benefit_cost_count_list_per_state):
+    # Total count / RTT
+    total_rtt = float(sum(totalRTTMap["rlc_ul"].values()))
+    total_count = float(sum(totCountStatsMap["rlc_ul"].values()))
+
     total_status_pdu = sum(status_pdu_count_map["total"].values())
     total_fast_retx = sum(status_pdu_count_map["dup_ack"].values())
     dup_ack_ratio_per_rrc_result = ""
     dup_ack_ratio_overall_result = ""
-    
     
     for k, v in status_pdu_count_map["dup_ack"].items():
         if status_pdu_count_map["total"][k] == 0:
@@ -545,11 +549,50 @@ def print_rlc_fast_retx_states_per_RRC_state(status_pdu_count_map):
         dup_ack_ratio_per_rrc_result += str(cur_dup_ack_ratio_per_rrc) + "\t"
         dup_ack_ratio_overall_result += str(status_pdu_count_map["dup_ack"][k] / total_status_pdu) + "\t"
 
+    # The benefit RTT per state
+    benefit_rtt_result_overall = ""
+    benefit_rtt_result_per_state = ""
+
+    # combine FACH and FACH promote
+    FACH_total = totalRTTMap["rlc_ul"][const.FACH_ID] + totalRTTMap["rlc_ul"][const.FACH_TO_DCH_ID]
+    PCH_total = totalRTTMap["rlc_ul"][const.PCH_ID] + totalRTTMap["rlc_ul"][const.PCH_TO_FACH_ID]
+    
+    for rrcID in rtt_benefit_cost_time_list_per_state["win"]:
+        benefit_time = float(rtt_benefit_cost_time_list_per_state["win"][rrcID] + \
+                       rtt_benefit_cost_time_list_per_state["draw_plus"][rrcID] - \
+                       rtt_benefit_cost_time_list_per_state["draw"][rrcID] - \
+                       rtt_benefit_cost_time_list_per_state["loss"][rrcID])
+
+        if DEBUG:
+            print "RRC: ", const.RRC_MAP[rrcID]
+            print "Benefit time is ", benefit_time 
+        per_state_ratio = 0
+        if totalRTTMap["rlc_ul"][rrcID]:
+            per_state_total = 0.0
+            if rrcID == const.FACH_ID or rrcID == const.FACH_TO_DCH_ID:
+                per_state_total = FACH_total
+            elif rrcID == const.PCH_ID or rrcID == const.PCH_TO_FACH_ID:
+                per_state_total = PCH_total
+            else:
+                per_state_total = totalRTTMap["rlc_ul"][rrcID]
+            per_state_ratio = benefit_time / per_state_total
+
+            if DEBUG:
+                print "Total state RTT is ", per_state_total
+        benefit_rtt_result_overall += str(benefit_time / total_rtt) + "\t"
+        benefit_rtt_result_per_state += str(per_state_ratio) + "\t"
+
+    print "!!!Benefit RTT ratio overall is\n%s" % benefit_rtt_result_overall
+    print "!!!Benefit RTT ratio per state is\n%s" % benefit_rtt_result_per_state
+  
+    # NOT interesting, only occur during FACH
+    """
     print "*" * 30 + " RLC fast retx VS RRC:"
     print "RLC Fast Retx Ratio per state: %s" % dup_ack_ratio_per_rrc_result
     print "RLC Fast Retx Ratio overall: %s" % dup_ack_ratio_overall_result
     print status_pdu_count_map["total"]
     print status_pdu_count_map["dup_ack"]
+    """
     
 # print the detail information about the win case
 def print_real_win(rlc_fast_retx_map, real_win_count, tcp_received_num_case):

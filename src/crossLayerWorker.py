@@ -20,7 +20,8 @@ DETAIL_DEBUG = False
 CUR_DEBUG = False
 CONFIG_DEBUG = False
 DUP_DEBUG = False
-TRUE_WIN_DEBUG = True
+TRUE_WIN_DEBUG = False
+RRC_DEBUG = False
 
 ############################################################################
 ################## Cross Layer Based on RLC Layer ##########################
@@ -534,8 +535,12 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
     trans_time_benefit_cost_map = {"win":[], "draw_plus":[], "draw":[], "loss":[]}
     # RTT benefit/cost map
     rtt_benefit_cost_time_map = {"win":[], "draw_plus":[], "draw":[], "loss":[]}
+    rtt_benefit_cost_time_map_per_state = {"win": rw.initFullRRCMap(None), "draw_plus":rw.initFullRRCMap(None), \
+                                           "draw":rw.initFullRRCMap(None), "loss":rw.initFullRRCMap(None)}
     # RTT benefit/cost count map
     rtt_benefit_cost_count_map = {"win":[], "draw_plus":[], "draw":[], "loss":[]}
+    rtt_benefit_cost_count_map_per_state = {"win": rw.initFullRRCMap(None), "draw_plus":rw.initFullRRCMap(None), \
+                                            "draw":rw.initFullRRCMap(None), "loss":rw.initFullRRCMap(None)}
     # sorted retransmission keys
     sortedKeys = sorted(all_retx_map.keys())
 
@@ -624,6 +629,10 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                         
                         # loss case
                         # judge by index order or time order
+                        if RRC_DEBUG:
+                            print "Next Ctrl %d vs next list %d, Cond is %d" % (next_ctrl_ack_index, next_list_index, (next_ctrl_ack_index < next_list_index))
+                            print "Next List %d vs Cur Dup Ack %d, Cond is %s" % (next_list, cur_dup_ack, (next_list > cur_dup_ack))
+
                         if next_ctrl_ack_index < next_list_index or next_list > cur_dup_ack:
                             current_case = "loss"
                             rlc_fast_retx_map["loss"].append(tmp_rlc_sum)
@@ -641,6 +650,18 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                             if est_rtt:
                                 rtt_benefit_cost_time_map["loss"].append(est_rtt)
                                 rtt_benefit_cost_count_map["loss"].append(count_PDUs)
+                                cur_rrcID = QCATEntries[dup_ack_index_temp_buffer[dup_ack_threshold-1]].rrcID
+                                if cur_rrcID:
+                                    if RRC_DEBUG:
+                                        print "Loss case: %d" % cur_rrcID
+                                    if rtt_benefit_cost_time_map_per_state["loss"][cur_rrcID]:
+                                        rtt_benefit_cost_time_map_per_state["loss"][cur_rrcID].append(est_rtt)
+                                    else:
+                                        rtt_benefit_cost_time_map_per_state["loss"][cur_rrcID] = [est_rtt]
+                                    if rtt_benefit_cost_count_map_per_state["loss"][cur_rrcID]:
+                                        rtt_benefit_cost_count_map_per_state["loss"][cur_rrcID].append(count_PDUs)
+                                    else:
+                                        rtt_benefit_cost_count_map_per_state["loss"][cur_rrcID] = [count_PDUs]
                         # draw case
                         else:
                             sn_to_index_map_within_dup_acks = find_SN_within_interval(QCATEntries, firstACKindex, dup_ack_index_temp_buffer[dup_ack_threshold-1])
@@ -665,8 +686,19 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                             # RTT cost / benefit calculation
                             benefit_count = 0.0
                             cost_count = 0.0
+                            # tmp RRC map
+                            tmp_benefit_time = rw.initFullRRCMap(0.0)
+                            tmp_benefit_count = rw.initFullRRCMap(0.0)
+                            tmp_cost_time = rw.initFullRRCMap(0.0)
+                            tmp_cost_count = rw.initFullRRCMap(0.0)
+
                             for sn in retx_seq_num_li:
                                 if sn not in set(target_seq_num_li):
+                                    cur_rrcID = QCATEntries[sn_to_index_map_within_dup_acks[sn][0]].rrcID
+                                    if cur_rrcID:
+                                        tmp_cost_time[cur_rrcID] += last_dup_ack_rtt
+                                        tmp_cost_count[cur_rrcID] += 1
+
                                     draw_cost_time += last_dup_ack_rtt
                                     cost_count += 1
                                 else:
@@ -675,6 +707,12 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                                     for sn_index in sn_to_index_map_after_dup_acks[sn]:
                                         # only append positive time here
                                         if QCATEntries[sn_index].rtt["rlc"] and QCATEntries[sn_index].rtt["rlc"] > last_dup_ack_rtt:
+                                            cur_rrcID = QCATEntries[sn_index].rrcID
+
+                                            if cur_rrcID:
+                                                tmp_benefit_time[cur_rrcID] += (QCATEntries[sn_index].rtt["rlc"] - last_dup_ack_rtt)
+                                                tmp_benefit_count[cur_rrcID] += 1
+
                                             draw_benefit_time += (QCATEntries[sn_index].rtt["rlc"] - last_dup_ack_rtt)
                                             benefit_count += 1
                             if DUP_DEBUG:
@@ -698,6 +736,19 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                                     if benefit_count > 0:
                                         rtt_benefit_cost_time_map["draw_plus"].append(draw_benefit_time/benefit_count)
                                         rtt_benefit_cost_count_map["draw_plus"].append(benefit_count)
+                                        # add RRC state information
+                                        if RRC_DEBUG:
+                                            print "Draw Plus is %s:" % tmp_cost_count
+                                        for k in tmp_benefit_time:
+                                            if tmp_benefit_count[k]:
+                                                if rtt_benefit_cost_time_map_per_state["draw_plus"][k]:
+                                                    rtt_benefit_cost_time_map_per_state["draw_plus"][k].append(tmp_benefit_time[k] / tmp_benefit_count[k])
+                                                else:
+                                                    rtt_benefit_cost_time_map_per_state["draw_plus"][k] = [tmp_benefit_time[k] / tmp_benefit_count[k]]
+                                                if rtt_benefit_cost_count_map_per_state["draw_plus"][k]:
+                                                    rtt_benefit_cost_count_map_per_state["draw_plus"][k].append(tmp_benefit_count[k])
+                                                else:
+                                                    rtt_benefit_cost_count_map_per_state["draw_plus"][k] = [tmp_benefit_count[k]]
                             # Draw case
                             else:
                                 current_case = "draw"
@@ -722,6 +773,19 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                                 if cost_count > 0:
                                     rtt_benefit_cost_time_map["draw"].append((draw_cost_time - draw_benefit_time)/cost_count)
                                     rtt_benefit_cost_count_map["draw"].append(cost_count)
+                                    # RRC state cost count
+                                    if RRC_DEBUG:
+                                        print "Draw is %s:" % tmp_cost_count
+                                    for k in tmp_benefit_time:
+                                        if tmp_cost_count[k]:
+                                            if rtt_benefit_cost_time_map_per_state["draw"][k]:
+                                                rtt_benefit_cost_time_map_per_state["draw"][k].append((tmp_cost_time[k] - tmp_benefit_time[k]) / tmp_cost_count[k])
+                                            else:
+                                                rtt_benefit_cost_time_map_per_state["draw"][k] = [(tmp_cost_time[k] - tmp_benefit_time[k]) / tmp_cost_count[k]]
+                                            if rtt_benefit_cost_count_map_per_state["draw"][k]:
+                                                rtt_benefit_cost_count_map_per_state["draw"][k].append(tmp_cost_count[k])
+                                            else:
+                                                rtt_benefit_cost_count_map_per_state["draw"][k] = [tmp_cost_count[k]]
                     # win case
                     else:
                         current_case = "win"
@@ -831,9 +895,10 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                                         rlc_upper_limit = last_mapped_RLCs[0][0].timestamp - first_mapped_RLCs[0][0].timestamp
                                         if rlc_upper_limit < 0:
                                             rlc_upper_limit = 999
-                                    print "Win benefit time is %f" % benefit_time
-                                    print ">>> TCP benefit upper bound is %f" % tcp_upper_limit
-                                    print ">>> RLC benefit upper bound is %f" % rlc_upper_limit
+                                    if DUP_DEBUG:
+                                        print "Win benefit time is %f" % benefit_time
+                                        print ">>> TCP benefit upper bound is %f" % tcp_upper_limit
+                                        print ">>> RLC benefit upper bound is %f" % rlc_upper_limit
                                     if benefit_time < 0:
                                         benefit_time = 999
                                     benefit_time = min(rlc_upper_limit, benefit_time)
@@ -848,6 +913,19 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                                     if count_PDUs:
                                         rtt_benefit_cost_time_map["win"].append(tcp_upper_limit / count_PDUs)
                                         rtt_benefit_cost_count_map["win"].append(count_PDUs)
+                                        
+                                        # win and get all
+                                        win_rrc_state = find_rrc_state(QCATEntries, orig_tcp_index, last_retx_tcp_index+1)
+                                        if RRC_DEBUG:
+                                            print "Win case : %d" % win_rrc_state
+                                        if rtt_benefit_cost_time_map_per_state["win"][win_rrc_state]:
+                                            rtt_benefit_cost_time_map_per_state["win"][win_rrc_state].append(tcp_upper_limit / count_PDUs)
+                                        else:
+                                            rtt_benefit_cost_time_map_per_state["win"][win_rrc_state] = [tcp_upper_limit / count_PDUs]
+                                        if rtt_benefit_cost_count_map_per_state["win"][win_rrc_state]:
+                                            rtt_benefit_cost_count_map_per_state["win"][win_rrc_state].append(count_PDUs)
+                                        else:
+                                            rtt_benefit_cost_count_map_per_state["win"][win_rrc_state] = [count_PDUs]
 
                                     if DUP_DEBUG:
                                         # TODO: delete after testing
@@ -905,12 +983,14 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
     if TRUE_WIN_DEBUG:
         pw.print_real_win(rlc_fast_retx_map, real_win_count, tcp_received_num_case)
 
-    return (status_pdu_count_map, rlc_fast_retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_map, rtt_benefit_cost_count_map)
+    return (status_pdu_count_map, rlc_fast_retx_map, trans_time_benefit_cost_map, \
+            rtt_benefit_cost_time_map, rtt_benefit_cost_count_map, \
+            rtt_benefit_cost_time_map_per_state, rtt_benefit_cost_count_map_per_state)
 
 # overall benefit calculation
 # TODO: only consider uplink right now
 # @return: RTT benefit total time map + RTT benefit total count map
-def rlc_fast_retx_overall_benefit( rtt_benefit_cost_time_list, rtt_benefit_cost_count_list):   
+def rlc_fast_retx_overall_benefit(rtt_benefit_cost_time_list, rtt_benefit_cost_count_list):   
     all_kw = ["win", "draw_plus", "draw", "loss"]
     benefit_kw = all_kw[:2]
     overhead_kw = all_kw[2:]
@@ -935,6 +1015,32 @@ def rlc_fast_retx_overall_benefit( rtt_benefit_cost_time_list, rtt_benefit_cost_
 
     return rtt_benefit_cost_time_map, rtt_benefit_cost_count_map
         
+# overall RTT calculation
+# @ return
+#   RTT map: {"win":{"rrc1": RTT1, "rrc2": RTT2}, ...}
+#   Count map: {"win":{"rrc1": Count1, "rrc2": Count2}, ...}
+def rlc_fast_retx_per_rrc_state_benefit(rtt_benefit_time_list, rtt_benefit_count_list):
+    all_kw = ["win", "draw_plus", "draw", "loss"]
+    rlc_per_state_benefit_time_map = {}
+    rlc_per_state_benefit_count_map = {}
+    rrc_list = rw.initFullRRCMap(0.0).keys()
+
+    for kw in all_kw:
+        rlc_per_state_benefit_time_map[kw] = rw.initFullRRCMap(0.0)
+        rlc_per_state_benefit_count_map[kw] = rw.initFullRRCMap(0.0)
+
+    for kw in all_kw:
+        for rrc in rrc_list:
+            if not rtt_benefit_time_list[kw][rrc]:
+                rtt_benefit_time_list[kw][rrc] = []
+            for index in range(len(rtt_benefit_time_list[kw][rrc])):
+                rtt_time = rtt_benefit_time_list[kw][rrc][index]
+                count = rtt_benefit_count_list[kw][rrc][index]
+                rlc_per_state_benefit_time_map[kw][rrc] += rtt_time * count
+                rlc_per_state_benefit_count_map[kw][rrc] += count
+
+    return rlc_per_state_benefit_time_map, rlc_per_state_benefit_count_map
+
 
 ############################################################################
 ######################## Analysis of Err Demotion ##########################
@@ -1030,6 +1136,29 @@ def figure_out_best_timer(QCATEntries, FACH_state_list, logID):
 ############################# Helper functions #############################
 ############################################################################
 # RLC_FAST_RETX_ANALYSIS
+# check whether we have an FACH or FACH promotion or PCH promotion state
+# within the given range
+# @ return RRC state
+def find_rrc_state (QCATEntries, startIndex, endIndex):
+    # looking for target RRC state
+    rrc_state_priority_list = [const.FACH_TO_DCH_ID, const.FACH_ID, \
+                               const.PCH_TO_FACH_ID]
+    rrc_statistics = rw.initFullRRCMap(0.0)
+
+    for index in range(startIndex, endIndex):
+        cur_rrcID = QCATEntries[index].rrcID
+        if cur_rrcID:
+            rrc_statistics[cur_rrcID] += 1.0
+
+    max_rrcID = const.DCH_ID
+    max_count = 0
+    for rrc in rrc_state_priority_list:
+        if rrc_statistics[rrc] > max_count:
+            max_rrcID = rrc
+            max_count = rrc_statistics[rrc]
+    return max_rrcID
+
+# RLC_FAST_RETX_ANALYSIS
 # find the nearest control message of ACK or NACK
 # if cur_seq specified, then find the control msg greater than 
 # @input: 
@@ -1049,7 +1178,8 @@ def findNextCtrlMsg (QCATEntries, startIndex, ctrl_type = None, cur_seq = None):
             elif ctrl_type == "list":
                 if QCATEntries[index].dl_ctrl["list"]:
                     list_seq = QCATEntries[index].dl_ctrl["list"][-1][0]
-                    if list_seq > cur_seq:
+                    # Don't change this!!!
+                    if list_seq >= cur_seq:
                         return index
     return None
 

@@ -138,9 +138,9 @@ def main():
     ########################## Pre-process ##########################
     #################################################################
     tempLen = len(QCATEntries)
-    #print "Before remove dup: %d entries" % (tempLen)
+    print "Before remove dup: %d entries" % (tempLen)
     QCATEntries = util.removeQXDMDupIP(QCATEntries)
-    #sprint "After remove dup: %d entries" % (len(QCATEntries))
+    print "After remove dup: %d entries" % (len(QCATEntries))
 
     if TIME_DEBUG:
         print "Delete Dup IP takes ", time.time() - check_point_time, "sec"
@@ -340,10 +340,14 @@ def main():
                 if options.inPCAPFile:
                     tcp_lookup_table = clw.get_TCP_lookup_table(options.inPCAPFile, hash_target = "seq")
 
-                status_pdu_map, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list = clw.rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, 400, all_Retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent), tcp_lookup_table)
+                status_pdu_map, retx_map, trans_time_benefit_cost_map, rtt_benefit_cost_time_list, rtt_benefit_cost_count_list, \
+                rtt_benefit_cost_time_list_per_state, rtt_benefit_cost_count_list_per_state \
+                 = clw.rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, 400, all_Retx_bit_map, int(options.dup_ack_threshold), tcpAllRetxMap, int(options.draw_percent), tcp_lookup_table)
 
                 # Calculate the total increase or decrease RTT
                 total_benefit_cost_time_map, total_benefit_cost_count_map = clw.rlc_fast_retx_overall_benefit(rtt_benefit_cost_time_list, rtt_benefit_cost_count_list)
+                # calculate the total benefit/cost per state
+                rtt_benefit_cost_per_state_time_map, rtt_benefit_cost_per_state_count_map = clw.rlc_fast_retx_per_rrc_state_benefit(rtt_benefit_cost_time_list_per_state, rtt_benefit_cost_count_list_per_state)
                 total_retx_rtt = float(sum(retxRTTMap["rlc_ul"].values()))
                 total_retx_count = float(sum(retxCountMap["rlc_ul"].values()))
                 total_rtt = float(sum(totalRTTMap["rlc_ul"].values()))
@@ -372,7 +376,18 @@ def main():
                     # print "*" * 30 + " Retx RTT fraction and Retx Count fraction:"
                     # print "RLC retx RTT ratio is %f" % max(total_retx_rtt / (total_rtt - total_retx_rtt), 1)
                     # print "RLC count ratio is %f" % max(total_retx_count / (total_count - total_retx_count), 1)
-                    pw.print_rlc_fast_retx_states_per_RRC_state(status_pdu_map)
+                    """
+                    print "@@@@@@@@@@@ Per State Time Overall List:"
+                    print rtt_benefit_cost_time_list_per_state
+                    print "@@@@@@@@@@@ Per State Count Overall List:"
+                    print rtt_benefit_cost_count_list_per_state
+                    print "&&&&&&&&&&& Per State Time Overall Map:"
+                    print rtt_benefit_cost_per_state_time_map
+                    print "&&&&&&&&&&& Per State Count Map:"
+                    print rtt_benefit_cost_per_state_count_map
+                    """
+                    pw.print_rlc_fast_retx_states_per_RRC_state(status_pdu_map, totalRTTMap, totCountStatsMap, rtt_benefit_cost_per_state_time_map, rtt_benefit_cost_per_state_count_map)
+                    
                     
 
     #################################################################
