@@ -41,7 +41,7 @@ def main():
     while True:
         line = sys.stdin.readline()
         if not line: break
-        raw_data.append(line.strip().split(DEL))
+        raw_data.append(line.strip().split())
 
     # convert data into groups of cols
     cur_row = 0
@@ -60,10 +60,10 @@ def main():
     # format:
     #   col_id  group1_mean group1_delta    group2_mean group2_delta
     for i in range(num_col):
-        line = str(i+0.5) + "\t"
+        line = str(i+0.5) + DEL
         for group_id in range(num_group):
             mean = float(sum(data[group_id][i]))/float(len(data[group_id][i]))
-            line += str(mean) + "\t" + str(cal_std(data[group_id][i], mean)) + "\t"
+            line += str(mean) + DEL + str(cal_std(data[group_id][i], mean)) + DEL
         print line.strip()
 
 if __name__ == "__main__":

@@ -239,8 +239,9 @@ def main():
         check_point_time = time.time()
 
     #################################################################
-    #################### FACH State delay Process ###################
+    ############### RRC State Inference Verification ################
     #################################################################
+    
     #if options.direction:
         #dw.extractFACHStatePktDelayInfo(FACH_delay_analysis_entries, options.direction)
     

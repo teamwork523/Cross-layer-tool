@@ -3,6 +3,7 @@
 """
 @Author Haokun Luo
 @Date   03/17/2013
+
 Functions related to delay, TCP RTT calculation
 """
 
@@ -15,8 +16,7 @@ import Util as util
 #################################################################
 ##################### TCP RTT releated ##########################
 #################################################################
-# calculate the TCP RTT result
-
+# TODO: calculate the TCP RTT result
 
 
 #################################################################
