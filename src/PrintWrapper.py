@@ -62,11 +62,11 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
             
             # new per state ratio
             new_per_state_loss_ratio = 0
-            if k == const.PCH_ID or k == const.PCH_TO_FACH_ID:
+            if PCH_total_loss and (k == const.PCH_ID or k == const.PCH_TO_FACH_ID):
                 new_per_state_loss_ratio = v / PCH_total_loss
-            elif k == const.FACH_ID or k == const.FACH_TO_DCH_ID:
+            elif FACH_total_loss and (k == const.FACH_ID or k == const.FACH_TO_DCH_ID):
                 new_per_state_loss_ratio = v / FACH_total_loss
-            else:
+            elif DCH_total_loss and k == const.DCH_ID:
                 new_per_state_loss_ratio = v / DCH_total_loss
             new_per_state_loss_ratio_result += str(new_per_state_loss_ratio) + "\t"
     else: 
@@ -218,6 +218,11 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxTyp
     totKey = ""
     per_state_ratio = ""
     per_state_count = ""
+
+    # NEW: result considering per total FACH / PCH result
+    new_per_state_count_ratio = ""
+    new_per_state_rtt_ratio = ""
+
     # track through all the key name in totalMap, if find a string match, then
     # print the whole state ratio of that entry
     for totKey in totalStatsMap:
@@ -228,6 +233,18 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxTyp
         total_count = sum(totalStatsMap[totKey].values()) - sum(retxStatsMap[totKey].values())
         total_rtt = sum(totalRTTMap[totKey].values()) - sum(retxRTTMap[totKey].values())
         
+        # NEW: construct per whole FACH state ratio and PCH state ratio
+        FACH_tot_count = totalStatsMap[retxType.lower()][const.FACH_ID] + \
+                         totalStatsMap[retxType.lower()][const.FACH_TO_DCH_ID]
+        PCH_tot_count = totalStatsMap[retxType.lower()][const.PCH_ID] + \
+                        totalStatsMap[retxType.lower()][const.PCH_TO_FACH_ID]
+        DCH_tot_count = totalStatsMap[retxType.lower()][const.DCH_ID]
+        FACH_tot_rtt = totalRTTMap[retxType.lower()][const.FACH_ID] + \
+                       totalRTTMap[retxType.lower()][const.FACH_TO_DCH_ID]
+        PCH_tot_rtt = totalRTTMap[retxType.lower()][const.PCH_ID] + \
+                      totalRTTMap[retxType.lower()][const.PCH_TO_FACH_ID]
+        DCH_tot_rtt = totalRTTMap[retxType.lower()][const.DCH_ID]
+
         # construct count_retx result
         if not total_count:
             count_result = "0\t" * len(retxStatsMap[retxType.lower()])
@@ -241,6 +258,16 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxTyp
                 tot_result += str(total_count) + "\t"
                 per_state_ratio += str(stateRatio) + "\t"
                 per_state_count += str(v) + "\t"
+
+                # NEW: Per whole FACH / PCH state count 
+                new_state_ratio = 0
+                if FACH_tot_count and (k == const.FACH_ID or k == const.FACH_TO_DCH_ID):
+                    new_state_ratio = v / FACH_tot_count
+                elif PCH_tot_count and (k == const.PCH_ID or k == const.PCH_TO_FACH_ID):
+                    new_state_ratio = v / PCH_tot_count
+                elif DCH_tot_count and k == const.DCH_ID:
+                    new_state_ratio = v / DCH_tot_count
+                new_per_state_count_ratio += str(new_state_ratio) + "\t"
 
         # construct rtt_retx result
         if not total_rtt:
@@ -256,6 +283,16 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxTyp
                 rtt_per_state_ratio_result += str(rtt_per_state_ratio) + "\t"
                 rtt_per_state_result += str(v) + "\t"
 
+                # NEW: Per whole FACH / PCH state RTT
+                new_state_ratio = 0
+                if FACH_tot_rtt and (k == const.FACH_ID or k == const.FACH_TO_DCH_ID):
+                    new_state_ratio = v / FACH_tot_rtt
+                elif PCH_tot_count and (k == const.PCH_ID or k == const.PCH_TO_FACH_ID):
+                    new_state_ratio = v / PCH_tot_rtt
+                elif DCH_tot_count and k == const.DCH_ID:
+                    new_state_ratio = v / DCH_tot_rtt
+                new_per_state_rtt_ratio += str(new_state_ratio) + "\t"
+
     else:
         print >> sys.stderr, "ERROR: Invalid retransmission type"
         return
@@ -268,9 +305,11 @@ def printRetxRatio(retxStatsMap, totalStatsMap, retxRTTMap, totalRTTMap, retxTyp
         print "Retx_Count: Total_count is %d" % total_count
         print "Retx_Count: Per State count is %s" % per_state_count
         print "Retx_Count: Per state ratio is %s" % per_state_ratio
+        print "Retx_Count: New Per whole state ratio is %s" % new_per_state_count_ratio
         print "Retx_RTT: Total RTT is %d" % total_rtt
         print "Retx_RTT: Per State RTT is %s" % rtt_per_state_result
         print "Retx_RTT: Per State ratio is %s" % rtt_per_state_ratio_result
+        print "Retx_RTT: New Per who state ratio is %s " % new_per_state_rtt_ratio
         print "*"*40
 
 # RLC retransmission count vs signal strength
