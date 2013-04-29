@@ -43,6 +43,14 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
     per_state_loss_result = ""
     per_state_loss_ratio_result = ""
 
+    # New Version: Combine the FACH and PCH state
+    FACH_total_loss = loss_total_per_state_map[const.FACH_ID] + \
+                      loss_total_per_state_map[const.FACH_TO_DCH_ID]
+    PCH_total_loss = loss_total_per_state_map[const.PCH_ID] + \
+                     loss_total_per_state_map[const.PCH_TO_FACH_ID]
+    DCH_total_loss = loss_total_per_state_map[const.DCH_ID]
+    new_per_state_loss_ratio_result = ""
+
     if total_udp:
         for k,v in loss_count_per_state_map.items():
             loss_result += str(v / total_udp) + "\t"
@@ -51,6 +59,16 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
             if loss_total_per_state_map[k]:
                 per_state_loss_ratio = v/loss_total_per_state_map[k]
             per_state_loss_ratio_result += str(per_state_loss_ratio) + "\t"
+            
+            # new per state ratio
+            new_per_state_loss_ratio = 0
+            if k == const.PCH_ID or k == const.PCH_TO_FACH_ID:
+                new_per_state_loss_ratio = v / PCH_total_loss
+            elif k == const.FACH_ID or k == const.FACH_TO_DCH_ID:
+                new_per_state_loss_ratio = v / FACH_total_loss
+            else:
+                new_per_state_loss_ratio = v / DCH_total_loss
+            new_per_state_loss_ratio_result += str(new_per_state_loss_ratio) + "\t"
     else: 
         loss_result = "0\t" * len(loss_total_per_state_map)
     
@@ -63,6 +81,8 @@ def print_loss_ratio_per_state (loss_count_per_state_map, loss_total_per_state_m
     print per_state_loss_result
     print "Per state Loss Ratio:"
     print per_state_loss_ratio_result
+    print "@@@ New Per state loss ratio:"
+    print new_per_state_loss_ratio_result
 
 # print the UDP loss cause and RRC state
 def print_loss_cause_and_rrc_state (udp_loss_in_cellular, udp_loss_in_internet):

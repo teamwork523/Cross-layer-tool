@@ -22,6 +22,7 @@ import crossLayerWorker as clw
 import retxWorker as rw
 import delayWorker as dw
 import lossWorker as lw
+import rrcTimerWorker as rtw
 
 DEBUG = False
 DUP_DEBUG = True
@@ -38,7 +39,8 @@ def init_optParser():
                             " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
                             " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
                             " "*extraspace + "[--verify_cross_analysis], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
-                            " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target")
+                            " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
+                            " "*extraspace + "[--rrc_timer]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -79,6 +81,8 @@ def init_optParser():
                          help="Enable TCP retransmission analysis")
     optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
                          help="Relate retransmission signal strength with retransmission count")
+    optParser.add_option("--rrc_timer", action="store_true", dest="isValidateRRCTimer", default=False, \
+                         help="Include if you want to validate RRC Timer")
     optParser.add_option("--src_ip", dest="srcIP", default=None, \
                          help="Filter out entries with source ip")
     optParser.add_option("--src_port", dest="srcPort", default=None, \
@@ -138,9 +142,11 @@ def main():
     ########################## Pre-process ##########################
     #################################################################
     tempLen = len(QCATEntries)
-    print "Before remove dup: %d entries" % (tempLen)
+    if DEBUG:
+        print "Before remove dup: %d entries" % (tempLen)
     QCATEntries = util.removeQXDMDupIP(QCATEntries)
-    print "After remove dup: %d entries" % (len(QCATEntries))
+    if DEBUG:    
+        print "After remove dup: %d entries" % (len(QCATEntries))
 
     if TIME_DEBUG:
         print "Delete Dup IP takes ", time.time() - check_point_time, "sec"
@@ -241,10 +247,11 @@ def main():
     #################################################################
     ############### RRC State Inference Verification ################
     #################################################################
-    
     #if options.direction:
         #dw.extractFACHStatePktDelayInfo(FACH_delay_analysis_entries, options.direction)
-    
+    if options.isValidateRRCTimer:
+        rtw.get_RRC_timer_map(QCATEntries)
+
     #################################################################
     #################### Retransmission Analysis ####################
     #################################################################

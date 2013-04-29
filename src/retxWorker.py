@@ -526,9 +526,17 @@ def collectReTxPlusRRCResult (entries, tcpRetxMap, tcpFastRetxMap):
 ############################################################################
 # return a dict with all existing RRC state as keys, with value 0.0
 def initFullRRCMap(init_value):
+    return initFullRRCMap(init_value, const.RRC_MAP)
+
+def initFullRRCMap(init_value, rrc_map = const.RRC_MAP):
     initMap = {}
-    for i in const.RRC_MAP.keys():
-        initMap[i] = init_value
+    for i in rrc_map.keys():
+        if isinstance(init_value, list):
+            initMap[i] = list(init_value)
+        elif isinstance(init_value, dict):
+            initMap[i] = dict(init_value)
+        else:
+            initMap[i] = init_value
     return initMap
 
 # basic idea is to find the first ACK that 

@@ -313,6 +313,21 @@ def listMeanValue(li):
         return 0.0
     return meanValue([meanValue(item) for item in li])
 
+# Get the statistical distribution info
+# @return 
+#   [min, 25%, 50%, 75%, max]
+def quartileResult(li):
+    if not li:
+        return [0]*5
+    listLen = len(li)
+    sorted_list = sorted(li)
+    return [sorted_list[0], sorted_list[int(0.25*listLen)], sorted_list[int(0.5*listLen)], \
+            sorted_list[int(0.75*listLen)], sorted_list[-1]]
+
+# convert list to string with delimiters
+def listToStr(li, DEL = "\t"):
+    return DEL.join(str(li)[1:-1].split(", "))
+
 def medianValue(li):
     if not li:
         return None
