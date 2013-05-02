@@ -62,7 +62,7 @@ def extractFACHStatePktDelayInfo(entries, direction):
     print "FACH of interest: %d" % count_FACH_interest
     print "TCP diff avg & median: %f\t%f" % (util.meanValue(TCP_delay_map.values()), util.medianValue(TCP_delay_map.values()))
     print "RLC diff avg & median: %f\t%f" % (util.meanValue(RLC_delay_map.values()), util.medianValue(RLC_delay_map.values()))
-"""
+    """
     # currently hardset delay limit to be 3s
     for i in TCP_delay_map.values():
         print i

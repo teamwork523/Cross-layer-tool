@@ -45,7 +45,7 @@ RRC_DEBUG = False
 def map_SDU_to_PDU(entries, tcp_index, logID, hint_index = -1):
     # search for the entires IP packets
     tcp_payload = findEntireIPPacket(entries, tcp_index)
-    
+
     if DEBUG:
         print "#" * 40
         print "Index is %d" % tcp_index
