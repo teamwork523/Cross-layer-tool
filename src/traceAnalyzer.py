@@ -26,8 +26,8 @@ import rrcTimerWorker as rtw
 
 DEBUG = False
 DUP_DEBUG = True
-GAP_DEBUG = False
-TIME_DEBUG = False
+GAP_DEBUG = True
+TIME_DEBUG = True
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10

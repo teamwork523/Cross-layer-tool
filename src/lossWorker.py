@@ -20,8 +20,8 @@ from datetime import datetime
 
 DEBUG = False
 CUR_DEBUG = True
-GAP_DEBUG = False
-TIME_DEUBG = False
+GAP_DEBUG = True
+TIME_DEUBG = True
 
 #################################################################
 ##################### UDP Loss Analysis #########################
