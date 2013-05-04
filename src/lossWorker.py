@@ -398,8 +398,10 @@ def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
             cur_rlc_pdus = cur_entry.ul_pdu[0]
             if direction.lower() == "down":
                 cur_rlc_pdus = cur_entry.dl_pdu[0]
+            cur_rlc_plus = cur_entry.dl_pdu[0]
             
-
+            # check current sequence number
+            pass
 
 
 
