@@ -410,7 +410,11 @@ def main():
 
     # Loss ratio is essentially the retransmission ratio
     # use the old retransmission ratio map and the RTT calculation map
-    if options.is_loss_analysis or options.is_gap_analysis:
+    # Apply the gap analysis by comparing the transparent work analysis
+    if options.is_gap_analysis:
+        lw.rlc_retx_based_on_gap(QCATEntries, options.direction)
+
+    if options.is_loss_analysis:
         # hash table contains only one side traffic
         udp_clt_lookup_table = None
         udp_srv_lookup_table = None
@@ -431,9 +435,6 @@ def main():
                 print "UDP: Assign RTT takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
 
-        # Apply the gap analysis by comparing the transparent work analysis
-        if options.is_gap_analysis:
-            lw.rlc_retx_based_on_gap(QCATEntries, options.direction)
 
         if options.inPCAPFile and options.direction:
             options.hash_target = options.hash_target.lower()
