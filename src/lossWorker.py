@@ -20,7 +20,8 @@ from datetime import datetime
 
 DEBUG = False
 CUR_DEBUG = True
-GAP_DEBUG = True
+GAP_DEBUG = False
+TIME_DEUBG = False
 
 #################################################################
 ##################### UDP Loss Analysis #########################
@@ -286,20 +287,29 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
     while index < entry_length:
         cur_entry = QCATEntries[index]
         cur_gap = cur_entry.udp["gap"]
+
         if cur_entry.ip["tlp_id"] == const.UDP_ID and cur_gap:
             # find the last gap_period message
             last_map_index = find_last_same_gap_entry_index(QCATEntries, index, cur_gap)
+            if GAP_DEBUG:
+                print "Current index is %d" % index
+                print "Last map index is %d" % last_map_index
             # map the current UDP packet to the RLC layer PDUs
             first_rlc_list, first_sn_list = clw.map_SDU_to_PDU(QCATEntries, index, const.UL_PDU_ID)
             last_rlc_list, last_sn_list = clw.map_SDU_to_PDU(QCATEntries, last_map_index, const.UL_PDU_ID)
             # get the corresponding RLC log message
-            if first_rlc_list and last_rlc_list:
+            if first_rlc_list and last_rlc_list and last_sn_list:
                 rlc_begin_index = first_rlc_list[0][1]
-                rlc_end_index = last_rlc_list[-1][1]
+                tmp_rlc_end_index = last_rlc_list[-1][1]
+                rlc_end_index = clw.find_nearest_status(QCATEntries, tmp_rlc_end_index, max(last_sn_list))
+                if GAP_DEBUG:
+                    print "First RLC mapped index is ", rlc_begin_index
+                    print "Last RLC mapped index is ", rlc_end_index
+
                 if rlc_begin_index < rlc_end_index:
                     total_count_map, retx_count_map, retx_ratio = find_retx_within_a_range_2(QCATEntries, rlc_begin_index, rlc_end_index, direction)
                     """
-                    if CUR_DEBUG:
+                    if GAP_DEBUG:
                         print "Cur_gap is %f" % cur_gap
                         print "Retx_ratio is %f" % retx_ratio
                     """
@@ -312,14 +322,17 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
                         gap_retx_per_rrc_map[cur_gap]["total"] = util.merge_two_dict(gap_retx_per_rrc_map[cur_gap]["total"], total_count_map)
                     else:
                         gap_retx_per_rrc_map[cur_gap] = {"retx": retx_count_map, "total": total_count_map}
-
+                                                                                                                                                                                                                                                                                                                             
             index = last_map_index
 
         index += 1
 
-    if CUR_DEBUG:
+    # display the retransmission result
+    if True:
+        #print "Ready to show results ...."
         for k in sorted(gap_retx_list_map.keys()):
-            print "%f\t%f" % (k, util.medianValue(gap_retx_list_map[k]))
+            print "%f\t%s" % (k, str(util.quartileResult(gap_retx_list_map[k])))
+            #print "%f\t%s" % (k, gap_retx_list_map[k])
 
     return gap_retx_per_rrc_map
 
@@ -346,10 +359,13 @@ def find_last_same_gap_entry_index(QCATEntries, startIndex, target_gap):
     entry_len = len(QCATEntries)
     priv_same_gap_index = startIndex
 
-    for index in range(startIndex, entry_len):
+    for index in range(startIndex+1, entry_len):
         cur_entry = QCATEntries[index]
-        if cur_entry.logID == const.IP_ID and \
-           cur_entry.ip["tlp_id"] == const.UDP_ID:
+        if cur_entry.ip["tlp_id"] == const.UDP_ID:
+            """
+            if CUR_DEBUG:
+                print cur_entry.udp["gap"]
+            """            
             if cur_entry.udp["gap"] == target_gap:
                 priv_same_gap_index = index
             else:

@@ -493,10 +493,10 @@ class QCATEntry:
                             gran = int("".join(self.hex_dump["payload"][start+16:start+20]), 16)
                             if wait_count > 0 and wait_count < const.UDP_WAIT_LIMIT and gran > 0 and gran < const.UDP_GRAN_LIMIT:
                                 self.udp["gap"] = float(wait_count * gran) / 1000.0
+                        #print self.udp["gap"]
                         #self.__debugUDP()
                         # Use IP and transport layer header as signature
                         self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+const.UDP_Header_Len])
-                    
                         
 ################################################################################   
 ################################# Helper Functions #############################

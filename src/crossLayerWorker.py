@@ -1373,7 +1373,8 @@ def find_nearest_status (QCATEntries, startIndex, min_sn):
     for index in range(startIndex, last_index):
         curEntry = QCATEntries[index]
         if curEntry.dl_ctrl["chan"]:
-            if (curEntry.dl_ctrl["ack"] and curEntry.dl_ctrl["ack"] >= min_sn) or \
+            if (curEntry.dl_ctrl["ack"] and curEntry.dl_ctrl["ack"] > min_sn) or \
+               (curEntry.dl_ctrl["list"] and curEntry.dl_ctrl["list"][0][0] > min_sn) or \
                curEntry.dl_ctrl["reset"]:
                 return index
     return last_index - 1

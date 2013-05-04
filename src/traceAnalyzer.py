@@ -26,6 +26,7 @@ import rrcTimerWorker as rtw
 
 DEBUG = False
 DUP_DEBUG = True
+GAP_DEBUG = False
 TIME_DEBUG = False
 
 def init_optParser():
@@ -293,7 +294,7 @@ def main():
 
     if TIME_DEBUG:
         print "Retx analysis takes ", time.time() - check_point_time, "sec"
-        check_point_time = time.time()
+        check_point_time = time.time()       
 
     #################################################################
     #################### TCP Cross Layer Analysis ###################
@@ -404,15 +405,20 @@ def main():
     #################################################################
     ################## UDP Loss + Cross layer Analysis ##############
     #################################################################
-    if TIME_DEBUG:
-        print "Start UDP loss Analysis ", time.time() - check_point_time, "sec"
-        check_point_time = time.time()
-
     # Loss ratio is essentially the retransmission ratio
     # use the old retransmission ratio map and the RTT calculation map
     # Apply the gap analysis by comparing the transparent work analysis
-    if options.is_gap_analysis:
+    if options.is_gap_analysis and options.direction and options.server_ip:
+        if TIME_DEBUG:
+            print "Start UDP Gap Analysis ", time.time() - check_point_time, "sec"
+            check_point_time = time.time()
+
+        #lw.rlc_retx_based_on_gap(filteredQCATEntries, options.direction)
         lw.rlc_retx_based_on_gap(QCATEntries, options.direction)
+        #pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
+        if TIME_DEBUG:
+            print "Gap Analyais takes ", time.time() - check_point_time, "sec"
+            check_point_time = time.time()
 
     if options.is_loss_analysis:
         # hash table contains only one side traffic
