@@ -74,7 +74,8 @@ class QCATEntry:
         self.udp = {"src_port": None, \
                     "dst_port": None, \
                     "seg_size": None, \
-                    "seq_num":  None}
+                    "seq_num":  None, \
+                    "gap": None}
         # TODO: Link layer state info parse
         #       1. Retransmission rate
         #       2. Row bits
@@ -95,6 +96,7 @@ class QCATEntry:
         # TODO: currently assume only one entities
         # since sn could be duplicated, bad idea to use it as a key in header
         # Header has one to one correlation with sn
+        # Notice: numPDU is not accurate, since it include for both ctrl and data message 
         # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[], "len": None},...]
         self.ul_pdu = [{"chan": None,
                         "sn": [],
@@ -485,6 +487,12 @@ class QCATEntry:
                         self.udp["seg_size"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16) - const.UDP_Header_Len
                         if self.udp["seg_size"] >= 4:
                             self.udp["seq_num"]  = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
+                        if self.udp["seg_size"] >= 12:
+                            # use the wait_count and the granularity to calculate the gap period
+                            wait_count = int("".join(self.hex_dump["payload"][start+12:start+16]), 16)
+                            gran = int("".join(self.hex_dump["payload"][start+16:start+20]), 16)
+                            if wait_count > 0 and wait_count < const.UDP_WAIT_LIMIT and gran > 0 and gran < const.UDP_GRAN_LIMIT:
+                                self.udp["gap"] = float(wait_count * gran) / 1000.0
                         #self.__debugUDP()
                         # Use IP and transport layer header as signature
                         self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+const.UDP_Header_Len])
@@ -572,6 +580,8 @@ class QCATEntry:
         print "UDP total length is %d" % (self.udp["seg_size"])
         if self.udp["seq_num"]:
             print "UDP sequence number is %d" % (self.udp["seq_num"])
+        if self.udp["gap"]:
+            print "UDP gap value is %d" % (self.udp["gap"])
         
     def __debugEUL(self):
         print "*"* 40

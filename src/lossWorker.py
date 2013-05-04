@@ -20,6 +20,7 @@ from datetime import datetime
 
 DEBUG = False
 CUR_DEBUG = True
+GAP_DEBUG = True
 
 #################################################################
 ##################### UDP Loss Analysis #########################
@@ -268,6 +269,61 @@ def cal_UDP_RTT_per_state (QCATEntries, direction, clt_up_table, clt_down_table)
     return udp_rtt_per_state    
 
 #################################################################
+##################### Gap Analysis Analysis #####################
+#################################################################
+# For every gap period, we want to know the RLC layer retransmission ratio
+# @return
+#   1. RRC Map structure:
+#      {gap_period: {"retx":{FACH:[], PCH:[], DCH:[]}, "total":{}}, ...}
+#   2. Retx ratio map:
+#      {gap_period: [list of ratio], ...}
+def rlc_retx_based_on_gap (QCATEntries, direction):
+    index = 0
+    entry_length = len(QCATEntries)
+    gap_retx_per_rrc_map = {}
+    gap_retx_list_map = {}
+    
+    while index < entry_length:
+        cur_entry = QCATEntries[index]
+        cur_gap = cur_entry.udp["gap"]
+        if cur_entry.ip["tlp_id"] == const.UDP_ID and cur_gap:
+            # find the last gap_period message
+            last_map_index = find_last_same_gap_entry_index(QCATEntries, index, cur_gap)
+            # map the current UDP packet to the RLC layer PDUs
+            first_rlc_list, first_sn_list = clw.map_SDU_to_PDU(QCATEntries, index, const.UL_PDU_ID)
+            last_rlc_list, last_sn_list = clw.map_SDU_to_PDU(QCATEntries, last_map_index, const.UL_PDU_ID)
+            # get the corresponding RLC log message
+            if first_rlc_list and last_rlc_list:
+                rlc_begin_index = first_rlc_list[0][1]
+                rlc_end_index = last_rlc_list[-1][1]
+                if rlc_begin_index < rlc_end_index:
+                    total_count_map, retx_count_map, retx_ratio = find_retx_within_a_range(QCATEntries, rlc_begin_index, rlc_end_index, direction)
+                    """
+                    if CUR_DEBUG:
+                        print "Cur_gap is %f" % cur_gap
+                        print "Retx_ratio is %f" % retx_ratio
+                    """
+                    if gap_retx_list_map.has_key(cur_gap):
+                        gap_retx_list_map[cur_gap].append(retx_ratio)
+                    else:
+                        gap_retx_list_map[cur_gap] = [retx_ratio]
+                    if gap_retx_per_rrc_map.has_key(cur_gap):
+                        gap_retx_per_rrc_map[cur_gap]["retx"] = util.merge_two_dict(gap_retx_per_rrc_map[cur_gap]["retx"], retx_count_map)
+                        gap_retx_per_rrc_map[cur_gap]["total"] = util.merge_two_dict(gap_retx_per_rrc_map[cur_gap]["total"], total_count_map)
+                    else:
+                        gap_retx_per_rrc_map[cur_gap] = {"retx": retx_count_map, "total": total_count_map}
+
+            index = last_map_index
+
+        index += 1
+
+    if CUR_DEBUG:
+        for k in sorted(gap_retx_list_map.keys()):
+            print "%f\t%f" % (k, util.medianValue(gap_retx_list_map[k]))
+
+    return gap_retx_per_rrc_map
+
+#################################################################
 ######################### Helper function #######################
 #################################################################
 # find the echo UDP packet by sequence number and ip address
@@ -283,10 +339,67 @@ def find_echo_udp_index (QCATEntries, startIndex, seq_num, src_ip = None, dst_ip
                 if dst_ip and cur_entry.ip["dst_ip"] == dst_ip:
                     return index
     return None
-    
+
+# find the last gap result in all the entries
+def find_last_same_gap_entry_index(QCATEntries, startIndex, target_gap):
+    # only search for UDP packet
+    entry_len = len(QCATEntries)
+    priv_same_gap_index = startIndex
+
+    for index in range(startIndex, entry_len):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.IP_ID and \
+           cur_entry.ip["tlp_id"] == const.UDP_ID:
+            if cur_entry.udp["gap"] == target_gap:
+                priv_same_gap_index = index
+            else:
+                break
+
+    return priv_same_gap_index
+
+# Assume the RLC retransmission analysis is done
+# Find the RLC retransmission within a given range
+# @return
+#   1. A map between the RRC state and total RLC num
+#   2. A map between the RRC state and retx RLC num
+#   3. Retransmission Ratio
+def find_retx_within_a_range(QCATEntries, startIndex, endIndex, direction):
+    tot_rlc_count = rw.initFullRRCMap(0.0)
+    retx_rlc_count = rw.initFullRRCMap(0.0)
+
+    for index in range(startIndex, endIndex+1):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.UL_PDU_ID or \
+           cur_entry.logID == const.DL_PDU_ID:
+            cur_rrcID = cur_entry.rrcID
+            cur_rlc_pdus = cur_entry.ul_pdu[0]
+            cur_rlc_retx_pdus = cur_entry.retx["ul"]
+            if direction.lower() == "down":
+                cur_rlc_pdus = cur_entry.dl_pdu[0]
+                cur_rlc_retx_pdus = cur_entry.retx["dl"]
+            # check whether we have RRC ID or not
+            if cur_rrcID:
+                tot_rlc_count[cur_rrcID] += len(cur_rlc_pdus["sn"])
+                retx_rlc_count[cur_rrcID] += len(cur_rlc_retx_pdus)
+
+    return tot_rlc_count, retx_rlc_count, (float(sum(retx_rlc_count.values())) / float(sum(tot_rlc_count.values())))
+
+
+def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
+    tot_rlc_count = rw.initFullRRCMap(0.0)
+    retx_rlc_count = rw.initFullRRCMap(0.0)
+    # method 2
+    exist_sn_set = set([])
+    for index in range(startIndex, endIndex+1):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.UL_PDU_ID or \
+           cur_entry.logID == const.DL_PDU_ID:
+            cur_rrcID = cur_entry.rrcID
+            cur_rlc_pdus = cur_entry.ul_pdu[0]
+            if direction.lower() == "down":
+                cur_rlc_pdus = cur_entry.dl_pdu[0]
+            
 
 
 
-
-    
 

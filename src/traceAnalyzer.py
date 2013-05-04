@@ -3,7 +3,7 @@
 """
 @Author Haokun Luo
 @Date   02/02/2013
-The tool parse and analysis the Data Set generated from QXDM filtered log file (in txt)
+The tool parse and analysis the Data Set generated from QxDM filtered log file (in txt)
 It could extract IP packets and RLC PDUs, and map them with context information,
 i.e. RRC state, RSCP, and etc. One case study for the tool is to study cross-layer
 retransmission behavior and investigate the correlation between TCP RTO/Fast retransmission
@@ -73,6 +73,8 @@ def init_optParser():
                          help="Enable it if you want to non-IP entries in the result")
     optParser.add_option("--loss_analysis", action="store_true", dest="is_loss_analysis", default=False, \
                          help="loss ratio analysis over RLC layer")
+    optParser.add_option("--gap_analysis", action="store_true", dest="is_gap_analysis", default=False, \
+                         help="study the relationship between the gap period (from RRC inference measurement) to RLC layer retransmission analysis")
     optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
                          help="Flag to enable printing throughput information based on TCP trace analysis")
     optParser.add_option("--print_retx", dest="retxType", default=None, \
@@ -283,6 +285,7 @@ def main():
             sys.exit(1)
 
     # RLC retransmission process
+    # Since the RLC for TCP and UDP are the same, we use a generalized method for retx analysis
     [ULReTxCountMap, DLReTxCountMap] = rw.procRLCReTx(QCATEntries)
 
     # collect statistic information
@@ -303,7 +306,7 @@ def main():
             if options.direction.lower() == "up":
                 crossMap["retx"] = clw.TCP_RLC_Retx_Mapper(QCATEntries, entryIndexMap, tcpReTxMap, const.UL_PDU_ID)
                 crossMap["fast_retx"] = clw.TCP_RLC_Retx_Mapper(QCATEntries, entryIndexMap, tcpFastReTxMap, const.UL_PDU_ID)
-                
+
                 # TODO: delete after checking
                 crossMap["all"] = clw.TCP_RLC_Retx_Mapper(QCATEntries, entryIndexMap, tcpAllRetxMap, const.UL_PDU_ID)
 
@@ -407,7 +410,7 @@ def main():
 
     # Loss ratio is essentially the retransmission ratio
     # use the old retransmission ratio map and the RTT calculation map
-    if options.is_loss_analysis:
+    if options.is_loss_analysis or options.is_gap_analysis:
         # hash table contains only one side traffic
         udp_clt_lookup_table = None
         udp_srv_lookup_table = None
@@ -427,6 +430,10 @@ def main():
             if TIME_DEBUG:
                 print "UDP: Assign RTT takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
+
+        # Apply the gap analysis by comparing the transparent work analysis
+        if options.is_gap_analysis:
+            lw.rlc_retx_based_on_gap(QCATEntries, options.direction)
 
         if options.inPCAPFile and options.direction:
             options.hash_target = options.hash_target.lower()

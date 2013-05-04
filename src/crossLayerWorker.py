@@ -1321,7 +1321,7 @@ def detect_real_win (QCATEntries, first_mapped_RLCs, last_mapped_RLCs, orig_tcp_
     if last_mapped_RLCs:
         last_tcp_retx_mapped_rlc_max_index = last_mapped_RLCs[-1][1]
         last_tcp_retx_mapped_rlc_max_sn = last_mapped_RLCs[-1][0].ul_pdu[0]["sn"][-1]
-                
+
     if last_tcp_retx_mapped_rlc_max_index and \
        find_reset_ack (QCATEntries, orig_tcp_index, last_tcp_retx_mapped_rlc_max_index):
         if TRUE_WIN_DEBUG:

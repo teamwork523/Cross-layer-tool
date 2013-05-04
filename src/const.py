@@ -53,6 +53,9 @@ LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
 
 ############ UDP packet
 UDP_RTT_LIMIT = 5
+# instrumented index value
+UDP_WAIT_LIMIT = 32
+UDP_GRAN_LIMIT = 1024
 
 # Include data configuration settings
 # TODO: hard configured, to be changed

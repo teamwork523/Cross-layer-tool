@@ -332,9 +332,9 @@ def medianValue(li):
     if not li:
         return None
     if len(li) % 2 == 0:
-        return (li[len(li)*1.0/2-1] + li[len(li)*1.0/2])/2.0
+        return (li[int(len(li)*1.0/2)-1] + li[int(len(li)*1.0/2)])/2.0
     if len(li) % 2 != 0:
-        return li[len(li)*1.0/2]
+        return li[int(len(li)*1.0/2)]
 
 def set_belongs_to(A, B):
     for i in A:
@@ -478,6 +478,16 @@ def sycTimeLine(entries, tsDict):
             print rssi_errSQR_dict[mappedTS]
     return rssi_errSQR_dict
 """
+
+# merge two dictionaries
+# if two dicts have diff key sets, then return the original key set
+# else return the merged one
+def merge_two_dict(orig_dict, append_dict):
+    if sorted(orig_dict.keys()) != sorted(append_dict.keys()):
+        return orig_dict
+    for key in orig_dict:
+        orig_dict[key] += append_dict[key]
+    return orig_dict
 
 def convert_ts_in_human(ts):
 	return datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")

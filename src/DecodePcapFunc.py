@@ -4,6 +4,7 @@ import struct
 import socket
 import json
 import sys
+import const
 
 def decode_PcapFileHeader(B_datastring):
  
@@ -241,9 +242,18 @@ def tcp_payload(packet_data, i, link_len):
 ##################################################################
 ###################### UDP Fields ################################
 ##################################################################
+    """   
+               4 bytes    4 bytes      4 bytes  
+             ----------------------------------------------
+Instrumented | Seq Num | Wait_index | Granularity | 
+Packet
+             ----------------------------------------------
+             |------------ UDP Payload-----------|
+
+    """
 # notice: src/dst port locate the same location as TCP, so directly borrow from TCP
 def udp_seg_size(packet_data, i, link_len):
-    return ip_length(packet_data, i, link_len) - 8 - 20
+    return ip_length(packet_data, i, link_len) - const.UDP_Header_Len - const.IP_Header_Len
 
 # UDP payload
 def udp_payload(packet_data, i, link_len):
@@ -254,11 +264,25 @@ def udp_payload(packet_data, i, link_len):
 def udp_seq_num(packet_data, i, link_len):
     # assume the first 4 bytes are seq_num
     max_lookup_byte_len = 4
-    start_index = link_len + 20 + 8
+    start_index = link_len + const.IP_Header_Len + const.UDP_Header_Len
     if len(packet_data[i][1]) <= start_index:
         return None
     return struct.unpack(">i", packet_data[i][1][start_index:start_index+max_lookup_byte_len])[0]
-    
+
+# extract the wait_index and granularity from the trace
+def udp_gap_period(packet_data, i, link_len):
+    # calculate the real gap period from the wait index and granularity
+    start_index = link_len + const.IP_Header_Len  + const.UDP_Header_Len + 4
+    instr_len_unit = 4
+    if len(packet_data[i][1]) <= start_index + instr_len_unit * 2:
+        return None
+    wait_index = struct.unpack(">i", packet_data[i][1][start_index:start_index+instr_len_unit])[0]
+    granularity = struct.unpack(">i", packet_data[i][1][start_index+instr_len_unit:start_index+instr_len_unit*2])[0]
+    if wait_index > 0 and wait_index < const.UDP_WAIT_LIMIT and \
+       granularity > 0 and granularity < const.UDP_GRAN_LIMIT:
+        return wait_index * granularity / 1000.0
+    return None
+
 ##################################################################
 
 def main():
