@@ -297,7 +297,7 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
                 rlc_begin_index = first_rlc_list[0][1]
                 rlc_end_index = last_rlc_list[-1][1]
                 if rlc_begin_index < rlc_end_index:
-                    total_count_map, retx_count_map, retx_ratio = find_retx_within_a_range(QCATEntries, rlc_begin_index, rlc_end_index, direction)
+                    total_count_map, retx_count_map, retx_ratio = find_retx_within_a_range_2(QCATEntries, rlc_begin_index, rlc_end_index, direction)
                     """
                     if CUR_DEBUG:
                         print "Cur_gap is %f" % cur_gap
@@ -398,10 +398,16 @@ def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
             cur_rlc_pdus = cur_entry.ul_pdu[0]
             if direction.lower() == "down":
                 cur_rlc_pdus = cur_entry.dl_pdu[0]
-            cur_rlc_plus = cur_entry.dl_pdu[0]
             
-            # check current sequence number
-            pass
+            if cur_rrcID:
+                # check current sequence number
+                for sn in cur_rlc_pdus["sn"]:
+                    if sn in exist_sn_set:
+                        retx_rlc_count[cur_rrcID] += 1
+                    else:
+                        exist_sn_set.add(sn)
+                    tot_rlc_count[cur_rrcID] += 1
+    return tot_rlc_count, retx_rlc_count, (float(sum(retx_rlc_count.values())) / float(sum(tot_rlc_count.values())))
 
 
 
