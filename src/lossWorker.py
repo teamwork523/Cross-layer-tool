@@ -20,8 +20,8 @@ from datetime import datetime
 
 DEBUG = False
 CUR_DEBUG = True
-GAP_DEBUG = True
-TIME_DEUBG = True
+GAP_DEBUG = False
+TIME_DEUBG = False
 
 #################################################################
 ##################### UDP Loss Analysis #########################
@@ -288,7 +288,7 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
         cur_entry = QCATEntries[index]
         cur_gap = cur_entry.udp["gap"]
 
-        if cur_entry.ip["tlp_id"] == const.UDP_ID and cur_gap:
+        if cur_entry.ip["tlp_id"] == const.UDP_ID and cur_gap >= 0  :
             # find the last gap_period message
             last_map_index = find_last_same_gap_entry_index(QCATEntries, index, cur_gap)
             if GAP_DEBUG:
@@ -331,7 +331,7 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
     if True:
         #print "Ready to show results ...."
         for k in sorted(gap_retx_list_map.keys()):
-            print "%f\t%s" % (k, str(util.quartileResult(gap_retx_list_map[k])))
+            print "%f\t%s" % (k, util.listToStr(util.quartileResult(gap_retx_list_map[k])))
             #print "%f\t%s" % (k, gap_retx_list_map[k])
 
     return gap_retx_per_rrc_map

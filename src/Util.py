@@ -315,14 +315,14 @@ def listMeanValue(li):
 
 # Get the statistical distribution info
 # @return 
-#   [min, 25%, 50%, 75%, max]
+#   [5%, 25%, 50%, 75%, 95%]
 def quartileResult(li):
     if not li:
         return [0]*5
     listLen = len(li)
     sorted_list = sorted(li)
-    return [sorted_list[0], sorted_list[int(0.25*listLen)], sorted_list[int(0.5*listLen)], \
-            sorted_list[int(0.75*listLen)], sorted_list[-1]]
+    return [sorted_list[int(0.05*listLen)], sorted_list[int(0.25*listLen)], sorted_list[int(0.5*listLen)], \
+            sorted_list[int(0.75*listLen)], sorted_list[int(0.95*listLen)]]
 
 # convert list to string with delimiters
 def listToStr(li, DEL = "\t"):

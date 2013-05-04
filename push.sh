@@ -16,7 +16,10 @@ then
     scp -r pcap/UDP/seq/* haokun@owl.eecs.umich.edu:$owl_folder/pcap/UDP/seq/
 elif [ $OPTION = '-e' ]
 then
-    scp -r pcap/UDP/seq/* haokun@ep2.eecs.umich.edu:$ep2_folder/pcap/UDP/seq/
+    #scp -r pcap/UDP/seq/* haokun@ep2.eecs.umich.edu:$ep2_folder/pcap/UDP/seq/
+    for i in HTC S3;do
+        scp -r Data/UDP/$i/instr/* haokun@ep2.eecs.umich.edu:$ep2_folder/Data/UDP/$i/instr/
+    done
 else
     echo $USAGE
     exit 1
