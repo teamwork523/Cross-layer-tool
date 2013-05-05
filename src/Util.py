@@ -7,7 +7,7 @@ This program analyze the Data Set generated from QXDM filtered log file
 It could optionally map the packets from PCAP with the RRC states in the log
 """
 
-import os, sys, re, time
+import os, sys, re, time, math
 import hashlib, base64
 import const
 import QCATEntry as qe
@@ -323,6 +323,25 @@ def quartileResult(li):
     sorted_list = sorted(li)
     return [sorted_list[int(0.05*listLen)], sorted_list[int(0.25*listLen)], sorted_list[int(0.5*listLen)], \
             sorted_list[int(0.75*listLen)], sorted_list[int(0.95*listLen)]]
+
+# calculate the standard deviation of the list
+def stdevValue(li, mean = None):
+    if not li:
+        return 0.0
+
+    if not mean:
+        mean = meanValue(li)
+
+    diff_sum = 0.0
+    for i in li:
+        diff_sum += (i-mean)*(i-mean)
+    return math.sqrt(diff_sum / len(li))
+
+# Get both mean and standard dev
+def meanStdevPair(li):
+    li = [i for i in li if i != 0.0]
+    mean = meanValue(li)
+    return (mean, stdevValue(li, mean))
 
 # convert list to string with delimiters
 def listToStr(li, DEL = "\t"):
