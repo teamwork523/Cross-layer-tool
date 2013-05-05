@@ -331,7 +331,7 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
     if True:
         #print "Ready to show results ...."
         for k in sorted(gap_retx_list_map.keys()):
-            mean, stdev = util.meanStdevPair(gap_retx_list_map[k], upper_bound = 100.0)
+            mean, stdev = util.meanStdevPair(gap_retx_list_map[k], upper_bound = 300.0)
             print "%f\t%f\t%f" % (k, mean, stdev / 10.0)
             #print "%f\t%s" % (k, util.listToStr(util.quartileResult(gap_retx_list_map[k])))
             #print "%f\t%s" % (k, gap_retx_list_map[k])
