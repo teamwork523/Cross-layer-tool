@@ -338,8 +338,8 @@ def stdevValue(li, mean = None):
     return math.sqrt(diff_sum / len(li))
 
 # Get both mean and standard dev
-def meanStdevPair(li):
-    li = [i for i in li if i != 0.0]
+def meanStdevPair(li, upper_bound = None):
+    li = [i for i in li if i != 0.0 and (not upper_bound or (upper_bound and i < upper_bound))]
     mean = meanValue(li)
     return (mean, stdevValue(li, mean))
 
