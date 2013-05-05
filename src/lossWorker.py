@@ -436,7 +436,8 @@ def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
     total_sum = float(sum(tot_rlc_count.values()))
     retx_sum = float(sum(retx_rlc_count.values()))
     if total_sum > 0.0:
-        ratio = retx_sum / total_sum
+        # ratio = retx_sum / total_sum
+        ratio = retx_sum
     
     return tot_rlc_count, retx_rlc_count, ratio
 
