@@ -399,8 +399,12 @@ def find_retx_within_a_range(QCATEntries, startIndex, endIndex, direction):
             if cur_rrcID:
                 tot_rlc_count[cur_rrcID] += len(cur_rlc_pdus["sn"])
                 retx_rlc_count[cur_rrcID] += len(cur_rlc_retx_pdus)
-
-    return tot_rlc_count, retx_rlc_count, (float(sum(retx_rlc_count.values())) / float(sum(tot_rlc_count.values())))
+    ratio = 0.0
+    total_sum = float(sum(tot_rlc_count.values()))
+    retx_sum = float(sum(retx_rlc_count.values())
+    if total_sum:
+        ratio = retx_sum / total_sum
+    return tot_rlc_count, retx_rlc_count, ratio
 
 
 def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
@@ -425,7 +429,12 @@ def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
                     else:
                         exist_sn_set.add(sn)
                     tot_rlc_count[cur_rrcID] += 1
-    return tot_rlc_count, retx_rlc_count, (float(sum(retx_rlc_count.values())) / float(sum(tot_rlc_count.values())))
+    ratio = 0.0
+    total_sum = float(sum(tot_rlc_count.values()))
+    retx_sum = float(sum(retx_rlc_count.values())
+    if total_sum:
+        ratio = retx_sum / total_sum
+    return tot_rlc_count, retx_rlc_count, ratio
 
 
 
