@@ -17,8 +17,8 @@ then
 elif [ $OPTION = '-e' ]
 then
     #scp -r pcap/UDP/seq/* haokun@ep2.eecs.umich.edu:$ep2_folder/pcap/UDP/seq/
-    # for i in HTC S3;do
-    for i in HTC;do
+    for i in HTC S3;do
+    #for i in HTC;do
         scp -r Data/UDP/$i/instr/* haokun@ep2.eecs.umich.edu:$ep2_folder/Data/UDP/$i/instr/
     done
 else

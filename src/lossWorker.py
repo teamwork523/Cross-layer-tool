@@ -283,12 +283,13 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
     entry_length = len(QCATEntries)
     gap_retx_per_rrc_map = {}
     gap_retx_list_map = {}
-    
+    tot_rlc_num = 0.0    
+
     while index < entry_length:
         cur_entry = QCATEntries[index]
         cur_gap = cur_entry.udp["gap"]
 
-        if cur_entry.ip["tlp_id"] == const.UDP_ID and cur_gap >= 0  :
+        if cur_entry.ip["tlp_id"] == const.UDP_ID and cur_gap >= 0:
             # find the last gap_period message
             last_map_index = find_last_same_gap_entry_index(QCATEntries, index, cur_gap)
             if GAP_DEBUG:
@@ -307,16 +308,17 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
                     print "Last RLC mapped index is ", rlc_end_index
 
                 if rlc_begin_index < rlc_end_index:
-                    total_count_map, retx_count_map, retx_ratio = find_retx_within_a_range_2(QCATEntries, rlc_begin_index, rlc_end_index, direction)
+                    total_count_map, retx_count_map, retx_num, total_num = find_retx_within_a_range(QCATEntries, rlc_begin_index, rlc_end_index, direction)
                     """
                     if GAP_DEBUG:
                         print "Cur_gap is %f" % cur_gap
-                        print "Retx_ratio is %f" % retx_ratio
+                        print "retx_num is %f" % retx_num
                     """
+                    tot_rlc_num += total_num
                     if gap_retx_list_map.has_key(cur_gap):
-                        gap_retx_list_map[cur_gap].append(retx_ratio)
+                        gap_retx_list_map[cur_gap].append(retx_num)
                     else:
-                        gap_retx_list_map[cur_gap] = [retx_ratio]
+                        gap_retx_list_map[cur_gap] = [retx_num]
                     if gap_retx_per_rrc_map.has_key(cur_gap):
                         gap_retx_per_rrc_map[cur_gap]["retx"] = util.merge_two_dict(gap_retx_per_rrc_map[cur_gap]["retx"], retx_count_map)
                         gap_retx_per_rrc_map[cur_gap]["total"] = util.merge_two_dict(gap_retx_per_rrc_map[cur_gap]["total"], total_count_map)
@@ -326,6 +328,10 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
             index = last_map_index
 
         index += 1
+
+    # recalculate the whole group by the ratio of dividing the total group number
+    for gap, retx_list in gap_retx_list_map.items():
+        gap_retx_list_map[gap] = [i/tot_rlc_num for i in retx_list]
 
     # display the retransmission result
     if True:
@@ -384,34 +390,6 @@ def find_last_same_gap_entry_index(QCATEntries, startIndex, target_gap):
 def find_retx_within_a_range(QCATEntries, startIndex, endIndex, direction):
     tot_rlc_count = rw.initFullRRCMap(0.0)
     retx_rlc_count = rw.initFullRRCMap(0.0)
-
-    for index in range(startIndex, endIndex+1):
-        cur_entry = QCATEntries[index]
-        if cur_entry.logID == const.UL_PDU_ID or \
-           cur_entry.logID == const.DL_PDU_ID:
-            cur_rrcID = cur_entry.rrcID
-            cur_rlc_pdus = cur_entry.ul_pdu[0]
-            cur_rlc_retx_pdus = cur_entry.retx["ul"]
-            if direction.lower() == "down":
-                cur_rlc_pdus = cur_entry.dl_pdu[0]
-                cur_rlc_retx_pdus = cur_entry.retx["dl"]
-            # check whether we have RRC ID or not
-            if cur_rrcID:
-                tot_rlc_count[cur_rrcID] += len(cur_rlc_pdus["sn"])
-                retx_rlc_count[cur_rrcID] += len(cur_rlc_retx_pdus)
-
-    ratio = 0.0
-    total_sum = float(sum(tot_rlc_count.values()))
-    retx_sum = float(sum(retx_rlc_count.values()))
-    if total_sum > 0:
-        ratio = retx_sum / total_sum
-
-    return tot_rlc_count, retx_rlc_count, ratio
-
-
-def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
-    tot_rlc_count = rw.initFullRRCMap(0.0)
-    retx_rlc_count = rw.initFullRRCMap(0.0)
     # method 2
     exist_sn_set = set([])
     for index in range(startIndex, endIndex+1):
@@ -439,7 +417,7 @@ def find_retx_within_a_range_2(QCATEntries, startIndex, endIndex, direction):
         # ratio = retx_sum / total_sum
         ratio = retx_sum
     
-    return tot_rlc_count, retx_rlc_count, ratio
+    return tot_rlc_count, retx_rlc_count, retx_sum, total_sum
 
 
 
