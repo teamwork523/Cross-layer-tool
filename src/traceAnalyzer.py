@@ -41,7 +41,7 @@ def init_optParser():
                             " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
                             " "*extraspace + "[--verify_cross_analysis], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
                             " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
-                            " "*extraspace + "[--rrc_timer]")
+                            " "*extraspace + "[--rrc_timer], [--gap_rtt]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -76,6 +76,8 @@ def init_optParser():
                          help="loss ratio analysis over RLC layer")
     optParser.add_option("--gap_analysis", action="store_true", dest="is_gap_analysis", default=False, \
                          help="study the relationship between the gap period (from RRC inference measurement) to RLC layer retransmission analysis")
+    optParser.add_option("--gap_rtt", action="store_true", dest="is_gap_rtt", default=False, \
+                         help="Investigate the inter-packet gap time vs the UDP RTT result")
     optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
                          help="Flag to enable printing throughput information based on TCP trace analysis")
     optParser.add_option("--print_retx", dest="retxType", default=None, \
@@ -415,9 +417,24 @@ def main():
 
         #lw.rlc_retx_based_on_gap(filteredQCATEntries, options.direction)
         lw.rlc_retx_based_on_gap(QCATEntries, options.direction)
+
+        if TIME_DEBUG:
+            print "Gap RTT Analyais takes ", time.time() - check_point_time, "sec"
+            check_point_time = time.time()
+    
+    # correlate the UDP RTT value with inter-packet time
+    if options.is_gap_rtt:
+        # calculate the RTT for each UDP packet based on the sequence number
+        if options.server_ip and options.direction:
+            udp_clt_lookup_table, udp_srv_echo_lookup_table = lw.get_UDP_clt_lookup_table(QCATEntries, \
+                                                              options.direction, options.server_ip, options.hash_target)
+            if options.hash_target == "seq":
+                lw.assign_udp_rtt(QCATEntries, options.direction, udp_clt_lookup_table, udp_srv_echo_lookup_table)
+            # print the corresponding RTT for each gap value 
+            lw.get_gap_to_rtt_map(QCATEntries)
         #pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
         if TIME_DEBUG:
-            print "Gap Analyais takes ", time.time() - check_point_time, "sec"
+            print "Gap RTT Analyais takes ", time.time() - check_point_time, "sec"
             check_point_time = time.time()
 
     if options.is_loss_analysis:

@@ -283,7 +283,7 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
     entry_length = len(QCATEntries)
     gap_retx_per_rrc_map = {}
     gap_retx_list_map = {}
-    tot_rlc_num = 0.0    
+    tot_rlc_num = 0.0
 
     while index < entry_length:
         cur_entry = QCATEntries[index]
@@ -342,7 +342,53 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
             #print "%f\t%s" % (k, util.listToStr(util.quartileResult(gap_retx_list_map[k])))
             #print "%f\t%s" % (k, gap_retx_list_map[k])
 
-    return gap_retx_per_rrc_map
+    return gap_retx_per_rrc_map, gap_retx_list_map
+
+# Derive the RTT value for each gap period
+# @return
+#   1. Map between gap result and RTT value
+def get_gap_to_rtt_map(QCATEntries):
+    gap_rtt_per_rrc_map = {}
+    gap_rtt_list_map = {}
+    index = 0
+    entry_length = len(QCATEntries)
+
+    while index < entry_length:
+        cur_entry = QCATEntries[index]
+        cur_gap = cur_entry.udp["gap"]
+
+        if cur_entry.ip["tlp_id"] == const.UDP_ID and cur_gap >= 0:
+            # find the last gap_period message
+            last_map_index = find_last_same_gap_entry_index(QCATEntries, index, cur_gap)
+            
+            # update the RTT map table
+            for temp_index in range(index, last_map_index+1):
+                temp_entry = QCATEntries[temp_index]
+                cur_rtt = temp_entry.rtt["udp"]
+                cur_rrc = temp_entry.rrcID
+                # append to RTT list
+                if cur_rtt:
+                    if gap_rtt_list_map.has_key(cur_gap):
+                        gap_rtt_list_map[cur_gap].append(cur_rtt)
+                    else:
+                        gap_rtt_list_map[cur_gap] = [cur_rtt]
+                # update RRC map
+                if cur_rrc:
+                    if not gap_rtt_per_rrc_map.has_key(cur_gap):
+                        gap_rtt_per_rrc_map[cur_gap] = rw.initFullRRCMap([])
+                    gap_rtt_per_rrc_map[cur_gap][cur_rrc].append(cur_rtt)
+            # leap the index
+            index = last_map_index
+        # update the index
+        index += 1
+
+    # display all the RTT timer
+    if True:
+        for k in sorted(gap_rtt_list_map.keys()):
+            mean, stdev = util.meanStdevPair(gap_rtt_list_map[k])
+            print "%f\t%f\t%f" % (k, mean, stdev)
+
+    return gap_rtt_list_map, gap_rtt_per_rrc_map
 
 #################################################################
 ######################### Helper function #######################
