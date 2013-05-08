@@ -330,14 +330,14 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
         index += 1
 
     # recalculate the whole group by the ratio of dividing the total group number
-    for gap, retx_list in gap_retx_list_map.items():
-        gap_retx_list_map[gap] = [i/tot_rlc_num for i in retx_list]
+    #for gap, retx_list in gap_retx_list_map.items():
+        #gap_retx_list_map[gap] = [i/tot_rlc_num for i in retx_list]
 
     # display the retransmission result
     if True:
         #print "Ready to show results ...."
         for k in sorted(gap_retx_list_map.keys()):
-            mean, stdev = util.meanStdevPair(gap_retx_list_map[k], upper_bound = 300.0)
+            mean, stdev = util.meanStdevPair(gap_retx_list_map[k], upper_bound = 0.5)
             print "%f\t%f\t%f" % (k, mean, stdev / 3.0)
             #print "%f\t%s" % (k, util.listToStr(util.quartileResult(gap_retx_list_map[k])))
             #print "%f\t%s" % (k, gap_retx_list_map[k])
@@ -460,10 +460,10 @@ def find_retx_within_a_range(QCATEntries, startIndex, endIndex, direction):
     total_sum = float(sum(tot_rlc_count.values()))
     retx_sum = float(sum(retx_rlc_count.values()))
     if total_sum > 0.0:
-        # ratio = retx_sum / total_sum
-        ratio = retx_sum
+        ratio = retx_sum / total_sum
+        # ratio = retx_sum
     
-    return tot_rlc_count, retx_rlc_count, retx_sum, total_sum
+    return tot_rlc_count, retx_rlc_count, ratio, total_sum
 
 
 
