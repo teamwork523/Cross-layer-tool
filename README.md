@@ -70,7 +70,9 @@ File Distribution
 
 - *rrcTimerWorker.py*
 
-  Validate the RRC state inferred timer for UMTS network.
+  Validate the RRC state inferred timer for UMTS network. Primarily validate the
+  FACH_PROMOTE and DCH_PROMOTE timer by counting the time interval between the last
+  IP packet to the RRC state log.
 
 - *Util.py*
 
