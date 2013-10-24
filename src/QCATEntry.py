@@ -76,6 +76,12 @@ class QCATEntry:
                     "seg_size": None, \
                     "seq_num":  None, \
                     "gap": None}
+        # HTTP fields
+        # Assume always use TCP to transmit
+        # Currently support:
+        # 1. GET request (first three bytes equals to "47 45 54")
+        # 2. DATA (i.e data payload or TCP ACK)
+        self.http = {"type": None}
         # TODO: Link layer state info parse
         #       1. Retransmission rate
         #       2. Row bits
@@ -479,6 +485,18 @@ class QCATEntry:
                         # self.__debugTCP()
                         # Use IP and transport layer header as signature
                         self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+self.tcp["header_len"]])
+
+                        # Parse TCP packet (assume it always use TCP for transmission)
+                        if self.tcp["src_port"] == 80:
+                            self.http["type"] = "DATA"
+                            # self.__debugHTTP()
+                        if self.tcp["dst_port"] == 80:
+                            http_start = const.Payload_Header_Len + self.ip["header_len"] + self.tcp["header_len"]
+                            if ("".join(self.hex_dump["payload"][http_start:http_start+3])).decode("hex") == "GET":
+                                self.http["type"] = "GET"
+                            else:
+                                self.http["type"] = "DATA"
+                            #self.__debugHTTP()
                     # Parse UDP Packet
                     if self.ip["tlp_id"] == const.UDP_ID:
                         start = const.Payload_Header_Len + self.ip["header_len"] 
@@ -583,6 +601,9 @@ class QCATEntry:
         if self.udp["gap"]:
             print "UDP gap value is %d" % (self.udp["gap"])
         
+    def __debugHTTP(self):
+        print "HTTP type is %s" % (self.http["type"])
+
     def __debugEUL(self):
         print "*"* 40
         print "sample length %f" % self.eul["sample_len"] 

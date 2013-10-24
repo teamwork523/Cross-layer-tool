@@ -19,6 +19,7 @@ CUR_DEBUG = False
 ############################################################################
 ############################# TCP Retx #####################################
 ############################################################################
+# Always assume the first packet start with a SYN_NON_ACK packet
 # extract the data entry based on flow info
 # @Return [[flow1_of_entries], [flow2_of_entries], ...]
 def extractFlows (entries):
@@ -26,11 +27,15 @@ def extractFlows (entries):
     localFlow = []
     for entry in entries:
         if entry.logID == const.PROTOCOL_ID and entry.ip["tlp_id"] == const.TCP_ID:
-            if not entry.flow:
+            # if not entry.flow:
+            if not (entry.tcp["SYN_FLAG"] and not entry.tcp["ACK_FLAG"]):
                 localFlow.append(entry)
             elif localFlow:
                 # start a new flow here
                 flows.append(localFlow)
+                localFlow = [entry]
+            else:
+                # When the first packet is SYN packet
                 localFlow = [entry]
     if localFlow:
         flows.append(localFlow)
@@ -262,8 +267,8 @@ def procRLCReTx(entries):
                         entry.retx["ul"][curSN_UL].append(entry.ul_pdu[0]["size"][i])
                     # update retx count map
                     if curSN_UL not in ULReTxCountMapLocal:
-                    	# [tx_count, timestamp, duration]
-                        ULReTxCountMapLocal[curSN_UL] = [1, ts_ul, ts_ul - ULSNMap[curSN_UL][1], [ULSNMap[curSN_UL][2], entry]]
+                    	# [retx_count, timestamp, duration]
+                        ULReTxCountMapLocal[curSN_UL] = [0, ts_ul, ts_ul - ULSNMap[curSN_UL][1], [ULSNMap[curSN_UL][2], entry]]
                     else:
                         ULReTxCountMapLocal[curSN_UL][0] += 1
                         ULReTxCountMapLocal[curSN_UL][2] = ts_ul - ULReTxCountMapLocal[curSN_UL][1]
@@ -327,8 +332,8 @@ def procRLCReTx(entries):
                         entry.retx["dl"][curSN_DL].append(entry.dl_pdu[0]["size"][i])
                     # update retx count map
                     if curSN_DL not in DLReTxCountMapLocal:
-                    	# [tx_count, timestamp, duration]
-                        DLReTxCountMapLocal[curSN_DL] = [1, ts_dl, ts_dl - DLSNMap[curSN_DL][1], [DLSNMap[curSN_DL][2], entry]]
+                    	# [retx_count, timestamp, duration]
+                        DLReTxCountMapLocal[curSN_DL] = [0, ts_dl, ts_dl - DLSNMap[curSN_DL][1], [DLSNMap[curSN_DL][2], entry]]
                     else:
                         DLReTxCountMapLocal[curSN_DL][0] += 1
                         DLReTxCountMapLocal[curSN_DL][2] = ts_dl - DLReTxCountMapLocal[curSN_DL][1]
@@ -564,6 +569,7 @@ def countTCPReTx(tcpRetxMap):
 # Transform the ReTx Count map into Timestamp key base
 # Old format: {sn: [count, ts, duration, entry]}
 # New format: {ts: {sn1:(count1,duration1, [entry1, entry2,...]), sn2:(count2, duration2, [entry1, entry2, ...]), ...}
+# Also inject retransmitted entry into the count
 def retxCountMapTransform (retxCountMapList):
     tsMap = {}
     for retxCountMap in retxCountMapList:
@@ -572,4 +578,9 @@ def retxCountMapTransform (retxCountMapList):
                 tsMap[v[1]][k] = (v[0], v[2], v[3])
             else:
                 tsMap[v[1]] = {k: (v[0], v[2], v[3])}
+            for retxEntry in v[3]:
+                if retxEntry.timestamp in tsMap:
+                    tsMap[retxEntry.timestamp][k] = (v[0], v[2], [])
+                else:
+                    tsMap[retxEntry.timestamp] = {k: (v[0], v[2], [])}
     return tsMap

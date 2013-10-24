@@ -84,6 +84,37 @@ def readPCAPResultFile(pcapResultFile):
             payload = line
     return PCAPPackets
 
+###############################################################################################
+########################################### Filtering #########################################
+###############################################################################################
+# WARNING: only support TCP right now
+# Filter the packets to enable multiple IP analysis
+# @ return (A, B)
+# A: non-ip entry list
+# B: map of ip entry list, with (k, v) as (srv_ip, ip_entries_list)
+def multiIPFilter(entries, client_ip):
+    nonIPEntries = []
+    IPEntriesMap = {}
+
+    for entry in entries:
+        if entry.logID != const.PROTOCOL_ID:
+            nonIPEntries.append(entry)
+        elif entry.ip["tlp_id"] != const.UDP_ID:
+            # eliminate all the UDP protocol, i.e. DNS lookup
+            # client IP must appear as either in source or destination IP
+            target_ip = ""
+            if entry.ip["src_ip"] == client_ip:
+                target_ip = entry.ip["dst_ip"]
+            elif entry.ip["dst_ip"] == client_ip:
+                target_ip = entry.ip["src_ip"]
+
+            if target_ip != "":
+                if target_ip in IPEntriesMap:
+                    IPEntriesMap[target_ip].append(entry)
+                else:
+                    IPEntriesMap[target_ip] = [entry]
+
+    return (nonIPEntries, IPEntriesMap)
 
 # filter out proper packets
 def packetFilter(entries, cond):
@@ -245,6 +276,36 @@ def mapRLCReTxOverTime (entries, interval):
 				if entry.logID == const.DL_PDU_ID:
 					cur_dl_retx += sum([len(x) for x in entry.retx["dl"].values()])
 	return (ul_map, dl_map)        
+
+#############################################################################
+###################### Data Pre-process functions ###########################
+############################################################################# 
+# New!
+# Find the client IP address based on the address count
+def findClientIP(entries):
+    ipAddrCount = {}
+    
+    # filter all the IP packets
+    for i in range(len(entries)):
+        cur_entry = entries[i]
+        # count segmented IP packets as one
+        if cur_entry.logID == const.PROTOCOL_ID and \
+           cur_entry.custom_header["seg_num"] == 0:
+            src_ip = cur_entry.ip["src_ip"]
+            dst_ip = cur_entry.ip["dst_ip"]
+            if src_ip in ipAddrCount:
+                ipAddrCount[src_ip] += 1
+            else:
+                ipAddrCount[src_ip] = 1
+            if dst_ip in ipAddrCount:
+                ipAddrCount[dst_ip] += 1
+            else:
+                ipAddrCount[dst_ip] = 1
+
+    # sort the count map based on count by descending order
+    sortedIpAddrCount = sorted(ipAddrCount.items(), key=lambda ipAddrCount: ipAddrCount[1], reverse=True)
+
+    return sortedIpAddrCount[0][0]
 
 # Remove duplicated IP packets generated from QXDM
 def removeQXDMDupIP(entries):
@@ -477,26 +538,6 @@ def createTSbasedMap(entries):
         else:
             entryMap[key].append(entry)
     return entryMap
-  
-# check if AGC and real rssi value matches
-# Deprecated
-"""
-def sycTimeLine(entries, tsDict):
-    rssi_errSQR_dict = {}
-    for entry in entries:
-        if entry.logID == const.AGC_ID and entry.agc["RxAGC"]:
-            ts = entry.timestamp*1000
-            print "TS in QCAT is %d" % (ts)
-            mappedTS = binarySearch(ts, sorted(tsDict.keys()))
-            print entry.agc["RxAGC"]
-            print conv_dmb_to_rssi(meanValue(entry.agc["RxAGC"]))
-            print mappedTS
-            print tsDict[mappedTS]
-            rssi_errSQR_dict[mappedTS] = pow(float(conv_dmb_to_rssi(meanValue(entry.agc["RxAGC"])))
-                                           - float(tsDict[mappedTS]), 2)
-            print rssi_errSQR_dict[mappedTS]
-    return rssi_errSQR_dict
-"""
 
 # merge two dictionaries
 # if two dicts have diff key sets, then return the original key set
@@ -508,8 +549,15 @@ def merge_two_dict(orig_dict, append_dict):
         orig_dict[key] += append_dict[key]
     return orig_dict
 
-def convert_ts_in_human(ts):
-	return datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")
+def convert_ts_in_human(ts, year=False):
+    if year == False:
+    	return datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")
+    else:
+        t = datetime.fromtimestamp(ts).strftime("%Y %b %d  %H:%M:%S.%f")
+        # extra rounding work for Microsecond
+        tail = t[-7:]
+        f = round(float(tail), 3)
+        return "%s%.3f" % (t[:-7], f)
 
 # compute md5 hash
 def md5_hash(data):
@@ -517,3 +565,52 @@ def md5_hash(data):
     MD5 = hashlib.md5(data)
     return base64.b64encode(MD5.digest(), '._').strip('=')
     # return data
+
+# determine the TCP flag string
+# Sample output: "SYN" + DEL + "ACK"
+def get_tcp_flag_info(entry, DEL):
+    result = ""
+    if entry.tcp["CWR_FLAG"]:
+        result += "CWR" + DEL
+    if entry.tcp["ECE_FLAG"]:
+        result += "ECE" + DEL
+    if entry.tcp["URG_FLAG"]:
+        result += "URG" + DEL
+    if entry.tcp["ACK_FLAG"]:
+        result += "ACK" + DEL
+    if entry.tcp["PSH_FLAG"]:
+        result += "PSH" + DEL
+    if entry.tcp["RST_FLAG"]:
+        result += "RST" + DEL
+    if entry.tcp["SYN_FLAG"]:
+        result += "SYN" + DEL
+    if entry.tcp["FIN_FLAG"]:
+        result += "FIN" + DEL
+    if len(result) > 0:
+        return result[:-1]
+    return result
+
+# merge two entry lists based on timestamp
+def merge_two_entry_lists(nonIP, IP):
+    IP_cur_index = 0
+    nonIP_cur_index = 0
+    merged_entry = []    
+    nonIP_len = len(nonIP)
+    IP_len = len(IP)
+
+    while True:
+        if IP_cur_index >= IP_len or nonIP_cur_index >= nonIP_len:
+            break
+        if nonIP[nonIP_cur_index].timestamp < IP[IP_cur_index].timestamp:
+            merged_entry.append(nonIP[nonIP_cur_index])
+            nonIP_cur_index += 1
+        else:
+            merged_entry.append(IP[IP_cur_index])
+            IP_cur_index += 1
+
+    if IP_cur_index >= IP_len:
+        merged_entry += nonIP[nonIP_cur_index:]
+    if nonIP_cur_index >= nonIP_len:
+        merged_entry += IP[IP_cur_index:]
+
+    return merged_entry

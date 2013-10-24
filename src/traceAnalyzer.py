@@ -25,21 +25,21 @@ import lossWorker as lw
 import rrcTimerWorker as rtw
 
 DEBUG = False
-DUP_DEBUG = True
+DUP_DEBUG = False
 GAP_DEBUG = False
 TIME_DEBUG = False
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
-    optParser = OptionParser(usage="./%prog [-l, --log] QCAT_LOG_PATH [-m] [-p, --pcap] inPCAPFile\n" + \
+    optParser = OptionParser(usage="./%prog [-f, --file] QCAT_LOG_PATH [-m] [-p, --pcap] inPCAPFile\n" + \
                             " "*extraspace + "[-t, --type] protocolType, \n" + \
                             " "*extraspace + "[--src_ip] source_ip, [--dst_ip] destination_ip\n" + \
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
-                            " "*extraspace + "[-a] num_packets, [-d] direction, [--srv_ip] server_ip, \n" + \
+                            " "*extraspace + "[-a] num_packets, [-d] direction, [--clt_ip] client_ip, [--srv_ip] server_ip, \n" + \
                             " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
                             " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
-                            " "*extraspace + "[--verify_cross_analysis], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
+                            " "*extraspace + "[--cross_mapping_detail], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
                             " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
                             " "*extraspace + "[--rrc_timer], [--gap_rtt]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
@@ -50,7 +50,7 @@ def init_optParser():
                          help="Up or down, none specify will ignore throughput")
     optParser.add_option("-e", dest="endPercent", default=1, \
                          help="Ending point of the sampling")
-    optParser.add_option("-l", "--log", dest="inQCATLogFile", default="", \
+    optParser.add_option("-f", "--file", dest="inQCATLogFile", default="", \
                          help="QCAT log file path")
     optParser.add_option("-m", action="store_true", default=False, dest="isMapping", \
                          help="Add this option when try to map PCAP trace with QCAT log file")
@@ -58,8 +58,12 @@ def init_optParser():
                          help="PCAP trace file path")
     optParser.add_option("-t", "--type", dest="protocolType", default="TCP", \
                          help="Protocol Type, i.e. TCP or UDP")
+    optParser.add_option("--clt_ip", dest="client_ip", default=None, \
+    					  help="Client side IP address assuming the device IP address does not change.")
     optParser.add_option("--cross_analysis", action="store_true", dest="isCrossAnalysis", default=False, \
                          help="Map the TCP packet with RLC header, then process the cross layer information")
+    optParser.add_option("--cross_mapping_detail", action="store_true", dest="cross_mapping_detail", default=False, \
+    					  help="Print out each TCP packets and mapped RLC PDUs")
     #optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
     #                     help="Set this option if you want to map the RLC retransmission with TCP retransmission")
     optParser.add_option("--draw_percent", dest="draw_percent", default=50, \
@@ -96,8 +100,6 @@ def init_optParser():
     					  help="Used combined with direction option to filter useful retransmission packets")
     optParser.add_option("--udp_hash_target", dest="hash_target", default="seq", \
     					  help="Hash UDP based on hashed payload, sequence number or more. Current support hash or seq. Useful if you want to use UDP server trace to sync with client side QxDM trace.")
-    optParser.add_option("--verify_cross_analysis", action="store_true", dest="verify_cross_analysis", default=False, \
-    					  help="Print out each TCP packets and mapped RLC PDU")
 
     # Debugging options
     # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
@@ -156,6 +158,12 @@ def main():
     if TIME_DEBUG:
         print "Delete Dup IP takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
+
+    # determine the client address if user don't pass one
+    if options.client_ip == None:
+        options.client_ip = util.findClientIP(QCATEntries)
+
+    # print "Client IP is %s" % (options.client_ip)   
 
     #################################################################
     ###################### Mapping Context Info #####################
@@ -216,7 +224,7 @@ def main():
     # this used for keep the non-IP entries in the logs
     cond["keep_non_ip_entries"] = False
     # To verify the cross analysis, must include the non ip entries
-    if options.verify_cross_analysis or options.keep_non_ip_entries:
+    if options.cross_mapping_detail or options.keep_non_ip_entries:
         cond["keep_non_ip_entries"] = True
     if options.srcIP != None:
         if util.validateIP(options.srcIP) == None:
@@ -241,9 +249,31 @@ def main():
     	else:
     		cond["ip_relation"] = "or"
     		cond["srv_ip"] = options.server_ip
-    filteredQCATEntries = util.packetFilter(QCATEntries, cond)
-    # create a map between Filtered entries and its index
-    filteredEntryToIndexMap = util.createEntryMap(filteredQCATEntries)
+
+    # if client IP is enabled then use a separate the list entries into two lists
+    filteredQCATEntries = []
+    filteredEntryToIndexMap = {}
+    nonIPEntries = []
+    IPEntriesMap = {}
+
+    if options.client_ip != None:
+        (nonIPEntries, IPEntriesMap) = util.multiIPFilter(QCATEntries, options.client_ip)
+        
+        # double check the quality of filtering
+        """
+        print "Total trace length is %d" % (len(QCATEntries))
+        print "Non IP trace length is %d" % (len(nonIPEntries))
+        count = 0
+        for key in IPEntriesMap:
+            cur_count = len(IPEntriesMap[key])
+            count += cur_count
+        print "IP trace length is %d" % (count)
+        print "The number of distinguished server IPs is %d" % (len(IPEntriesMap.keys()))
+        """
+    else:
+        filteredQCATEntries = util.packetFilter(QCATEntries, cond)
+        # create a map between Filtered entries and its index
+        filteredEntryToIndexMap = util.createEntryMap(filteredQCATEntries)
 
     if TIME_DEBUG:
         print "Filter packets takes ", time.time() - check_point_time, "sec"
@@ -260,12 +290,11 @@ def main():
     #################################################################
     #################### Retransmission Analysis ####################
     #################################################################
-    tcpReTxMap = tcpFastReTxMap = None
+    tcpReTxMap = tcpFastReTxMap = tcpAllRetxMap = None
     # TCP retransmission process
     if options.enable_tcp_retx_test:
         if options.direction and options.server_ip:
             tcpflows = rw.extractFlows(filteredQCATEntries)
-
 
             if DEBUG:
                 print "Filtered QCAT Entry # is %d" % len(filteredQCATEntries)
@@ -283,20 +312,19 @@ def main():
             # CONFIG MAP
             rlc_retx_config_map = clw.getContextInfo(tcpReTxMap, const.DL_CONFIG_PDU_ID)
             rlc_fast_retx_config_map = clw.getContextInfo(tcpFastReTxMap, const.UL_CONFIG_PDU_ID)
-        else:
-            print >> sys.stderr, "Please specify direction and server ip to apply retransmission analysis"
-            sys.exit(1)
 
     # RLC retransmission process
     # Since the RLC for TCP and UDP are the same, we use a generalized method for retx analysis
-    [ULReTxCountMap, DLReTxCountMap] = rw.procRLCReTx(QCATEntries)
+    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(QCATEntries)
+    print RLCULReTxCountMap
+    print ("#" * 100 + "\n") * 4
 
     # collect statistic information
     retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
     if TIME_DEBUG:
         print "Retx analysis takes ", time.time() - check_point_time, "sec"
-        check_point_time = time.time()       
+        check_point_time = time.time() 
 
     #################################################################
     #################### TCP Cross Layer Analysis ###################
@@ -575,69 +603,46 @@ def main():
     #################################################################
     # verify the TCP layer information with RRC layer by printing
     # each TCP packet and corresponding RLC packet
-    if options.verify_cross_analysis:
-        if options.direction and options.server_ip:
-            if options.direction.lower() == "up":
-                # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
-                pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
-            else:
-                # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
-                pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
-        else:
-            print >> sys.stderr, "Must specify the direction and server \
-                                  ip to perform the cross layer optimization"
-
-    #################################################################
-    ####################### Evaluation Section ######################
-    #################################################################
-
-
-    #################################################################
-    ######################## Deprecated Section #####################
-    #################################################################
-    ################# You can ignore the part below #################
-    #################################################################
-    # Verify QXDM and PCAP timestamp offset
-    # Not useful at this point
-    if options.isMapping == True and options.inPCAPFile == "":
-        optParser.error("-p, --pcap: Empty PCAP filepath")
-    elif options.isMapping == True:
-        outFile = "pcapResult.txt"
-        # Assume pcapTSVerifier is in the same folder as the current program
-        folder = "/".join(sys.argv[0].split("/")[:-1]) + "/"
-        print folder
-        os.system(folder+"pcapTSVerifier " + options.inPCAPFile + " > " + outFile)
-
-        PCAPPackets = util.readPCAPResultFile(outFile)
-        PCAPMaps = util.createTSbasedMap(PCAPPackets)
-        QCATMaps = util.createTSbasedMap(QCATEntries)
-        countMap = util.mapPCAPwithQCAT(PCAPMaps, QCATMaps)
-        totalCount = countMap["fast"] + countMap["slow"] + countMap["same"]
-        print "*"*40
-        print "In total %d packets"%(len(PCAPPackets))
-        print "Mapping rate is %f"%((float)(totalCount)/(float)(len(PCAPPackets)))
-        print "QCAT ahead rate is %f"%((float)(countMap["fast"])/(float)(len(PCAPPackets)))
-        print "QCAT same rate is %f"%((float)(countMap["same"])/(float)(len(PCAPPackets)))
-        print "QCAT slow rate is %f"%((float)(countMap["slow"])/(float)(len(PCAPPackets)))
-        print "DCH state rate is %f"%((float)(countMap[const.DCH_ID])/(float)(len(PCAPPackets)))
-        print "FACH state rate is %f"%((float)(countMap[const.FACH_ID])/(float)(len(PCAPPackets)))
-        print "PCH state rate is %f"%((float)(countMap[const.PCH_ID])/(float)(len(PCAPPackets)))
-    #elif options.isMapping == False and options.inPCAPFile != "":
-        #optParser.error("Include -m if you want to map PCAP file to QCAT log file")
-
-    # create map between ts and rssi
-    """
-    if options.sigFile:
-        print "Reading from %s ..." % (options.sigFile)
-        tsDict = util.readFromSig(options.sigFile)
-        print "Finish Reading ..."
-        # TODO: sync signal with AGC value
-        errDict = util.sycTimeLine(QCATEntries, tsDict)
-        print "Mean squared error is %f" % (util.meanValue(errDict.values()))
-    """
-    # ULRLCOTMap, DLRLCOTMap = cw.mapRLCReTxOverTime(QCATEntries, interval)
-    # pw.printRLCReTxMapStats(ULRLCOTMap)
-    # pw.printRLCReTxMapStats(DLRLCOTMap)
+    if options.cross_mapping_detail and options.enable_tcp_retx_test:
+        if options.direction:
+            if options.server_ip:
+                if options.direction.lower() == "up":
+                    # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
+                    pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap)
+                else:
+                    # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
+                    pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap)
+            elif options.client_ip:
+                if options.direction.lower() == "up":
+                    ratio_list = []
+                    length_list = []
+                    retx_list = []
+                    # New: perform multiple server IP mapping
+                    # print "Non IP trace length is %d" % (len(nonIPEntries))
+                    DEL = ","
+                    print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number" + DEL + "Number_of_Retranmission" + DEL + "TCP_Flag_Info"
+                    count = 0
+                    for ip in IPEntriesMap.keys():
+                        # print ">.<" * 40
+                        length_list.append(len(IPEntriesMap[ip]))
+                        mergedEntries = util.merge_two_entry_lists(nonIPEntries, IPEntriesMap[ip])
+                        # print "No. %dth key has merged entry length as %d" % (count, len(mergedEntries))
+                        count += 1
+                        tcpflows = rw.extractFlows(IPEntriesMap[ip])
+                        # print "No. %dth: TCP flow length is %d" % (count, len(tcpflows))
+                        tcpReTxMap, tcpFastReTxMap, tcpAllRetxMap = rw.procTCPReTx(tcpflows, options.direction, ip)
+                        retx_list.append(len(tcpAllRetxMap))
+                        ratio_list.append(pw.print_tcp_and_rlc_mapping_sn_version(mergedEntries, util.createEntryMap(mergedEntries), const.UL_PDU_ID, ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap, withHeader=False, client_ip = options.client_ip))
+                    """
+                    print "\n" + ">.<" * 40
+                    print "Average ratio is %f" % (util.meanValue(ratio_list))
+                    print "Ratio distribution is %s" % (util.quartileResult(ratio_list))
+                    print "Average flow length is %f" % (util.meanValue(length_list))
+                    print "Flow length distribution is %s" % (util.quartileResult(length_list))
+                    print "Average retx ratio is %f" % (util.meanValue(retx_list))
+                    print "Retx distribution is %s" % (util.quartileResult(retx_list))
+                    """
+                # TODO: add downlink
 
 if __name__ == "__main__":
     main()

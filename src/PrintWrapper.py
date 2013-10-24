@@ -705,33 +705,84 @@ def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, sr
                 print "??? Not found a mapped RLC entry. Double check!!!"
 
 # Verify the correctness of TCP and RLC one-to-all Mapping in terms of sequence number
+# Notice: both TCP and RLC retransmission analysis are pre-processed
 # Print TCP sequence number plus a line of mapped RLC sequence number 
-def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_ip):
+def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_ip, tcpAllRetxMap, RLCULRetxMap, RLCDLRetxMap, withHeader=True, client_ip=None):
     TCP_entry_count = 0.0
     Mapped_TCP_entry_count = 0.0
-
+    DEL = ","
+    if withHeader:
+        if client_ip:
+            print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
+        else:
+            print "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
     for i in range(len(QCATEntries)):
         tcpEntry = QCATEntries[i]
         if tcpEntry.logID == const.PROTOCOL_ID and tcpEntry.ip["tlp_id"] == const.TCP_ID \
            and ((pduID== const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
                 (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
-            
+
             TCP_entry_count += 1
             mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(QCATEntries, i , pduID)
+
+            # Cross-layer mapping information
             if mapped_RLCs:
                 Mapped_TCP_entry_count += 1
-
-            """
-            print "TCP\t" + str(int(tcpEntry.tcp["seq_num"]))[:-1]
-            if mapped_RLCs:
-                print "RLC\t" + str(mapped_sn)[1:-1]
+            line = ""
+            if client_ip:
+                line += client_ip + DEL
+            line += srv_ip + DEL + str(tcpEntry.timestamp) + DEL + str(int(tcpEntry.tcp["seq_num"]))[:-1] + DEL
+            # TCP retransmission information
+            if tcpAllRetxMap.has_key(tcpEntry.timestamp):
+                line += str(len(tcpAllRetxMap[tcpEntry.timestamp][0]) - 1)
             else:
-                print "??? Not found a mapped RLC entry. Double check!!!"
-            """
+                line += "0"
+            # TCP Flag
+            line += DEL + util.get_tcp_flag_info(tcpEntry, "/") + DEL
+            # RLC information
+            if mapped_RLCs:
+                line += str(util.convert_ts_in_human(mapped_RLCs[0][0].timestamp, year=True)) + DEL
+                # RLC retransmission count information
+                # TODO: add downlink later
+                tmpCountResults = ""
+                for (RLCEntry, index) in mapped_RLCs:
+                    # each entry might corresponding to multiple PDUs
+                    print str(RLCEntry.timestamp) + ", " + str(RLCEntry.ul_pdu[0]["sn"])
+                    if RLCEntry.timestamp in RLCULRetxMap:
+                        print "Found: " + str(RLCULRetxMap[RLCEntry.timestamp]) + " of entry " + str(RLCEntry)
+                    else:
+                        print "Not Exist!!!! of entry " + str(RLCEntry)
+                    for sn in RLCEntry.ul_pdu[0]["sn"]:
+                        tmpCountResults += str(sn) + ":" 
+                        if RLCEntry.timestamp in RLCULRetxMap and sn in RLCULRetxMap[RLCEntry.timestamp]:
+                            # TODO: debug on the RLC retransmission map
+                            tmpCountResults += str(RLCULRetxMap[RLCEntry.timestamp][sn][0])
+                        else:
+                            tmpCountResults += str(0)
+                        tmpCountResults += "/"
+                if tmpCountResults:
+                    # get rid of the last "/"
+                    tmpCountResults = tmpCountResults[:-1]
+                line += tmpCountResults
+            else:
+                line += "N/A" + DEL + "N/A"           
+            # HTTP Type
+            line += DEL
+            if tcpEntry.http["type"]:
+                line += tcpEntry.http["type"]
+            else:
+                line += "N/A"
+            # print line
+
     ratio = 0
     if TCP_entry_count > 0:
         ratio = Mapped_TCP_entry_count / TCP_entry_count
+    """
+    print
+    print "*" * 80
     print "Mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, ratio)
+    """
+    return ratio
 
 #######################################################################
 ######################## Packet Trace #################################

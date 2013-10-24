@@ -15,7 +15,7 @@ File Distribution
 - *contextWorker.py*
 
   Stores all the functions that related to assign context information to each entry class, 
-  i.e. RRC state, thoughtput trace analysis, signal strength (RSCP and ECIO information)
+  i.e. RRC state, throughtput trace analysis, signal strength (RSCP and ECIO information)
 
 - *crossLayerWorker.py*
 
@@ -35,7 +35,7 @@ File Distribution
 
 - *PCAPPacket.py*
 
-  It was only used for mapping the time stamp between QCAT and converted PCAP file.
+  It was only used for mapping the timestamp between QCAT and converted PCAP file.
   Not very useful at this point.
 
 - *PCAPParser.py*
@@ -64,7 +64,7 @@ File Distribution
 
 - *traceAnalyzer.py*
 
-  The core function of the tool. The basic work flow is that it will read data first.
+  The core function of the tool. The basic workflow is that it will read data first.
   Then store them using internal data structure (QCATEntry class). Later assign context
   information and apply retransmission analysis. Finally, print useful results.
 
@@ -92,7 +92,7 @@ Sample Usage
 - Print throughput vs timestamps
   > ./traceAnalyzer.py -l QCAT_log_file_path --print_throughput
 
-- Provide hints on source ip and destination ip (not gaurentee accurate)
+- Provide hints on source ip and destination ip (not guaranteed accurate)
   > ./traceAnalyzer.py -l QCAT_log_file_path -a 50
     
 - Verify QCAT timer and PCAP timer (converted from QCAT file)
@@ -107,8 +107,10 @@ Sample Usage
 
 Tips
 --------------
-- We strongly recommand you include the filter options, i.e. -d and --srv_ip
+- We strongly recommend you include the filter options, i.e. -d and --srv_ip
 
 
 
    
+
+
