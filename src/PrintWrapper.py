@@ -716,6 +716,11 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
             print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
         else:
             print "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
+
+    found_count = 0.0
+    not_found_count = 0.0
+    rlc_mapped_count = 0.0
+
     for i in range(len(QCATEntries)):
         tcpEntry = QCATEntries[i]
         if tcpEntry.logID == const.PROTOCOL_ID and tcpEntry.ip["tlp_id"] == const.TCP_ID \
@@ -746,18 +751,24 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                 # TODO: add downlink later
                 tmpCountResults = ""
                 for (RLCEntry, index) in mapped_RLCs:
-                    # each entry might corresponding to multiple PDUs
-                    print str(RLCEntry.timestamp) + ", " + str(RLCEntry.ul_pdu[0]["sn"])
-                    if RLCEntry.timestamp in RLCULRetxMap:
-                        print "Found: " + str(RLCULRetxMap[RLCEntry.timestamp]) + " of entry " + str(RLCEntry)
+                    rlc_mapped_count += 1
+                    # DEBUG
+                    """
+                    print str(RLCEntry.timestamp) + ": " + str(RLCEntry.ul_pdu[0]["sn"]) + " of entry " + str(RLCEntry)
+                    if RLCEntry in RLCULRetxMap:
+                        print "Found!!!"
                     else:
-                        print "Not Exist!!!! of entry " + str(RLCEntry)
+                        print "Not Exist!!!!"
+                    """
                     for sn in RLCEntry.ul_pdu[0]["sn"]:
-                        tmpCountResults += str(sn) + ":" 
-                        if RLCEntry.timestamp in RLCULRetxMap and sn in RLCULRetxMap[RLCEntry.timestamp]:
-                            # TODO: debug on the RLC retransmission map
-                            tmpCountResults += str(RLCULRetxMap[RLCEntry.timestamp][sn][0])
+                        if sn in mapped_sn and \
+                           RLCEntry in RLCULRetxMap and \
+                           sn in RLCULRetxMap[RLCEntry]:
+                            found_count += 1
+                            tmpCountResults += str(sn) + ":" 
+                            tmpCountResults += str(RLCULRetxMap[RLCEntry][sn])
                         else:
+                            not_found_count += 1
                             tmpCountResults += str(0)
                         tmpCountResults += "/"
                 if tmpCountResults:
@@ -772,7 +783,7 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                 line += tcpEntry.http["type"]
             else:
                 line += "N/A"
-            # print line
+            print line
 
     ratio = 0
     if TCP_entry_count > 0:
@@ -781,7 +792,14 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
     print
     print "*" * 80
     print "Mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, ratio)
+    found_ratio = 0.0
+    if not_found_count + found_count > 0:
+        found_ratio = found_count / (not_found_count + found_count)
+    print
+    print "Total mapped RLC count is %d" % (rlc_mapped_count)
+    print "Found ratio is %f / %f = %f" % (found_count, not_found_count + found_count, found_ratio)
     """
+
     return ratio
 
 #######################################################################

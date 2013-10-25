@@ -16,6 +16,7 @@ from datetime import datetime
 
 DEBUG = False
 CUR_DEBUG = False
+RETX_DEBUG = True
 ############################################################################
 ############################# TCP Retx #####################################
 ############################################################################
@@ -214,6 +215,10 @@ def detectReTx (entry, entryHist, is_up, srv_ip):
 ############################# RLC Retx #####################################
 ############################################################################
 # process link layer retransmission
+# INPUT:
+# 1. entries: list of the QxDM entries
+# 2. detail: the detail level of output, i.e. simple or complete
+# 
 # IMPORTANT ASSUMPTION:
 # 1. SN starts from 0 to a NUM (fixed in UL, not fixed in DL)
 # 2. SN always increase
@@ -227,8 +232,12 @@ def detectReTx (entry, entryHist, is_up, srv_ip):
 # RETURN:
 # Function will return two list of maps (UL an DL) that count the 
 # retransmission time for each SN
+# 
+# NOTICE:
+# Only retransmissted packet PDU is in the map
+#
 # TODO: Fix the downlink part, currenly using heuristics
-def procRLCReTx(entries):
+def procRLCReTx(entries, detail="complete"):
     ULCounter = 0
     DLCounter = 0
     ULPrivIndex = 0  # track for the period of index
@@ -250,6 +259,8 @@ def procRLCReTx(entries):
     ULReTxCountMapLocal = {}
     DLReTxCountMapLocal = {}
     
+    count = 0;
+
     for entry in entries:
         if entry.logID == const.UL_PDU_ID:
             for i in range(len(entry.ul_pdu[0]["sn"])):
@@ -266,9 +277,10 @@ def procRLCReTx(entries):
                     else:
                         entry.retx["ul"][curSN_UL].append(entry.ul_pdu[0]["size"][i])
                     # update retx count map
+                    count += 1
                     if curSN_UL not in ULReTxCountMapLocal:
                     	# [retx_count, timestamp, duration]
-                        ULReTxCountMapLocal[curSN_UL] = [0, ts_ul, ts_ul - ULSNMap[curSN_UL][1], [ULSNMap[curSN_UL][2], entry]]
+                        ULReTxCountMapLocal[curSN_UL] = [1, ts_ul, ts_ul - ULSNMap[curSN_UL][1], [ULSNMap[curSN_UL][2], entry]]
                     else:
                         ULReTxCountMapLocal[curSN_UL][0] += 1
                         ULReTxCountMapLocal[curSN_UL][2] = ts_ul - ULReTxCountMapLocal[curSN_UL][1]
@@ -290,6 +302,7 @@ def procRLCReTx(entries):
                         incr = curSN_UL - ULPrivSN
                     ULCounter += 1
                     ULPrivIndex += 1
+        # TODO: fix the correctness of downlink
         elif entry.logID == const.DL_PDU_ID:
             for i in range(len(entry.dl_pdu[0]["sn"])):
                 ts_dl = entry.timestamp
@@ -350,7 +363,15 @@ def procRLCReTx(entries):
         ULReTxCountMapList.append(ULReTxCountMapLocal)
     if DLReTxCountMapLocal:
         DLReTxCountMapList.append(DLReTxCountMapLocal)
-    #print "DL ReTx length is %d" % (len(DLReTxCountMapList))
+
+    # TODO: delete after debugging
+    if RETX_DEBUG:
+        print "RetxWorker: # of RLC entries inserted is " + str(count)
+
+    if detail == "simple":
+        return [retxCountSimpleTransform(ULReTxCountMapList), \
+                retxCountSimpleTransform(DLReTxCountMapList)]
+
     return [retxCountMapTransform(ULReTxCountMapList), \
             retxCountMapTransform(DLReTxCountMapList)]
 
@@ -584,3 +605,18 @@ def retxCountMapTransform (retxCountMapList):
                 else:
                     tsMap[retxEntry.timestamp] = {k: (v[0], v[2], [])}
     return tsMap
+
+# Simple output format
+# input format: {sn: [count, ts, duration, entry]}
+# output format: {entry: {sn: count,...},...}
+def retxCountSimpleTransform(snBasedMapList):
+    entryBasedMap = {}
+
+    for snBasedMap in snBasedMapList:
+        for k, v in snBasedMap.items():
+            for entry in v[3]:
+                if not entryBasedMap.has_key(entry):
+                    entryBasedMap[entry] = {}
+                entryBasedMap[entry][k] = v[0]
+
+    return entryBasedMap

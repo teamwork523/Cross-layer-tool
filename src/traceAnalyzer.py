@@ -28,6 +28,7 @@ DEBUG = False
 DUP_DEBUG = False
 GAP_DEBUG = False
 TIME_DEBUG = False
+RETX_DEBUG = True
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
@@ -293,32 +294,27 @@ def main():
     tcpReTxMap = tcpFastReTxMap = tcpAllRetxMap = None
     # TCP retransmission process
     if options.enable_tcp_retx_test:
-        if options.direction and options.server_ip:
-            tcpflows = rw.extractFlows(filteredQCATEntries)
+        if options.direction:
+            if options.server_ip:
+                tcpflows = rw.extractFlows(filteredQCATEntries)
 
-            if DEBUG:
-                print "Filtered QCAT Entry # is %d" % len(filteredQCATEntries)
-                print "TCP flow length is %d" % len(tcpflows)
-            tcpReTxMap, tcpFastReTxMap, tcpAllRetxMap = rw.procTCPReTx(tcpflows, options.direction, options.server_ip)
-            tcpReTxCount = rw.countTCPReTx(tcpReTxMap)
-            tcpFastReTxCount = rw.countTCPReTx(tcpFastReTxMap)
+                if DEBUG:
+                    print "Filtered QCAT Entry # is %d" % len(filteredQCATEntries)
+                    print "TCP flow length is %d" % len(tcpflows)
+                tcpReTxMap, tcpFastReTxMap, tcpAllRetxMap = rw.procTCPReTx(tcpflows, options.direction, options.server_ip)
+                tcpReTxCount = rw.countTCPReTx(tcpReTxMap)
+                tcpFastReTxCount = rw.countTCPReTx(tcpFastReTxMap)
 
-            # combine the Retx Map with the fast retx Map            
-            if DEBUG or DUP_DEBUG:
-                print "TCP ReTx happens %d times" % (tcpReTxCount)
-                print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
+                # combine the Retx Map with the fast retx Map            
+                if DEBUG or DUP_DEBUG:
+                    print "TCP ReTx happens %d times" % (tcpReTxCount)
+                    print "TCP Fast ReTx happens %d times" % (tcpFastReTxCount)
 
-            # Correlate the TCP retransmission information with RLC configuration info
-            # CONFIG MAP
-            rlc_retx_config_map = clw.getContextInfo(tcpReTxMap, const.DL_CONFIG_PDU_ID)
-            rlc_fast_retx_config_map = clw.getContextInfo(tcpFastReTxMap, const.UL_CONFIG_PDU_ID)
-
-    # RLC retransmission process
-    # Since the RLC for TCP and UDP are the same, we use a generalized method for retx analysis
-    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(QCATEntries)
-    print RLCULReTxCountMap
-    print ("#" * 100 + "\n") * 4
-
+                # Correlate the TCP retransmission information with RLC configuration info
+                # CONFIG MAP
+                rlc_retx_config_map = clw.getContextInfo(tcpReTxMap, const.DL_CONFIG_PDU_ID)
+                rlc_fast_retx_config_map = clw.getContextInfo(tcpFastReTxMap, const.UL_CONFIG_PDU_ID)                
+        
     # collect statistic information
     retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
@@ -607,6 +603,9 @@ def main():
         if options.direction:
             if options.server_ip:
                 if options.direction.lower() == "up":
+                    # RLC retransmission process
+                    # Since the RLC for TCP and UDP are the same, we use a generalized method for retx analysis
+                    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(filteredQCATEntries, detail="simple")
                     # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
                     pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap)
                 else:
@@ -617,8 +616,14 @@ def main():
                     ratio_list = []
                     length_list = []
                     retx_list = []
+                    
+                    # perform RLC retransmission analysis
+                    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(nonIPEntries, detail="simple")
+                    if RETX_DEBUG:
+                        print "Orig RLC PDU UL #: " + str(util.count_entry_number(nonIPEntries, const.UL_PDU_ID))
+                        print "Retx RLC PDU UL #: " + str(util.count_entry_number(RLCULReTxCountMap.keys(), const.UL_PDU_ID))
+
                     # New: perform multiple server IP mapping
-                    # print "Non IP trace length is %d" % (len(nonIPEntries))
                     DEL = ","
                     print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number" + DEL + "Number_of_Retranmission" + DEL + "TCP_Flag_Info"
                     count = 0

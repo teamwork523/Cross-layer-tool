@@ -614,3 +614,15 @@ def merge_two_entry_lists(nonIP, IP):
         merged_entry += IP[IP_cur_index:]
 
     return merged_entry
+
+#############################################################################
+############################ Debugging functions ############################
+#############################################################################
+# count the total number of a specific type of entry
+def count_entry_number(totalEntry, entryID):
+    count = 0
+    for entry in totalEntry:
+        if entry.logID == entryID:
+            count += 1
+
+    return count
