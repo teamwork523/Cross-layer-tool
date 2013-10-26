@@ -28,7 +28,7 @@ DEBUG = False
 DUP_DEBUG = False
 GAP_DEBUG = False
 TIME_DEBUG = False
-RETX_DEBUG = True
+RETX_DEBUG = False
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
@@ -613,9 +613,10 @@ def main():
                     pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap)
             elif options.client_ip:
                 if options.direction.lower() == "up":
-                    ratio_list = []
+                    tcp_mapped_ratio_list = []
                     length_list = []
                     retx_list = []
+                    rlc_retx_ratio_list = []
                     
                     # perform RLC retransmission analysis
                     [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(nonIPEntries, detail="simple")
@@ -625,7 +626,7 @@ def main():
 
                     # New: perform multiple server IP mapping
                     DEL = ","
-                    print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number" + DEL + "Number_of_Retranmission" + DEL + "TCP_Flag_Info"
+                    print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
                     count = 0
                     for ip in IPEntriesMap.keys():
                         # print ">.<" * 40
@@ -637,9 +638,12 @@ def main():
                         # print "No. %dth: TCP flow length is %d" % (count, len(tcpflows))
                         tcpReTxMap, tcpFastReTxMap, tcpAllRetxMap = rw.procTCPReTx(tcpflows, options.direction, ip)
                         retx_list.append(len(tcpAllRetxMap))
-                        ratio_list.append(pw.print_tcp_and_rlc_mapping_sn_version(mergedEntries, util.createEntryMap(mergedEntries), const.UL_PDU_ID, ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap, withHeader=False, client_ip = options.client_ip))
-                    """
+                        ratios = pw.print_tcp_and_rlc_mapping_sn_version(mergedEntries, util.createEntryMap(mergedEntries), const.UL_PDU_ID, ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap, withHeader=False, client_ip = options.client_ip)
+                        tcp_mapped_ratio_list.append(ratios[0])
+                        rlc_retx_ratio_list.append(ratios[1])
+
                     print "\n" + ">.<" * 40
+                    """
                     print "Average ratio is %f" % (util.meanValue(ratio_list))
                     print "Ratio distribution is %s" % (util.quartileResult(ratio_list))
                     print "Average flow length is %f" % (util.meanValue(length_list))
@@ -647,6 +651,8 @@ def main():
                     print "Average retx ratio is %f" % (util.meanValue(retx_list))
                     print "Retx distribution is %s" % (util.quartileResult(retx_list))
                     """
+                    print "RLC retx average ratio is %f" % (util.meanValue(rlc_retx_ratio_list))
+                    print "RLC retx ratio distribution is %s" % (util.quartileResult(rlc_retx_ratio_list))
                 # TODO: add downlink
 
 if __name__ == "__main__":

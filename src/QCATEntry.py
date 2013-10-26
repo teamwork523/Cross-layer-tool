@@ -483,7 +483,7 @@ class QCATEntry:
                             self.flow["ack_num"] = self.tcp["ack_num"]
                             self.flow["timestamp"] = self.timestamp
                         # self.__debugTCP()
-                        # Use IP and transport layer header as signature
+                        # Use Artificial, IP and transport layer header as signature
                         self.ip["signature"] = "".join(self.hex_dump["payload"][:start+self.ip["header_len"]+self.tcp["header_len"]])
 
                         # Parse TCP packet (assume it always use TCP for transmission)

@@ -723,10 +723,12 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
 
     for i in range(len(QCATEntries)):
         tcpEntry = QCATEntries[i]
-        if tcpEntry.logID == const.PROTOCOL_ID and tcpEntry.ip["tlp_id"] == const.TCP_ID \
-           and ((pduID== const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
-                (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
-
+        if tcpEntry.logID == const.PROTOCOL_ID and \
+           tcpEntry.ip["tlp_id"] == const.TCP_ID and \
+           tcpEntry.custom_header["seg_num"] == 0 and \
+           ((pduID== const.UL_PDU_ID and tcpEntry.ip["dst_ip"] == srv_ip) or \
+            (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
+            # make sure it is the first of TCP packet
             TCP_entry_count += 1
             mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(QCATEntries, i , pduID)
 
@@ -746,7 +748,9 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
             line += DEL + util.get_tcp_flag_info(tcpEntry, "/") + DEL
             # RLC information
             if mapped_RLCs:
-                line += str(util.convert_ts_in_human(mapped_RLCs[0][0].timestamp, year=True)) + DEL
+                # DEBUG:
+                line += str(mapped_RLCs[0][0].timestamp) + DEL
+                # line += str(util.convert_ts_in_human(mapped_RLCs[0][0].timestamp, year=True)) + DEL
                 # RLC retransmission count information
                 # TODO: add downlink later
                 tmpCountResults = ""
@@ -765,11 +769,10 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                            RLCEntry in RLCULRetxMap and \
                            sn in RLCULRetxMap[RLCEntry]:
                             found_count += 1
-                            tmpCountResults += str(sn) + ":" 
-                            tmpCountResults += str(RLCULRetxMap[RLCEntry][sn])
+                            tmpCountResults += str(sn) + ":" + str(RLCULRetxMap[RLCEntry][sn])
                         else:
                             not_found_count += 1
-                            tmpCountResults += str(0)
+                            tmpCountResults += str(sn) + ":" + str(0)
                         tmpCountResults += "/"
                 if tmpCountResults:
                     # get rid of the last "/"
@@ -785,22 +788,23 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                 line += "N/A"
             print line
 
-    ratio = 0
+    tcp_mapped_ratio = 0
     if TCP_entry_count > 0:
-        ratio = Mapped_TCP_entry_count / TCP_entry_count
+        tcp_mapped_ratio = Mapped_TCP_entry_count / TCP_entry_count
+    
+    rlc_retx_ratio = 0.0
+    if not_found_count + found_count > 0:
+        rlc_retx_ratio = found_count / (not_found_count + found_count)
     """
     print
     print "*" * 80
-    print "Mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, ratio)
-    found_ratio = 0.0
-    if not_found_count + found_count > 0:
-        found_ratio = found_count / (not_found_count + found_count)
+    print "Mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, tcp_mapped_ratio)
     print
     print "Total mapped RLC count is %d" % (rlc_mapped_count)
-    print "Found ratio is %f / %f = %f" % (found_count, not_found_count + found_count, found_ratio)
+    print "Found ratio is %f / %f = %f" % (found_count, not_found_count + found_count, rlc_retx_ratio)
     """
 
-    return ratio
+    return (tcp_mapped_ratio, rlc_retx_ratio)
 
 #######################################################################
 ######################## Packet Trace #################################

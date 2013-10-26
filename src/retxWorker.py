@@ -16,7 +16,7 @@ from datetime import datetime
 
 DEBUG = False
 CUR_DEBUG = False
-RETX_DEBUG = True
+RETX_DEBUG = False
 ############################################################################
 ############################# TCP Retx #####################################
 ############################################################################
@@ -364,7 +364,6 @@ def procRLCReTx(entries, detail="complete"):
     if DLReTxCountMapLocal:
         DLReTxCountMapList.append(DLReTxCountMapLocal)
 
-    # TODO: delete after debugging
     if RETX_DEBUG:
         print "RetxWorker: # of RLC entries inserted is " + str(count)
 

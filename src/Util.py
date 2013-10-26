@@ -317,6 +317,7 @@ def removeQXDMDupIP(entries):
     privEntryIndex = None
     privSignature = None
     # filter all the potential deleted entries
+    # TODO: modify this to allow a longer match
     for i in range(len(entries)):
         if entries[i].logID == const.PROTOCOL_ID:
             if entries[i].ip["tlp_id"] == const.TCP_ID or entries[i].ip["tlp_id"] == const.UDP_ID:
