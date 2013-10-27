@@ -5,6 +5,15 @@ Author
 - Haokun Luo (haokun@umich.edu)
 
 
+Installation Dependency
+--------------
+- World Timezone Defitions (http://pytz.sourceforge.net/)
+  > cd install
+  > ./install.sh
+
+  Notice that you might need to install python-setuptools in the process
+
+
 File Distribution
 --------------
 - *const.py*

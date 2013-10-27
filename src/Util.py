@@ -85,6 +85,36 @@ def readPCAPResultFile(pcapResultFile):
     return PCAPPackets
 
 ###############################################################################################
+########################################### IP packet #########################################
+###############################################################################################
+# group segemanted IP packets together
+# Append the segmented IP packets to the first one
+# Input: entry list with segmented IP log entries
+# Ouput: entry list without segmented IP log entries
+def groupSegmentedIPPackets(segEntryList):
+    nonSegIPEntryList = []
+    privIPEntry = None
+
+    # DEBUG
+    single_entry_count_len_based = 0
+    single_entry_count_frag_based = 0
+
+    for entry in segEntryList:
+        len_detect = frag
+        if entry.logID == const.PROTOCOL_ID:
+            # check whether the length matches the actual IP packet size
+            if len(entry.hex_dump["payload"]) - const.Payload_Header_Len == entry.ip["total_len"]:
+                single_entry_count_len_based += 1
+            if entry.custom_header["final_seg"] and entry.custom_header["seg_num"] == 0:
+                single_entry_count_frag_based += 1
+
+    print "Packet length found %d packets need single IP entry" % (single_entry_count_len_based)
+    print "Customer Header found %d packets need single IP entry" % (single_entry_count_frag_based)
+
+    sys.exit(1)
+
+
+###############################################################################################
 ########################################### Filtering #########################################
 ###############################################################################################
 # WARNING: only support TCP right now

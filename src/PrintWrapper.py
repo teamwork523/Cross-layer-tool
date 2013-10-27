@@ -947,6 +947,10 @@ def printUDPEntry(entry):
                                       entry.ip["dst_ip"], entry.udp["src_port"], entry.udp["dst_port"], \
                                       entry.udp["seg_size"])
 
+# print an IP entry inforamtion
+def printIPEntry(entry):
+    print "" % ()
+
 # print a RLC entry information
 def printRLCEntry(entry, dir_type):
     printEntry(entry)
