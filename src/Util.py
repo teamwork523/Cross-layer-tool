@@ -85,33 +85,133 @@ def readPCAPResultFile(pcapResultFile):
     return PCAPPackets
 
 ###############################################################################################
-########################################### IP packet #########################################
+################## IP packet Invalide Elimination, Regroup and Validation #####################
 ###############################################################################################
+# Eliminate the invalid IP packets
+# Invalid Conditions:
+# 1. Artificial Header implies a single packet, but IP length doesn't match the actual length
+#
+# Input: entry list with invalid IP log entries
+# Ouput: entry list without invalid IP log entries
+def eliminateInvalidIPPackets(rawEntryList):
+    validEntryList = []
+    
+    for entry in rawEntryList:
+        if entry.logID == const.PROTOCOL_ID:
+            # Invalid Cond 1
+            if entry.custom_header["final_seg"] == 1 and entry.custom_header["seg_num"] == 0:
+                if len(entry.hex_dump["payload"]) - const.Payload_Header_Len != entry.ip["total_len"]:
+                    continue
+        validEntryList.append(entry)
+
+    return validEntryList
+
+
 # group segemanted IP packets together
 # Append the segmented IP packets to the first one
 # Input: entry list with segmented IP log entries
 # Ouput: entry list without segmented IP log entries
 def groupSegmentedIPPackets(segEntryList):
     nonSegIPEntryList = []
-    privIPEntry = None
-
-    # DEBUG
-    single_entry_count_len_based = 0
-    single_entry_count_frag_based = 0
+    IPEntryLead = None
 
     for entry in segEntryList:
-        len_detect = frag
         if entry.logID == const.PROTOCOL_ID:
-            # check whether the length matches the actual IP packet size
-            if len(entry.hex_dump["payload"]) - const.Payload_Header_Len == entry.ip["total_len"]:
-                single_entry_count_len_based += 1
-            if entry.custom_header["final_seg"] and entry.custom_header["seg_num"] == 0:
-                single_entry_count_frag_based += 1
+            if entry.custom_header["final_seg"] == 1 and entry.custom_header["seg_num"] == 0:
+                nonSegIPEntryList.append(entry)
+            else:
+                # check whether there will be consecutive IP packets in the future
+                if entry.custom_header["seg_num"] == 0:
+                    # first IP packet
+                    IPEntryLead = entry
+                elif IPEntryLead != None:
+                    # append the payload to the first IP packet
+                    IPEntryLead.hex_dump["payload"] += entry.hex_dump["payload"][const.Payload_Header_Len:]
+                    if entry.custom_header["final_seg"] == 1:
+                        # Last IP packet in a row
+                        nonSegIPEntryList.append(IPEntryLead)
+                        # reset the first of the group
+                        IPEntryLead = None
+        else:
+            nonSegIPEntryList.append(entry)
 
-    print "Packet length found %d packets need single IP entry" % (single_entry_count_len_based)
-    print "Customer Header found %d packets need single IP entry" % (single_entry_count_frag_based)
+    return nonSegIPEntryList
 
-    sys.exit(1)
+# Eliminate duplicate IP packets
+# Conditions
+# 1. Same TCP/IP header will be considered as duplication
+#
+# Input: entry list with duplicate IP log entries
+# Ouput: entry list without duplicate IP log entries
+# Limitation: only handle TCP and UDP packets now
+def deDuplicateIPPackets(dupEntryList):
+    nonDupEntryList = []
+    headerSet = set()
+    startIndex = const.Payload_Header_Len
+
+    for entry in dupEntryList:
+        if entry.logID == const.PROTOCOL_ID:
+            if entry.ip["tlp_id"] == const.TCP_ID:
+                header = "".join(entry.hex_dump["payload"][startIndex:startIndex+entry.ip["header_len"]+entry.tcp["header_len"]])
+                if not header in headerSet:
+                    nonDupEntryList.append(entry)
+                    headerSet.add(header)
+            elif entry.ip["tlp_id"] == const.UDP_ID:
+                header = "".join(entry.hex_dump["payload"][startIndex:startIndex+entry.ip["header_len"]+const.UDP_Header_Len])
+                if not header in headerSet:
+                    nonDupEntryList.append(entry)
+                    headerSet.add(header)
+        else:
+            nonDupEntryList.append(entry)
+
+    return nonDupEntryList
+
+# Validate whether the all the IP packets are non-duplicated
+# Condition
+# 1. IP length in the header should match the actual length
+# 2. IP + TCP header should appear once
+def validateIPPackets(entryList):
+    packetToEntryMap = {}
+    startIndex = const.Payload_Header_Len
+    totalCount = 0.0
+    invalidCount = 0.0
+
+    for entry in entryList:
+        if entry.logID == const.PROTOCOL_ID:
+            totalCount += 1
+            if len(entry.hex_dump["payload"][startIndex:]) != entry.ip["total_len"]:
+                invalidCount += 1
+                print "#" * 80
+                print "!!!! Invalid IP payload length !!!"
+                pw.printIPEntry(entry)
+                continue
+            if entry.ip["tlp_id"] == const.TCP_ID:
+                packet = "".join(entry.hex_dump["payload"][startIndex:])
+                if packetToEntryMap.has_key(packet):
+                    invalidCount += 1
+                    print "#" * 80
+                    print "### TCP packet existed ###"
+                    print "Original TCP is:"
+                    pw.printIPEntry(packetToEntryMap[packet])
+                    print "Current TCP is:"
+                    pw.printIPEntry(entry) 
+                else:
+                    packetToEntryMap[packet] = entry
+            elif entry.ip["tlp_id"] == const.UDP_ID:
+                packet = "".join(entry.hex_dump["payload"][startIndex:])
+                if packetToEntryMap.has_key(packet):
+                    invalidCount += 1
+                    print "#" * 80
+                    print "~~~ UDP packet existed ~~~~"
+                    print "Original UDP is:"
+                    pw.printIPEntry(packetToEntryMap[packet])
+                    print "Current UDP is:"
+                    pw.printIPEntry(entry) 
+                else:
+                    packetToEntryMap[packet] = entry
+
+    print "="*80
+    print "Total invalid ratio is %f / %f = %f" % (invalidCount, totalCount, invalidCount/totalCount)
 
 
 ###############################################################################################
@@ -580,11 +680,18 @@ def merge_two_dict(orig_dict, append_dict):
         orig_dict[key] += append_dict[key]
     return orig_dict
 
-def convert_ts_in_human(ts, year=False):
-    if year == False:
-    	return datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")
+def convert_ts_in_human(ts, year=False, tz='utc'):
+    dt = None
+    if tz.lower() == 'utc':
+        dt = datetime.utcfromtimestamp(ts)
     else:
-        t = datetime.fromtimestamp(ts).strftime("%Y %b %d  %H:%M:%S.%f")
+        # use local PC timezone
+        dt = datetime.fromtimestamp(ts)
+
+    if year == False:
+    	return dt.strftime("%H:%M:%S.%f")
+    else:
+        t = dt.strftime("%Y %b %d  %H:%M:%S.%f")
         # extra rounding work for Microsecond
         tail = t[-7:]
         f = round(float(tail), 3)

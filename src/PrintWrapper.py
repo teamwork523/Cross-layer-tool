@@ -935,7 +935,7 @@ def printDLCount(entries):
 
 # print a TCP entry information
 def printTCPEntry(entry):
-	print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp),\
+	print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%s\t%d" % (util.convert_ts_in_human(entry.timestamp, year=True),\
 	 					entry.ip["src_ip"], entry.ip["dst_ip"], hex(entry.tcp["seq_num"]), \
 	 					hex(entry.tcp["ack_num"]), entry.ip["total_len"], entry.tcp["seg_size"], \
                         entry.custom_header, \
@@ -943,13 +943,14 @@ def printTCPEntry(entry):
 
 # print a UDP entry information
 def printUDPEntry(entry):
-    print "%s\t%s\t%s\t%s\t%s\t%s" % (util.convert_ts_in_human(entry.timestamp), entry.ip["src_ip"], \
+    print "%s\t%s\t%s\t%s\t%s\t%s" % (util.convert_ts_in_human(entry.timestamp, year=True), entry.ip["src_ip"], \
                                       entry.ip["dst_ip"], entry.udp["src_port"], entry.udp["dst_port"], \
                                       entry.udp["seg_size"])
 
 # print an IP entry inforamtion
 def printIPEntry(entry):
-    print "" % ()
+    print "%s\t%s\t%s\t%s\t%s" % (util.convert_ts_in_human(entry.timestamp, year=True), entry.ip["src_ip"], \
+                                  entry.ip["dst_ip"], entry.ip["tlp_id"], entry.ip["total_len"])
 
 # print a RLC entry information
 def printRLCEntry(entry, dir_type):
