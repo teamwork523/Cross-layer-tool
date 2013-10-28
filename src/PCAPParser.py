@@ -52,6 +52,44 @@ class PCAPParser:
             self.create_tcp_flows(const.LINK_HEADER_LEN[self.global_header["linktype"]])
         elif self.protocol == "udp":
             self.create_udp_trace(const.LINK_HEADER_LEN[self.global_header["linktype"]])
+        elif self.protocol == "ip":
+            self.create_ip_trace(const.LINK_HEADER_LEN[self.global_header["linktype"]])
+
+    ####################################################################
+    ######################## IP trace Analysis #########################
+    ####################################################################
+    # TODO: current build is only for validate QxDM trace
+    # generate a IP trace
+    def create_ip_trace(self, link_len):
+        self.ip_trace = []
+        for i in range(len(self.data)):
+            new_ip = self.init_ip_pkt()
+            # Notice that we store the converted Timestamp for debugging purpose
+            new_ip["ts"] = util.convert_ts_in_human(dp.packet_time(self.data, i), year=True)
+            new_ip["src_ip"] = dp.src_ip(self.data, i, link_len)
+            new_ip["dst_ip"] = dp.dst_ip(self.data, i, link_len)
+            new_ip["ip_header_len"] = dp.get_ip_header_len(self.data, i, link_len)
+            new_ip["ip_raw_header"] = dp.raw_ip_header(self.data, i, link_len)
+            new_ip["tlp_type"] = dp.protocol_type(self.data, i, link_len)
+            if new_ip["tlp_type"] == const.TCP_ID:
+                new_ip["tlp_raw_header"] = dp.get_raw_tcp_header(self.data, i, link_len)
+            elif new_ip["tlp_type"] == const.UDP_ID:
+                new_ip["tlp_raw_header"] = dp.get_raw_udp_header(self.data, i, link_len)
+            self.ip_trace.append(new_ip)
+
+    def init_ip_pkt(self):
+        """
+        Every IP packet contains
+        1. Timestamp
+        2. Src/dst ip
+        3. IP header length
+        4. Transport layer protocol (tlp) type
+        5. IP header raw data
+        6. Transport layer header
+        """
+        return {"ts": None, "src_ip": None, "dst_ip": None, \
+                "ip_header_len": None, "tlp_type": None, \
+                "ip_raw_header": None, "tlp_raw_header": None}
 
     ####################################################################
     ####################### UDP trace Analysis #########################
@@ -370,20 +408,21 @@ class PCAPParser:
 	def printPkt(self, i):
 		print "%s\t%s\t%s\t%s\t%s\t%d" % (util.convert_ts_in_human(i["ts"]), i["src_ip"], i["dst_ip"], hex(i["seq_num"]), hex(i["ack_num"]), i["seg_len"])
 				
-# Sample of usage			
+# Sample of usage	
+"""
 def main():
-    pcap = PCAPParser(sys.argv[1], "up", "tcp")
+    pcap = PCAPParser(sys.argv[1], "up", "ip")
     pcap.read_pcap()
     pcap.parse_pcap()
     # UDP example
     #pcap.filter_based_on_cond("dst_ip", "141.212.113.208")
     #pcap.build_udp_lookup_table("seq")
     # TPC example
-    pcap.build_tcp_lookup_table("seq")
+    #pcap.build_tcp_lookup_table("seq")
     # pcap.throughput_analysis()
     # pcap.retx_analysis()
-    pcap.debug()
+    #pcap.debug()
 	
 if __name__ == "__main__":
-    main()		
-			
+    main()	
+"""	

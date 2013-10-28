@@ -92,6 +92,27 @@ def interval(time1, time2):
 ##################################################################
 ####################### IP Fields ################################
 ##################################################################
+def raw_ip_header(packet_data, i, link_len):
+    return raw_byte_to_hex_str(packet_data[i][1][link_len:link_len + get_ip_header_len(packet_data, i, link_len)])
+
+def protocol_type(packet_data, i, link_len):
+    return ord(packet_data[i][1][link_len+9])
+
+# Assume the current packet uses TCP
+def get_raw_tcp_header(packet_data, i, link_len):
+    tcp_header_len = tcp_header_size(packet_data, i, link_len)
+    ip_header_len = get_ip_header_len(packet_data, i, link_len)
+    return raw_byte_to_hex_str(packet_data[i][1][link_len + ip_header_len:link_len + ip_header_len + tcp_header_len])
+
+# Assume the current packet uses UDP
+def get_raw_udp_header(packet_data, i, link_len):
+    ip_header_len = get_ip_header_len(packet_data, i, link_len)
+    return raw_byte_to_hex_str(packet_data[i][1][link_len + ip_header_len:link_len + ip_header_len + const.UDP_Header_Len])
+
+# IP header is valid from 4 to 8 bit, and multiple of 4 bytes
+def get_ip_header_len(packet_data, i, link_len):
+    return (ord(packet_data[i][1][link_len]) & 0xF) * 4
+
 def dst_ip(packet_data, i, link_len):
 	base = link_len + 16
 	return get_ip(packet_data, i, base)
@@ -105,6 +126,16 @@ def get_ip(packet_data, i, base):
 		   str(ord(packet_data[i][1][base+1:base+2])) + "." + \
 		   str(ord(packet_data[i][1][base+2:base+3])) + "." + \
 		   str(ord(packet_data[i][1][base+3:base+4]))
+
+def raw_byte_to_hex_str(raw_byte_list):
+    hex_str = ""
+    for raw_byte in raw_byte_list:
+        cur_byte = hex(ord(raw_byte)).upper()[2:]
+        if len(cur_byte) == 1:
+            # append the missing zero
+            cur_byte = '0' + cur_byte
+        hex_str += cur_byte
+    return hex_str
 
 ##################################################################
 ###################### TCP Fields ################################
@@ -134,7 +165,7 @@ def sequence_num(packet_data, i, link_len):
 
 def ack_num(packet_data, i):
 	return ord(packet_data[i][1][44]) * 16777216 + ord(packet_data[i][1][45]) * 65536 + ord(packet_data[i][1][46]) * 256 + ord(packet_data[i][1][47])
-# transform like '\x01\x0e\0xb0' to '0x010eb0'
+# transform like '\x01\x0e\xb0' to '0x010eb0'
 
 def ack_num(packet_data, i, link_len):
 	return ord(packet_data[i][1][link_len+28]) * 16777216 + ord(packet_data[i][1][link_len+29]) * 65536 + ord(packet_data[i][1][link_len+30]) * 256 + ord(packet_data[i][1][link_len+31])

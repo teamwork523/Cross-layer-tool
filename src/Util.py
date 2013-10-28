@@ -17,6 +17,7 @@ from datetime import datetime
 
 DEBUG = False
 TIME_DEBUG = False
+IP_DEBUG = False
 
 ###############################################################################################
 ########################################### I/O Related #######################################
@@ -166,6 +167,63 @@ def deDuplicateIPPackets(dupEntryList):
 
     return nonDupEntryList
 
+# DEBUG function
+# Detect which packet has been accidentally filtered out based on PCAP trace
+# Input
+# 1. list of entry from QxDM
+# 2. list of entry from PCAP trace
+def compareQxDMandPCAPtraces(qxdmEntryList, pcapIPList):
+    qxdmIPMap = {}
+    pcapIPMap = {}
+    startIndex = const.Payload_Header_Len
+
+    # generate Map for QxDM IP packets
+    for entry in qxdmEntryList:
+        if entry.logID == const.PROTOCOL_ID:
+            if entry.ip["tlp_id"] == const.TCP_ID:
+                header = "".join(entry.hex_dump["payload"][startIndex:startIndex+entry.ip["header_len"]+entry.tcp["header_len"]])
+                if header not in qxdmIPMap:
+                    qxdmIPMap[header] = entry
+            elif entry.ip["tlp_id"] == const.UDP_ID:
+                header = "".join(entry.hex_dump["payload"][startIndex:startIndex+entry.ip["header_len"]+const.UDP_Header_Len])
+                if header not in qxdmIPMap:
+                    qxdmIPMap[header] = entry
+    
+    # generate Map for pcap IP packets
+    for ip in pcapIPList:
+        if ip["tlp_raw_header"] != None and ip["ip_raw_header"] != None:
+            header = ip["ip_raw_header"] + ip["tlp_raw_header"]
+            if header not in pcapIPMap:
+                pcapIPMap[header] = ip
+    
+    print "QxDM IP total is %d, PCAP IP total is %d" % (len(qxdmIPMap), len(pcapIPMap))
+    
+    qxdmNotInPcapCount = 0.0
+    pcapNotInQxDMCount = 0.0
+
+    # Check whether QxDM entry in the PCAP trace
+    for qxdmIP in qxdmIPMap.keys():
+        if qxdmIP not in pcapIPMap:
+            qxdmNotInPcapCount += 1
+            if IP_DEBUG:
+                print "#" * 80
+                print "!!! IMPOSSIBLE QxDM not appear in PCAP !!!"
+                pw.printIPEntry(qxdmIPMap[qxdmIP])
+
+    # Check whether PCAP IP packets appear in QxDM
+    for pcapIP in pcapIPMap.keys():
+        if pcapIP not in qxdmIPMap:
+            pcapNotInQxDMCount += 1
+            if IP_DEBUG:
+                print "%" * 80
+                print "~~~ PCAP IP not showed in QxDM, over filtered ~~~"
+                print pcapIPMap[pcapIP]
+
+    print 
+    print "QxDM not in PCAP ratio %f / %f = %f" % (qxdmNotInPcapCount, len(qxdmIPMap), qxdmNotInPcapCount / len(qxdmIPMap))
+    print "PCAP not in QxDM ratio %f / %f = %f" % (pcapNotInQxDMCount, len(pcapIPMap), pcapNotInQxDMCount / len(pcapIPMap))
+
+# DEBUG function
 # Validate whether the all the IP packets are non-duplicated
 # Condition
 # 1. IP length in the header should match the actual length

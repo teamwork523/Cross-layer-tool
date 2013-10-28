@@ -1,6 +1,6 @@
 #!/bin/bash
 
-USAGE="./push.sh -{o,e} -d"
+USAGE="./push.sh -{o,e} -{d,p}"
 OPTION=$1
 UPLOAD_DATA=$2
 if [ $# -ne 1 ] && [ $# -ne 2 ];then
@@ -18,8 +18,11 @@ elif [ $OPTION = '-e' ]
 then
     #scp -r pcap/UDP/seq/* haokun@ep2.eecs.umich.edu:$ep2_folder/pcap/UDP/seq/
     scp -r $prj_folder/src/*.py haokun@ep2.eecs.umich.edu:$ep2_folder/src/
-    if [ $UPLOAD_DATA = '-d' ];then
-        scp -r $prj_folder/data/TCP/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/
+    if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-d' ];then
+        scp -r $prj_folder/data/TCP/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/TCP/
+    fi
+    if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-p' ];then
+        scp -r $prj_folder/data/PCAP/*.pcap haokun@ep2.eecs.umich.edu:$ep2_folder/data/PCAP/
     fi
 else
     echo $USAGE

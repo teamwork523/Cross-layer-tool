@@ -14,6 +14,7 @@ import os, sys, time
 import const
 import QCATEntry as qe
 import PCAPPacket as pp
+import PCAPParser as ppsr
 import Util as util
 from optparse import OptionParser
 import PrintWrapper as pw
@@ -166,6 +167,14 @@ def main():
 
     if RETX_DEBUG:
         print "After deduplicate IP packets, # of packets is %d" % (len(QCATEntries))
+
+    # TODO: delete after debugging
+    if options.inPCAPFile:
+        pcap = ppsr.PCAPParser(options.inPCAPFile, "up", "ip")
+        pcap.read_pcap()
+        pcap.parse_pcap()
+        util.compareQxDMandPCAPtraces(QCATEntries, pcap.ip_trace)
+
     util.validateIPPackets(QCATEntries)
     # TODO: delete after debugging
     sys.exit(1)
