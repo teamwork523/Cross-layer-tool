@@ -113,6 +113,9 @@ def get_raw_udp_header(packet_data, i, link_len):
 def get_ip_header_len(packet_data, i, link_len):
     return (ord(packet_data[i][1][link_len]) & 0xF) * 4
 
+def get_ip_len(packet_data, i, link_len):
+    return ord(packet_data[i][1][link_len+2]) * 256 + ord(packet_data[i][1][link_len+3])
+
 def dst_ip(packet_data, i, link_len):
 	base = link_len + 16
 	return get_ip(packet_data, i, base)

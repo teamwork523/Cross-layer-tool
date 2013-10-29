@@ -949,8 +949,10 @@ def printUDPEntry(entry):
 
 # print an IP entry inforamtion
 def printIPEntry(entry):
-    print "%s\t%s\t%s\t%s\t%s" % (util.convert_ts_in_human(entry.timestamp, year=True), entry.ip["src_ip"], \
-                                  entry.ip["dst_ip"], entry.ip["tlp_id"], entry.ip["total_len"])
+    print "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%d" % (util.convert_ts_in_human(entry.timestamp, year=True), entry.ip["src_ip"], \
+                                              entry.ip["dst_ip"], entry.ip["tlp_id"], entry.ip["total_len"], \
+                                              entry.custom_header["final_seg"], entry.custom_header["seg_num"], \
+                                              len(entry.hex_dump["payload"][const.Payload_Header_Len:]))
 
 # print a RLC entry information
 def printRLCEntry(entry, dir_type):

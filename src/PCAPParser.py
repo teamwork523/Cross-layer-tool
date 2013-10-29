@@ -69,6 +69,7 @@ class PCAPParser:
             new_ip["src_ip"] = dp.src_ip(self.data, i, link_len)
             new_ip["dst_ip"] = dp.dst_ip(self.data, i, link_len)
             new_ip["ip_header_len"] = dp.get_ip_header_len(self.data, i, link_len)
+            new_ip["ip_len"] = dp.get_ip_len(self.data, i, link_len)
             new_ip["ip_raw_header"] = dp.raw_ip_header(self.data, i, link_len)
             new_ip["tlp_type"] = dp.protocol_type(self.data, i, link_len)
             if new_ip["tlp_type"] == const.TCP_ID:
@@ -83,12 +84,13 @@ class PCAPParser:
         1. Timestamp
         2. Src/dst ip
         3. IP header length
-        4. Transport layer protocol (tlp) type
-        5. IP header raw data
-        6. Transport layer header
+        4. IP packet length
+        5. Transport layer protocol (tlp) type
+        6. IP header raw data
+        7. Transport layer header
         """
         return {"ts": None, "src_ip": None, "dst_ip": None, \
-                "ip_header_len": None, "tlp_type": None, \
+                "ip_header_len": None, "ip_len": None, "tlp_type": None, \
                 "ip_raw_header": None, "tlp_raw_header": None}
 
     ####################################################################

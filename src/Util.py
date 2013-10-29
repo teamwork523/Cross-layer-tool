@@ -17,7 +17,7 @@ from datetime import datetime
 
 DEBUG = False
 TIME_DEBUG = False
-IP_DEBUG = False
+IP_DEBUG = True
 
 ###############################################################################################
 ########################################### I/O Related #######################################
@@ -110,22 +110,52 @@ def eliminateInvalidIPPackets(rawEntryList):
 
 # group segemanted IP packets together
 # Append the segmented IP packets to the first one
+#
+# It is also possible that segements are not in consecutive sequence (though it is rare)
+#
 # Input: entry list with segmented IP log entries
-# Ouput: entry list without segmented IP log entries
+# Ouput: 
+# 1. entry list without segmented IP log entries
+# 2. ungroupable entries
 def groupSegmentedIPPackets(segEntryList):
     nonSegIPEntryList = []
+    ungroupableEntryList = []
+    ungroupableEntryBuffer = []
     IPEntryLead = None
+    IPEntryLeadOrigPayloadLen = 0
+    privSegNum = 0
 
     for entry in segEntryList:
         if entry.logID == const.PROTOCOL_ID:
             if entry.custom_header["final_seg"] == 1 and entry.custom_header["seg_num"] == 0:
                 nonSegIPEntryList.append(entry)
+                # eliminate pending ungroupable list
+                if ungroupableEntryBuffer != []:
+                    # reset first entry's payload
+                    IPEntryLead.hex_dump["payload"] = IPEntryLead.hex_dump["payload"][:IPEntryLeadOrigPayloadLen]
+                    ungroupableEntryList += ungroupableEntryBuffer
+                    ungroupableEntryBuffer = []
             else:
                 # check whether there will be consecutive IP packets in the future
                 if entry.custom_header["seg_num"] == 0:
                     # first IP packet
                     IPEntryLead = entry
+                    IPEntryLeadOrigPayloadLen = len(entry.hex_dump["payload"])
+                    privSegNum = 0
+                    ungroupableEntryBuffer.append(entry)
                 elif IPEntryLead != None:
+                    # detect whether the current segment number
+                    ungroupableEntryBuffer.append(entry) 
+                    if entry.custom_header["seg_num"] != privSegNum + 1:
+                        # reset first entry's payload
+                        IPEntryLead.hex_dump["payload"] = IPEntryLead.hex_dump["payload"][:IPEntryLeadOrigPayloadLen]
+                        ungroupableEntryList += ungroupableEntryBuffer
+                        ungroupableEntryBuffer = []
+                        # reset the first entry as well
+                        IPEntryLead = None
+                        IPEntryLeadOrigPayloadLen = 0
+                        continue
+                    privSegNum = entry.custom_header["seg_num"]
                     # append the payload to the first IP packet
                     IPEntryLead.hex_dump["payload"] += entry.hex_dump["payload"][const.Payload_Header_Len:]
                     if entry.custom_header["final_seg"] == 1:
@@ -133,10 +163,85 @@ def groupSegmentedIPPackets(segEntryList):
                         nonSegIPEntryList.append(IPEntryLead)
                         # reset the first of the group
                         IPEntryLead = None
+                        IPEntryLeadOrigPayloadLen = 0
+                        ungroupableEntryBuffer = []
+                else:
+                    # expect to start the segment number from 0
+                    ungroupableEntryList.append(entry)
         else:
             nonSegIPEntryList.append(entry)
 
-    return nonSegIPEntryList
+    return (nonSegIPEntryList, ungroupableEntryList)
+
+# Recover the ungroupable Entry
+#
+# Possible resaons that entries are not groupable
+# 1. Missing one or more logged entry
+# 2. IP packets are not logged consecutively
+#
+# Recovery steps
+# 1. Create a time to list of IP packet mapping 
+# 2. try to regroup 
+def recoveryUngroupPackets(ungroupableEntryList):
+    timeToEntryListMap = {}
+    recoveredEntryList = []
+
+    for entry in ungroupableEntryList:
+        if entry.timestamp in timeToEntryListMap:
+            timeToEntryListMap[entry.timestamp].append(entry)
+        else:
+            timeToEntryListMap[entry.timestamp] = [entry]
+    
+    # try to regroup another time
+    for ts in sorted(timeToEntryListMap.keys()):
+        if IP_DEBUG:
+            """
+            print "#" * 80
+            print "Ungrouped IP packet with the same timestamp\n"
+            for entry in timeToEntryListMap[ts]:
+                pw.printIPEntry(entry)
+            """
+        (regroupedEntryList, dummy) = groupSegmentedIPPackets(timeToEntryListMap[ts])
+        if regroupedEntryList != []:
+            recoveredEntryList += regroupedEntryList
+            """
+            if IP_DEBUG:
+                print "^.^" * 20
+                print "Success recoved IP packet\n"
+                for entry in regroupedEntryList:
+                    pw.printIPEntry(entry)
+                    headerLen = entry.ip["header_len"]
+                    if entry.ip["tlp_id"] == const.TCP_ID:
+                        headerLen += entry.tcp["header_len"]
+                    elif entry.ip["tlp_id"] == const.UDP_ID:
+                        headerLen += const.UDP_Header_Len
+                    print "".join(entry.hex_dump["payload"][const.Payload_Header_Len:const.Payload_Header_Len+headerLen])
+            """
+
+    return recoveredEntryList
+            
+
+# Insert back extra entry based on timestamp
+# Use binary search to allocation the insertion place
+# 
+# Input: main entry list and valid ungrouped entry
+# Output: inserted main entry list
+def insertListOfEntries(mainEntryList, insertedEntryList):
+    # create a timestamp list
+    tsList = []
+
+    for entry in mainEntryList:
+        tsList.append(entry.timestamp)
+
+    # Use binary search to insert
+    for insertedEntry in insertedEntryList:
+        insertIndex = binary_search_smallest_greater_index(insertedEntry.timestamp, 0, tsList)
+        # remember to update timestamp list as well
+        tsList.insert(insertIndex, insertedEntry.timestamp)
+        mainEntryList.insert(insertIndex, insertedEntry)
+
+    return mainEntryList
+
 
 # Eliminate duplicate IP packets
 # Conditions
@@ -243,6 +348,7 @@ def validateIPPackets(entryList):
                 print "!!!! Invalid IP payload length !!!"
                 pw.printIPEntry(entry)
                 continue
+
             if entry.ip["tlp_id"] == const.TCP_ID:
                 packet = "".join(entry.hex_dump["payload"][startIndex:])
                 if packetToEntryMap.has_key(packet):
@@ -655,67 +761,6 @@ def readFromSig(filename):
     fp.close()
     return tsDict
 
-# use binary search to find the nearest value in the given list
-def binarySearch (target, sortedList):
-    if not sortedList:
-        return None
-    if len(sortedList) == 1:
-        return sortedList[0]
-    if len(sortedList) == 2:
-        if target-sortedList[0] > sortedList[1] - target:
-            return sortedList[1]
-        else:
-            return sortedList[0]
-    mid = sortedList[len(sortedList)/2]
-    if target == mid:
-        return mid
-    elif target > mid:
-        return binarySearch(target, sortedList[len(sortedList)/2:])
-    else:
-        return binarySearch(target, sortedList[:len(sortedList)/2+1]) 
-
-# use binary search to find the smallest value that greater than the target
-# i.e. a = [1, 4, 7, 10, 13, 16, 19], and binary_search_smallest_greater_value(3, a) = 4
-def binary_search_smallest_greater_value(target, sortedList):
-    if not sortedList:
-        return None
-    if target > sortedList[-1]:
-        return None
-    if target < sortedList[0]:
-        return sortedList[0]
-    if len(sortedList) == 1:
-        return sortedList[0]
-    if len(sortedList) == 2:
-        return sortedList[1]
-    mid = sortedList[len(sortedList)/2]
-    if target == mid:
-        return mid
-    elif target > mid:
-        return binary_search_smallest_greater_value(target, sortedList[len(sortedList)/2:])
-    else:
-        return binary_search_smallest_greater_value(target, sortedList[:len(sortedList)/2+1])
-
-# use binary search to find the largest smaller value that greater than the target
-# i.e. a = [1, 4, 7, 10, 13, 16, 19], and binary_search_largest_smaller_value(3, a) = 1
-def binary_search_largest_smaller_value(target, sortedList):
-    if not sortedList:
-        return None
-    if target < sortedList[0]:
-        return None
-    if target > sortedList[-1]:
-        return sortedList[-1]
-    if len(sortedList) == 1:
-        return sortedList[0]
-    if len(sortedList) == 2:
-        return sortedList[0]
-    mid = sortedList[len(sortedList)/2]
-    if target == mid:
-        return mid
-    elif target >= mid:
-        return binary_search_largest_smaller_value(target, sortedList[len(sortedList)/2:])
-    else:
-        return binary_search_largest_smaller_value(target, sortedList[:len(sortedList)/2+1])
-
 ## Used in verify PCAP timestamp that maps with QCAT log
 # Use timestamp as key to create the map
 def createTSbasedMap(entries):
@@ -810,6 +855,96 @@ def merge_two_entry_lists(nonIP, IP):
         merged_entry += IP[IP_cur_index:]
 
     return merged_entry
+
+#############################################################################
+############################ Bianry Search ##################################
+############################################################################# 
+# Find the nearest value in the given list
+def binarySearch (target, sortedList):
+    if not sortedList:
+        return None
+    if len(sortedList) == 1:
+        return sortedList[0]
+    if len(sortedList) == 2:
+        if target-sortedList[0] > sortedList[1] - target:
+            return sortedList[1]
+        else:
+            return sortedList[0]
+    mid = sortedList[len(sortedList)/2]
+    if target == mid:
+        return mid
+    elif target > mid:
+        return binarySearch(target, sortedList[len(sortedList)/2:])
+    else:
+        return binarySearch(target, sortedList[:len(sortedList)/2+1]) 
+
+# Find the index of the smallest value that greater than the target
+# i.e. a = [1, 4, 7, 7, 13, 13, 19], and binary_search_smallest_greater_index(7, a) = 2
+# Input:
+# 1. target: value to compare
+# 2. base: first index of the range
+# 3. sortedList: assume the list has been sorted
+def binary_search_smallest_greater_index(target, base, sortedList):
+    if sortedList == None:
+        return None
+    sortedListLen = len(sortedList)
+    if sortedListLen == 0:
+        return base
+    if sortedListLen == 1:
+        return base
+    if sortedListLen == 2:
+        if target <= sortedList[0]:
+            return base
+        elif target <= sortedList[1]:
+            return base + 1
+        else:
+            return base + 2
+    if target > sortedList[sortedListLen/2]:
+        return binary_search_smallest_greater_index(target, base + sortedListLen / 2, sortedList[sortedListLen / 2:])
+    else:
+        return binary_search_smallest_greater_index(target, base, sortedList[:sortedListLen / 2 + 1])
+
+# Find the smallest value that greater than the target
+# i.e. a = [1, 4, 7, 10, 13, 16, 19], and binary_search_smallest_greater_value(3, a) = 4
+def binary_search_smallest_greater_value(target, sortedList):
+    if not sortedList:
+        return None
+    if target > sortedList[-1]:
+        return None
+    if target < sortedList[0]:
+        return sortedList[0]
+    if len(sortedList) == 1:
+        return sortedList[0]
+    if len(sortedList) == 2:
+        return sortedList[1]
+    mid = sortedList[len(sortedList)/2]
+    if target == mid:
+        return mid
+    elif target > mid:
+        return binary_search_smallest_greater_value(target, sortedList[len(sortedList)/2:])
+    else:
+        return binary_search_smallest_greater_value(target, sortedList[:len(sortedList)/2+1])
+
+# use binary search to find the largest smaller value that greater than the target
+# i.e. a = [1, 4, 7, 10, 13, 16, 19], and binary_search_largest_smaller_value(3, a) = 1
+def binary_search_largest_smaller_value(target, sortedList):
+    if not sortedList:
+        return None
+    if target < sortedList[0]:
+        return None
+    if target > sortedList[-1]:
+        return sortedList[-1]
+    if len(sortedList) == 1:
+        return sortedList[0]
+    if len(sortedList) == 2:
+        return sortedList[0]
+    mid = sortedList[len(sortedList)/2]
+    if target == mid:
+        return mid
+    elif target >= mid:
+        return binary_search_largest_smaller_value(target, sortedList[len(sortedList)/2:])
+    else:
+        return binary_search_largest_smaller_value(target, sortedList[:len(sortedList)/2+1])
 
 #############################################################################
 ############################ Debugging functions ############################

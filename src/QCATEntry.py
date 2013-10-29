@@ -15,6 +15,7 @@ import Util as util
 
 DEBUG = False
 CUR_DEBUG = False
+DL_CTRL_PDU_DEBUG = False
 
 class QCATEntry:
     """
@@ -314,9 +315,21 @@ class QCATEntry:
                 # check for number of entities
                 if int(self.detail[0].split()[-1]) != 1:
                     raise Exception("More than one entities in UL AM PDU")
-                # skip the first several lines
-                lineOfinterest = self.detail[5:]
+                lineOfinterest = self.detail
                 for index in range(len(lineOfinterest)):
+                    if lineOfinterest[index].find("DATA PDU") != -1:
+                        info = lineOfinterest[index].split("::")[1].strip().split(", ")
+                        self.dl_pdu[0]["chan"] = int(info[0].split(":")[1])
+                        cur_seq = int(info[1].split(" ")[1], 16)
+                        self.dl_pdu[0]["sn"].append(cur_seq)
+                        # Exactly the same format as UL_PDU_ID
+                        self.extractRLCHeaderInfo(self.dl_pdu[0], info, cur_seq, True)
+                        if DL_CTRL_PDU_DEBUG:
+                            print self.dl_pdu[0]
+                    elif lineOfinterest[index][:8] == "PDU Size":
+                        self.dl_pdu[0]["size"].append(int(lineOfinterest[index].split()[-1])/8)
+                    elif lineOfinterest[index][:14] == "Number of PDUs":
+                        self.dl_pdu[0]["numPDU"] = int(lineOfinterest[index].split()[-1])
                     if lineOfinterest[index].find("CONTROL PDU") != -1:
                         # Debug
                         """
@@ -420,19 +433,19 @@ class QCATEntry:
         # Structure:
         # Pyaload = Its own header + IP header
         if self.logID == const.PROTOCOL_ID:
+            # Notice: customized header parsing, apply this to apply 0x11EB entries
+            # Little Indian
+            self.custom_header["seq_num"] = int("".join(self.hex_dump["payload"][5:3:-1]), 16)
+            self.custom_header["seg_num"] = int(self.hex_dump["payload"][6], 16)
+            if self.hex_dump["payload"][7][0] == '0':
+                self.custom_header["final_seg"] = False
+            else:
+                self.custom_header["final_seg"] = True
             # Extract segmentation information
             # Extract transport layer information
             # length must greater than wrapping header plus IP header
             if len(self.hex_dump["payload"]) > const.Payload_Header_Len + 20 and \
                int(self.hex_dump["payload"][1], 16) == const.IP_ID:
-                # customized header parsing
-                # Little Indian
-                self.custom_header["seq_num"] = int("".join(self.hex_dump["payload"][5:3:-1]), 16)
-                self.custom_header["seg_num"] = int(self.hex_dump["payload"][6], 16)
-                if self.hex_dump["payload"][7][0] == '0':
-                    self.custom_header["final_seg"] = False
-                else:
-                    self.custom_header["final_seg"] = True
                 if CUR_DEBUG:
                     print "*" * 40
                     print " ".join(self.hex_dump["payload"][4:6])
