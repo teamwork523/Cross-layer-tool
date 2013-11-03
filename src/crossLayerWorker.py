@@ -43,8 +43,8 @@ RRC_DEBUG = False
 #       2. a list of corresponding sequnce number
 
 def map_SDU_to_PDU(entries, tcp_index, logID, hint_index = -1):
-    # search for the entires IP packets
-    tcp_payload = findEntireIPPacket(entries, tcp_index)
+    # fetch the actual payload
+    tcp_payload = findIPPacketData(entries, tcp_index)
 
     if DEBUG:
         print "#" * 40
@@ -212,31 +212,22 @@ def isDataMatch(dataList, payload, matching_index):
             return False
     return True
 
-# Find the entire IP packets 
-def findEntireIPPacket (entries, index):
+# Find the entire IP packets in hex
+# Assume the pro-processing of eliminating IP redundancy and fragmentation are done
+def findIPPacketData (entries, index):
     cur_custom_seq_num = entries[index].custom_header["seq_num"]
     payload = entries[index].hex_dump["payload"][const.Payload_Header_Len:]
 
-    # if current IP is already the last segment, then return directly
-    if entries[index].custom_header["final_seg"]:
+    # check 
+    if entries[index].ip["total_len"] == len(payload) and entries[index].custom_header["final_seg"] == 1:
         return payload
-
-    index += 1
-    entryLen = len(entries)
-    while (entries[index].logID != const.PROTOCOL_ID) or \
-          (entries[index].logID == const.PROTOCOL_ID and entries[index].custom_header["seq_num"] == cur_custom_seq_num and \
-          not entries[index].custom_header["final_seg"] and index < entryLen):
-        if entries[index].logID != const.PROTOCOL_ID:
-            index += 1
-            continue
-        payload += entries[index].hex_dump["payload"][const.Payload_Header_Len:]
-        index += 1
-    
-    # include the last segment as payload
-    if entries[index].custom_header["final_seg"]:
-        payload += entries[index].hex_dump["payload"][const.Payload_Header_Len:]
-
-    return payload
+    else:
+        if entries[index].ip["total_len"] != len(payload) and entries[index].custom_header["final_seg"] != 1:
+            raise Exception("ERROR: IP payload length not match with header size, also not final segment!!!")
+        elif entries[index].ip["total_len"] != len(payload):
+            raise Exception("ERROR: IP payload length not match with header size!!!")
+        else:
+            raise Exception("ERROR: IP entry not final segment!!!")
 
 ############################################################################
 ############## Statistics Generated from Cross Layer Mapping ###############

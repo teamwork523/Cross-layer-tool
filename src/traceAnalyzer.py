@@ -669,7 +669,7 @@ def main():
                     tcp_mapped_ratio_list = []
                     length_list = []
                     retx_list = []
-                    rlc_retx_ratio_list = []
+                    rlc_mapped_ratio_list = []
                     
                     # perform RLC retransmission analysis
                     [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(nonIPEntries, detail="simple")
@@ -693,19 +693,14 @@ def main():
                         retx_list.append(len(tcpAllRetxMap))
                         ratios = pw.print_tcp_and_rlc_mapping_sn_version(mergedEntries, util.createEntryMap(mergedEntries), const.UL_PDU_ID, ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap, withHeader=False, client_ip = options.client_ip)
                         tcp_mapped_ratio_list.append(ratios[0])
-                        rlc_retx_ratio_list.append(ratios[1])
+                        rlc_mapped_ratio_list.append(ratios[1])
 
-                    print "\n" + ">.<" * 40
-                    """
-                    print "Average ratio is %f" % (util.meanValue(ratio_list))
-                    print "Ratio distribution is %s" % (util.quartileResult(ratio_list))
-                    print "Average flow length is %f" % (util.meanValue(length_list))
-                    print "Flow length distribution is %s" % (util.quartileResult(length_list))
-                    print "Average retx ratio is %f" % (util.meanValue(retx_list))
-                    print "Retx distribution is %s" % (util.quartileResult(retx_list))
-                    """
-                    print "RLC retx average ratio is %f" % (util.meanValue(rlc_retx_ratio_list))
-                    print "RLC retx ratio distribution is %s" % (util.quartileResult(rlc_retx_ratio_list))
+                    print "\n" + ":)" * 40
+                    print "TCP mapping ratio is %f" % (util.meanValue(tcp_mapped_ratio_list))
+                    print "TCP mapping ratio distribution is %s" % (util.quartileResult(tcp_mapped_ratio_list))
+                    print "RLC mapped average ratio is %f" % (util.meanValue(rlc_mapped_ratio_list))
+                    print "RLC mapped ratio distribution is %s" % (util.quartileResult(rlc_mapped_ratio_list))
+
                 # TODO: add downlink
 
 if __name__ == "__main__":

@@ -717,8 +717,8 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
         else:
             print "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
 
-    found_count = 0.0
-    not_found_count = 0.0
+    cross_mapping_found_count = 0.0
+    cross_mapping_not_found_count = 0.0
     rlc_mapped_count = 0.0
 
     for i in range(len(QCATEntries)):
@@ -768,10 +768,10 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                         if sn in mapped_sn and \
                            RLCEntry in RLCULRetxMap and \
                            sn in RLCULRetxMap[RLCEntry]:
-                            found_count += 1
+                            cross_mapping_found_count += 1
                             tmpCountResults += str(sn) + ":" + str(RLCULRetxMap[RLCEntry][sn])
                         else:
-                            not_found_count += 1
+                            cross_mapping_not_found_count += 1
                             tmpCountResults += str(sn) + ":" + str(0)
                         tmpCountResults += "/"
                 if tmpCountResults:
@@ -788,23 +788,24 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                 line += "N/A"
             print line
 
-    tcp_mapped_ratio = 0
+    tcp_mapped_ratio = 0.0
     if TCP_entry_count > 0:
         tcp_mapped_ratio = Mapped_TCP_entry_count / TCP_entry_count
     
-    rlc_retx_ratio = 0.0
-    if not_found_count + found_count > 0:
-        rlc_retx_ratio = found_count / (not_found_count + found_count)
+    rlc_mapped_ratio = 0.0
+    if cross_mapping_not_found_count + cross_mapping_found_count > 0:
+        rlc_mapped_ratio = cross_mapping_found_count / (cross_mapping_not_found_count + cross_mapping_found_count)
+
     """
     print
     print "*" * 80
-    print "Mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, tcp_mapped_ratio)
+    print "TCP mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, tcp_mapped_ratio)
     print
     print "Total mapped RLC count is %d" % (rlc_mapped_count)
-    print "Found ratio is %f / %f = %f" % (found_count, not_found_count + found_count, rlc_retx_ratio)
+    print "RLC mapped ratio is %f / %f = %f" % (cross_mapping_found_count, cross_mapping_not_found_count + cross_mapping_found_count, rlc_retx_ratio)
     """
 
-    return (tcp_mapped_ratio, rlc_retx_ratio)
+    return (tcp_mapped_ratio, rlc_mapped_ratio)
 
 #######################################################################
 ######################## Packet Trace #################################

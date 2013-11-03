@@ -159,6 +159,8 @@ def groupSegmentedIPPackets(segEntryList):
                     # append the payload to the first IP packet
                     IPEntryLead.hex_dump["payload"] += entry.hex_dump["payload"][const.Payload_Header_Len:]
                     if entry.custom_header["final_seg"] == 1:
+                        # reset the first IP packet as final segment
+                        IPEntryLead.custom_header["final_seg"] = 1
                         # Last IP packet in a row
                         nonSegIPEntryList.append(IPEntryLead)
                         # reset the first of the group
