@@ -70,7 +70,6 @@ def map_SDU_to_PDU(entries, tcp_index, logID, hint_index = -1):
     start_index = tcp_index
     if hint_index != -1:
         start_index = max(hint_index, tcp_index)
-        # start_index = hint_index
     if DEBUG:
         print "Start_index at %d" % start_index
         pw.printRLCEntry(entries[start_index], "up")

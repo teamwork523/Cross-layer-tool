@@ -9,15 +9,85 @@ Functions related to delay, TCP RTT calculation
 
 import os, sys, re
 import const
+import crossLayerWorker as clw
 import QCATEntry as qe
 import PrintWrapper as pw
 import Util as util
 
+RLC_RTT_DEBUG = False
+TCP_RTT_DEBUG = False
+
 #################################################################
 ##################### TCP RTT releated ##########################
 #################################################################
-# TODO: calculate the TCP RTT result
+# Calculate the TCP RTT
+# Time(Sender) - Time(ACK = Sender's seq + TCP payload size)
+def calc_tcp_rtt(Entries, client_ip, direction):
+    entryLen = len(Entries)
+    for i in range(entryLen):
+        curEntry = Entries[i]
+        if curEntry.logID == const.PROTOCOL_ID and \
+           curEntry.ip["tlp_id"] == const.TCP_ID:
+            if direction.lower() == "up":
+                if curEntry.ip["src_ip"] == client_ip:
+                    tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
+                    ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["dst_ip"], direction,\
+                                curEntry.tcp["seq_num"] + tcp_len)
+                    if ack_entry:
+                        curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
+                        
+                        if TCP_RTT_DEBUG:
+                            print "Found one: " + str(curEntry.timestamp) + "\t" + str(curEntry.rtt["tcp"])
+            else:
+                if curEntry.ip["dst_ip"] == client_ip:
+                    tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
+                    ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["src_ip"], direction,\
+                                curEntry.tcp["seq_num"] + tcp_len)
+                    if ack_entry:
+                        curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
+                
 
+
+#################################################################
+##################### RLC RTT releated ##########################
+#################################################################
+# calculate the RTT based on polling and STATUS PDU
+# assume RTT doesn't varies within a certain amount of time
+def calc_rlc_rtt(QCATEntries):
+    recent_poll_index = None
+    for index in range(len(QCATEntries)):
+        cur_entry = QCATEntries[index]
+        if cur_entry.logID == const.UL_PDU_ID and check_polling_bit(cur_entry.ul_pdu[0]["header"]):
+            recent_poll_index = index
+        elif cur_entry.dl_ctrl["chan"]:
+            if recent_poll_index: 
+                # find an STATUS with a matched privious polling request
+                rlc_rtt = cur_entry.timestamp - QCATEntries[recent_poll_index].timestamp
+                # enforce the non-difference RTT
+                if rlc_rtt > 0:
+                    QCATEntries[recent_poll_index].rtt["rlc"] = rlc_rtt
+                    if RLC_RTT_DEBUG:
+                        print "RLC RTT: %f" % QCATEntries[recent_poll_index].rtt["rlc"]
+            recent_poll_index = None
+
+
+# assign the RLC RTT result
+def assign_rlc_rtt(QCATEntries):
+    recent_rtt = None
+    for entry in QCATEntries:
+        if entry.rtt["rlc"]:
+            recent_rtt = entry.rtt["rlc"]
+        elif recent_rtt:
+            # TODO: downlink part is not well taken care
+            if entry.logID == const.UL_PDU_ID or \
+               entry.logID == const.DL_CTRL_PDU_ID or \
+               entry.logID == const.DL_PDU_ID:
+                entry.rtt["rlc"] = recent_rtt
+        """
+        if RLC_RTT_DEBUG:
+            if entry.rtt["rlc"]:
+                print "entry's RLC rtt is %f" % entry.rtt["rlc"]
+        """
 
 #################################################################
 ##################### Packet delay Info #########################
@@ -66,7 +136,42 @@ def extractFACHStatePktDelayInfo(entries, direction):
     # currently hardset delay limit to be 3s
     for i in TCP_delay_map.values():
         print i
-   
+
+#################################################################
+################## First-hop RTT releated #######################
+#################################################################
+# Calculate the first hop latency proportion
+#
+# Input:
+# 1. Entry list with TCP RTT calculated and estimated RLC RTT
+# Output:
+# 1. List of TCP RTT
+# 2. Corresponding Average first hop latency (Overall transmission delay + OTA latency)
+# 3. Ratio of the first hop latency
+def first_hop_latency_evaluation(entryList, pduID):
+    tcp_rtt_list = []
+    first_hop_rtt_list = []
+    ratio_rtt_list = []
+    entryLen = len(entryList)
+
+    for i in range(entryLen):
+        entry = entryList[i]
+        if entry.rtt["tcp"] != None and entry.rtt["tcp"] > 0:
+            # perform cross-layer mapping
+            mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , pduID)
+            if mapped_RLCs:
+                transmission_delay = mapped_RLCs[-1][0].timestamp - mapped_RLCs[0][0].timestamp
+                rlc_rtt_list = [rlc[0].rtt["rlc"] for rlc in mapped_RLCs if rlc[0].rtt["rlc"] != None]
+                # TODO: check maximum value
+                first_hop_rtt_tmp = util.meanValue(rlc_rtt_list)
+                if first_hop_rtt_tmp / entry.rtt["tcp"] < 1.0:
+                    tcp_rtt_list.append(entry.rtt["tcp"])
+                    first_hop_rtt_list.append(first_hop_rtt_tmp)
+                    ratio_rtt_list.append(first_hop_rtt_tmp / entry.rtt["tcp"])
+
+    return (tcp_rtt_list, first_hop_rtt_list, ratio_rtt_list)
+                
+
 #################################################################
 ################# helper function ###############################
 #################################################################
@@ -85,4 +190,32 @@ def findDelayPair(entries, index, logType):
             break
 
     return (beforeTime, afterTime)
+
+# check if there is a polling request in the header list
+def check_polling_bit(header_list):
+    if header_list:
+        for header in header_list:
+            if header["p"]:
+                return True
+    return False
+
+# find the ACK packet entry by given TCP ack number
+def find_tcp_ack_entry(entryList, server_ip, direction, ack_num):
+    for entry in entryList:
+        if entry.logID == const.PROTOCOL_ID and \
+           entry.ip["tlp_id"] == const.TCP_ID:
+            # terminate search at a FIN packet
+            if direction.lower() == "up":
+                if entry.ip["src_ip"] == server_ip:
+                    if entry.tcp["ack_num"] == ack_num:
+                        return entry
+                    elif entry.tcp["FIN_FLAG"]:
+                        return None
+            else:
+                if entry.ip["dst_ip"] == server_ip:
+                    if entry.tcp["ack_num"] == ack_num:
+                        return entry
+                    elif entry.tcp["FIN_FLAG"]:
+                        return None
+    return None
 

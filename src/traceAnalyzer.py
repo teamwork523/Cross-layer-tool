@@ -29,7 +29,7 @@ DEBUG = False
 DUP_DEBUG = False
 GAP_DEBUG = False
 TIME_DEBUG = False
-IP_DUP_DEBUG = True
+IP_DUP_DEBUG = False
 
 def init_optParser():
     extraspace = len(sys.argv[0].split('/')[-1])+10
@@ -43,7 +43,8 @@ def init_optParser():
                             " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
                             " "*extraspace + "[--cross_mapping_detail], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
                             " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
-                            " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility]")
+                            " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility]\n" +\
+                            " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -78,6 +79,8 @@ def init_optParser():
                          help="Filter out entries with destination port number")
     optParser.add_option("--dup_ack_threshold", dest="dup_ack_threshold", default=3, \
                          help="The number of duplicate ack to trigger RLC fast retransmission")
+    optParser.add_option("--first_hop_latency_analysis", action="store_true", dest="isFirstHopLatencyAnalysis", default=False, \
+                         help="Output the TCP RTT, estimated RLC RTT, and first-hop latency ratio")
     optParser.add_option("--keep_non_ip", action="store_true", dest="keep_non_ip_entries", default=False, \
                          help="Enable it if you want to non-IP entries in the result")
     optParser.add_option("--loss_analysis", action="store_true", dest="is_loss_analysis", default=False, \
@@ -101,9 +104,11 @@ def init_optParser():
     optParser.add_option("--src_port", dest="srcPort", default=None, \
                          help="Filter out entries with source port number")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
-    					  help="Used combined with direction option to filter useful retransmission packets")
+    					 help="Used combined with direction option to filter useful retransmission packets")
+    optParser.add_option("--validate_rrc_state_inference", action="store_true", dest="isValidateInference", default=False, \
+                         help="Validate the RRC inference algorithm by output desired output")
     optParser.add_option("--udp_hash_target", dest="hash_target", default="seq", \
-    					  help="Hash UDP based on hashed payload, sequence number or more. Current support hash or seq. Useful if you want to use UDP server trace to sync with client side QxDM trace.")
+    					 help="Hash UDP based on hashed payload, sequence number or more. Current support hash or seq. Useful if you want to use UDP server trace to sync with client side QxDM trace.")
 
     # Debugging options
     # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
@@ -253,8 +258,8 @@ def main():
 
     # Calculate the RLC RTT based on the polling bit and returned STATUS PDU
     # TODO: right now uplink only
-    cw.calc_rlc_rtt(QCATEntries)
-    cw.assign_rlc_rtt(QCATEntries)
+    dw.calc_rlc_rtt(QCATEntries)
+    dw.assign_rlc_rtt(QCATEntries)
 
     if TIME_DEBUG:
         print "Assign Context takes ", time.time() - check_point_time, "sec"
@@ -641,8 +646,36 @@ def main():
     #pw.printReTxVSRRCResult(QCATEntries, None)
     
     #################################################################
-    ######################## Verification Section ###################
+    ####################### Research Related ########################
     #################################################################
+    # Calculate the first hop latency and ratio for RLC layer
+    # LIMIT: only support TCP uplink at this moment
+    if options.isFirstHopLatencyAnalysis and options.client_ip and options.direction:
+        # TCP RTT
+        dw.calc_tcp_rtt(QCATEntries, options.client_ip, options.direction)
+
+        tcp_rtt_list = first_hop_rtt_list = ratio_rtt_list = []
+        # only support uplink now
+        if options.direction.lower() == "up":
+            tcp_rtt_list, first_hop_rtt_list, ratio_rtt_list = dw.first_hop_latency_evaluation(QCATEntries, const.UL_PDU_ID)
+        else:
+            tcp_rtt_list, first_hop_rtt_list, ratio_rtt_list = dw.first_hop_latency_evaluation(QCATEntries, const.DL_PDU_ID)
+
+        
+        # output the first-hop ratio
+        for ratio in sorted(ratio_rtt_list):
+            print ratio
+
+    # Validate the RRC inference algorithm
+    # Output:
+    # 1. timestamp of IP packet
+    # 2. RRC state
+    if options.isValidateInference:
+        for entry in QCATEntries:
+            if entry.logID == const.PROTOCOL_ID:
+                print str(entry.timestamp) + "\t" + str(entry.rrcID)
+        
+
     # Proof downlink RLC provides insufficient data
     # compare the the total downlink IP packet size vs total downlink RLC PDU size
     if options.validate_cross_layer_feasibility and options.client_ip:

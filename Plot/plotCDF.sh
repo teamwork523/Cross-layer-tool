@@ -9,7 +9,7 @@ gnuplot -p <<EOF
 set autoscale
 set xtic auto                          # set xtics automatically
 set ytic auto                          # set ytics automatically
-set title 'CDF of $legend'
+# set title 'CDF of $legend'
 set xlabel "$legend"
 set ylabel "CDF"
 
