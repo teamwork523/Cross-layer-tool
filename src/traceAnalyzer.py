@@ -44,7 +44,7 @@ def init_optParser():
                             " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
                             " "*extraspace + "[--cross_mapping_detail], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
                             " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
-                            " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility]\n" +\
+                            " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility] type\n" +\
                             " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
                             " "*extraspace + "[--retx_cross_analysis]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
@@ -67,8 +67,9 @@ def init_optParser():
     					  help="Client side IP address assuming the device IP address does not change.")
     optParser.add_option("--cross_analysis", action="store_true", dest="isCrossAnalysis", default=False, \
                          help="Map the TCP packet with RLC header, then process the cross layer information")
-    optParser.add_option("--check_cross_mapping_feasibility", action="store_true", dest="validate_cross_layer_feasibility", default=False, \
-    					 help="Print out each TCP packets and mapped RLC PDUs")
+    optParser.add_option("--check_cross_mapping_feasibility", dest="validate_cross_layer_feasibility", default=None, \
+    					 help="Validate the cross-layer mapping feasibility, i.e. byte - compare total bytes in both layers, \
+                               unique - check unique PDU chain in the RLC layer")
     optParser.add_option("--cross_mapping_detail", action="store_true", dest="cross_mapping_detail", default=False, \
     					  help="Print out each TCP packets and mapped RLC PDUs")
     #optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
@@ -695,10 +696,17 @@ def main():
     if options.isValidateInference:
         vw.rrc_inference_validation(QCATEntries)        
 
-    # Proof downlink RLC provides insufficient data
-    # compare the the total downlink IP packet size vs total downlink RLC PDU size
+    # Check cross-layer mapping feasibility
     if options.validate_cross_layer_feasibility and options.client_ip:
-        vw.check_mapping_feasibility(QCATEntries, options.client_ip)
+        # Count total number of bytes in the lower layer
+        if options.validate_cross_layer_feasibility.lower() == "byte":
+            vw.check_mapping_feasibility_use_bytes(QCATEntries, options.client_ip)
+        # Check the uniqueness of RLC layer trace
+        if options.validate_cross_layer_feasibility.lower() == "unique":
+            if not options.direction:
+                print >> sys.stderr, "Cross-layer feasibility: Must specify the direction"
+                sys.exit(1)
+            vw.check_mapping_feasibility_uniqueness(QCATEntries, options.direction)
 
     # verify the TCP layer information with RRC layer by printing
     # each TCP packet and corresponding RLC packet

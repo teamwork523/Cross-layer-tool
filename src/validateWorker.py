@@ -10,6 +10,9 @@ Validation for RRC inference, feasibility of cross layer mapping and etc.
 import os, sys, time
 import const
 
+############################################################################
+############################# RRC Inference ################################
+############################################################################
 # Validate RRC inference algorithm
 # Output:
 # timestamp \t RRC state
@@ -18,8 +21,51 @@ def rrc_inference_validation(entryList):
         if entry.logID == const.PROTOCOL_ID:
             print str(entry.timestamp) + "\t" + str(entry.rrcID)
 
+############################################################################
+##################### Cross-layer feasibility ##############################
+############################################################################
+# Examine the uniqueness of the RLC layer PDU "chain" mapping
+# Two possible termination of the chain (WCDMA uplink)
+# 1. HE = 2
+# 2. The last LI (most likely the second is 127)
+def check_mapping_feasibility_uniqueness(entryList, direction, network_type="wcdma"):
+    # key is data chain, value is the total number of appearance
+    uniqueCount = {}
+    curKey = ""
+
+    # determine the log of interest
+    log_of_interest_id = None
+    # TODO: add LTE if necessary
+    if network_type.lower() == "wcdma":
+        if direction.lower() == "up":
+            log_of_interest_id = const.UL_PDU_ID
+        else:
+            log_of_interest_id = const.DL_PDU_ID
+
+    for entry in entryList:
+        if entry.logID == log_of_interest_id:
+            pdu = find_pdu_based_on_log_id(entry, log_of_interest_id)
+            for header in pdu["header"]:
+                if header["he"] == 2 or header["li"][-1] == 127:
+                    if curKey in uniqueCount:
+                        uniqueCount[curKey] += 1
+                    else:
+                        uniqueCount[curKey] = 1
+                    # reset the key
+                    curKey = ""
+                else:
+                    curKey += "".join(header["data"])
+    
+    # count the key appear twice or more
+    dupCount = float(len([x for x in uniqueCount.values if x > 1]))
+    totalCount = float(len(uniqueCount.keys()))
+    
+    print "Duplicat percentage %f / %f = %f" % (dupCount, totalCount, dupCount / totalCount)
+
+
 # compare total bytes and total number of packet in both uplink and downlink
-def check_mapping_feasibility(mainEntryList, client_ip):
+# Output: statistics about the bytes and packet/PDU counts 
+def check_mapping_feasibility_use_bytes(mainEntryList, client_ip):
     uplink_stat = {"ip": {"bytes":0.0, "counts":0.0}, "rlc": {"bytes":0.0, "counts":0.0}}
     downlink_stat = {"ip": {"bytes":0.0, "counts":0.0}, "rlc_flex": {"bytes":0.0, "counts":0.0}, "rlc": {"bytes":0.0, "counts":0.0}}
     
@@ -62,3 +108,17 @@ def check_mapping_feasibility(mainEntryList, client_ip):
                                    / downlink_stat["ip"]["counts"])
     print "Count diff ratio %f" % (abs(downlink_stat["ip"]["counts"] - downlink_stat["rlc"]["counts"]) \
                                    / downlink_stat["ip"]["counts"])
+
+############################################################################
+################################# Helper ###################################
+############################################################################
+# return the corresponding pdu entry based on id
+def find_pdu_based_on_log_id(entry, log_id):
+    # TODO: add LTE if necessary
+    if log_id == const.UL_PDU_ID:
+        return entry.ul_pdu[0]
+    elif log_id == const.DL_PDU_ID:
+        return entry.dl_pdu[0]
+        
+
+
