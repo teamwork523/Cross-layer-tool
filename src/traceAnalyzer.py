@@ -24,6 +24,7 @@ import retxWorker as rw
 import delayWorker as dw
 import lossWorker as lw
 import rrcTimerWorker as rtw
+import validateWorker as vw
 
 DEBUG = False
 DUP_DEBUG = False
@@ -691,21 +692,13 @@ def main():
             print v
 
     # Validate the RRC inference algorithm
-    # Output:
-    # 1. timestamp of IP packet
-    # 2. RRC state
     if options.isValidateInference:
-        for entry in QCATEntries:
-            if entry.logID == const.PROTOCOL_ID:
-                print str(entry.timestamp) + "\t" + str(entry.rrcID)
-        
+        vw.rrc_inference_validation(QCATEntries)        
 
     # Proof downlink RLC provides insufficient data
     # compare the the total downlink IP packet size vs total downlink RLC PDU size
     if options.validate_cross_layer_feasibility and options.client_ip:
-        print "Working on validation ... "
-        print "Current length of QCAT entry is %d" % (len(QCATEntries))
-        clw.check_mapping_feasibility(QCATEntries, options.client_ip)
+        vw.check_mapping_feasibility(QCATEntries, options.client_ip)
 
     # verify the TCP layer information with RRC layer by printing
     # each TCP packet and corresponding RLC packet
