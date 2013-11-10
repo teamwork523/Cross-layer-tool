@@ -38,9 +38,11 @@ def main():
     print "Data Summary:"
     print "Mean: " + str(mean)
     print "Min: " + str(sortData[0])
+    print "5%: " + str(sortData[int(dataLen*0.05)])
     print "Q1: " + str(sortData[int(dataLen*0.25)])
     print "Median: " + str(sortData[int(dataLen*0.5)])
     print "Q3: " + str(sortData[int(dataLen*0.75)])
+    print "95%: " + str(sortData[int(dataLen*0.95)])
     print "Max: " + str(sortData[dataLen-1])
     print "Std: " + str(math.sqrt(diff_sum/dataLen))
     

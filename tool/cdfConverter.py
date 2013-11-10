@@ -13,9 +13,13 @@ def main():
     data = []
     index = int(sys.argv[1]) - 1 
     accurancy = float(sys.argv[2])
+    header = sys.argv[3]
     DEL = "\t"
     
     line = sys.stdin.readline()
+    if header.lower() == "y":
+        line = sys.stdin.readline()
+
     while line != "":
         tempData = line.strip().split(DEL)
         data.append(float(tempData[index]))

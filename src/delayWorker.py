@@ -147,11 +147,13 @@ def extractFACHStatePktDelayInfo(entries, direction):
 # Output:
 # 1. List of TCP RTT
 # 2. Corresponding Average first hop latency (Overall transmission delay + OTA latency)
-# 3. Ratio of the first hop latency
+# 3. Transmission delay ratio
+# 4. OTA delay ratio
 def first_hop_latency_evaluation(entryList, pduID):
     tcp_rtt_list = []
     first_hop_rtt_list = []
-    ratio_rtt_list = []
+    transmission_delay_ratio_rtt_list = []
+    ota_delay_ratio_rtt_list = []
     entryLen = len(entryList)
 
     for i in range(entryLen):
@@ -162,14 +164,12 @@ def first_hop_latency_evaluation(entryList, pduID):
             if mapped_RLCs:
                 transmission_delay = mapped_RLCs[-1][0].timestamp - mapped_RLCs[0][0].timestamp
                 rlc_rtt_list = [rlc[0].rtt["rlc"] for rlc in mapped_RLCs if rlc[0].rtt["rlc"] != None]
-                # TODO: check maximum value
-                first_hop_rtt_tmp = util.meanValue(rlc_rtt_list)
-                if first_hop_rtt_tmp / entry.rtt["tcp"] < 1.0:
-                    tcp_rtt_list.append(entry.rtt["tcp"])
-                    first_hop_rtt_list.append(first_hop_rtt_tmp)
-                    ratio_rtt_list.append(first_hop_rtt_tmp / entry.rtt["tcp"])
+                tcp_rtt_list.append(entry.rtt["tcp"])
+                first_hop_rtt_list.append(transmission_delay + util.meanValue(rlc_rtt_list))
+                transmission_delay_ratio_rtt_list.append(min(transmission_delay / entry.rtt["tcp"], 1.0))
+                ota_delay_ratio_rtt_list.append(min(util.meanValue(rlc_rtt_list) / entry.rtt["tcp"], 1.0))
 
-    return (tcp_rtt_list, first_hop_rtt_list, ratio_rtt_list)
+    return (tcp_rtt_list, first_hop_rtt_list, transmission_delay_ratio_rtt_list, ota_delay_ratio_rtt_list)
                 
 
 #################################################################

@@ -8,6 +8,7 @@ It contains all the necessary functions to process TCP and RLC retransmission
 """
 import os, sys, re
 import const
+import crossLayerWorker as clw
 import QCATEntry as qe
 import PCAPPacket as pp
 import PrintWrapper as pw
@@ -375,6 +376,35 @@ def procRLCReTx(entries, detail="complete"):
             retxCountMapTransform(DLReTxCountMapList)]
 
 ############################################################################
+######################## Cross-layer Retx Analysis #########################
+############################################################################
+# Apply the cross layer information
+# Output:
+# 1. Map between transport layer mapping and the lower layer retransmission
+#    information
+def crossLayerMappingRLCRetxInfo(entryList, direction, client_ip, RLCMap):
+    # A cross-layer RLC retx map
+    clMap = {}
+
+    for i in range(len(entryList)):
+        transportEntry = entryList[i]
+        if transportEntry.logID == const.PROTOCOL_ID:
+            if direction.lower() == "up" and transportEntry.ip["src_ip"] == client_ip:
+                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , const.UL_PDU_ID)
+                if mapped_RLCs:
+                    (count, total) = countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, direction)
+                    if total > 0:
+                        clMap[transportEntry] = min(float(count) / float(total), 1.0)
+            elif direction.lower() != "up" and transportEntry.ip["dst_ip"] == client_ip:
+                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , const.DL_PDU_ID)
+                if mapped_RLCs:
+                    (count, total) = countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, direction)
+                    if total > 0:
+                        clMap[transportEntry] = min(float(count) / float(total), 1.0)
+        
+    return clMap
+
+############################################################################
 ############################# Statistic Info ###############################
 ############################################################################
 # Collect TCP and RLC retx statistic info
@@ -619,3 +649,27 @@ def retxCountSimpleTransform(snBasedMapList):
                 entryBasedMap[entry][k] = v[0]
 
     return entryBasedMap
+
+# Given a list of mapped RLC entry, and mapped SN, then add up the total number of retranmitted PDU
+# Output
+# 1. retransmitted SN count
+# 2. Total SN count
+def countRLCRetx(rlcList, retxMap, direction):
+    count = 0
+    total = 0
+    for rlc in rlcList:
+        pdu_sn = []
+        if direction.lower() == "up":
+            pdu_sn = rlc.ul_pdu[0]["sn"]
+        else:
+            pdu_sn = rlc.dl_pdu[0]["sn"]
+
+        if retxMap.has_key(rlc):
+            for sn in pdu_sn:
+                if sn in retxMap[rlc]:
+                    count += 1
+                total += 1
+        else:
+            total += len(pdu_sn)
+
+    return (count, total)

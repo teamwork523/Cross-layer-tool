@@ -39,12 +39,13 @@ def init_optParser():
                             " "*extraspace + "[--dst_ip] dstIP, [--src_port] srcPort\n" + \
                             " "*extraspace + "[--dst_port] destPort, [-b] begin_portion, [-e] end_portion\n" + \
                             " "*extraspace + "[-a] num_packets, [-d] direction, [--clt_ip] client_ip, [--srv_ip] server_ip, \n" + \
-                            " "*extraspace + "[--print_retx] retransmission_type, [--print_throughput]\n" + \
+                            " "*extraspace + "[--print_retx] retransmission_type, [ --print_throughput]\n" + \
                             " "*extraspace + "[--retx_analysis], [--retx_count_sig], [--cross_analysis]\n" + \
                             " "*extraspace + "[--cross_mapping_detail], [--keep_non_ip], [--dup_ack_threshold] th\n" + \
                             " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
                             " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility]\n" +\
-                            " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]")
+                            " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
+                            " "*extraspace + "[--retx_cross_analysis]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -95,6 +96,8 @@ def init_optParser():
                          help="Useful tag to print retx ratio (loss ratio) against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
     optParser.add_option("--retx_analysis", action="store_true", dest="enable_tcp_retx_test", default=False, \
                          help="Enable TCP retransmission analysis")
+    optParser.add_option("--retx_cross_analysis", action="store_true", dest="isRLCRetxAnalysis", default=False, \
+                         help="Map transport layer packet with RLC ayer")
     optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
                          help="Relate retransmission signal strength with retransmission count")
     optParser.add_option("--rrc_timer", action="store_true", dest="isValidateRRCTimer", default=False, \
@@ -322,7 +325,7 @@ def main():
         print "IP trace length is %d" % (count)
         print "The number of distinguished server IPs is %d" % (len(IPEntriesMap.keys()))
         """
-    else:
+    if options.server_ip != None:
         filteredQCATEntries = util.packetFilter(QCATEntries, cond)
         # create a map between Filtered entries and its index
         filteredEntryToIndexMap = util.createEntryMap(filteredQCATEntries)
@@ -334,8 +337,6 @@ def main():
     #################################################################
     ############### RRC State Inference Verification ################
     #################################################################
-    #if options.direction:
-        #dw.extractFACHStatePktDelayInfo(FACH_delay_analysis_entries, options.direction)
     if options.isValidateRRCTimer:
         rtw.get_RRC_timer_map(QCATEntries)
 
@@ -366,7 +367,7 @@ def main():
                 rlc_retx_config_map = clw.getContextInfo(tcpReTxMap, const.DL_CONFIG_PDU_ID)
                 rlc_fast_retx_config_map = clw.getContextInfo(tcpFastReTxMap, const.UL_CONFIG_PDU_ID)                
         
-    # collect statistic information
+    # Peform RLC layer retransmission analysis and collect statistic information
     retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
     if TIME_DEBUG:
@@ -657,14 +658,37 @@ def main():
         tcp_rtt_list = first_hop_rtt_list = ratio_rtt_list = []
         # only support uplink now
         if options.direction.lower() == "up":
-            tcp_rtt_list, first_hop_rtt_list, ratio_rtt_list = dw.first_hop_latency_evaluation(QCATEntries, const.UL_PDU_ID)
+            tcp_rtt_list, first_hop_rtt_list, transmission_delay_ratio_rtt_list, \
+            ota_delay_ratio_rtt_list = dw.first_hop_latency_evaluation(QCATEntries, const.UL_PDU_ID)
         else:
-            tcp_rtt_list, first_hop_rtt_list, ratio_rtt_list = dw.first_hop_latency_evaluation(QCATEntries, const.DL_PDU_ID)
+            tcp_rtt_list, first_hop_rtt_list, transmission_delay_ratio_rtt_list, \
+            ota_delay_ratio_rtt_list = dw.first_hop_latency_evaluation(QCATEntries, const.DL_PDU_ID)
 
+        # output the TCP the RTT list 
+        list_len = len(first_hop_rtt_list)
+        DEL = "\t"
+        print "TCP_rtt" + DEL + "First_hop_rtt" + DEL + "Tx_delay_ratio" + DEL + "First_hop_rtt_ratio"
+        for i in range(list_len):
+            print str(tcp_rtt_list[i]) + DEL + \
+                  str(first_hop_rtt_list[i]) + DEL + \
+                  str(transmission_delay_ratio_rtt_list[i]) + DEL + \
+                  str(ota_delay_ratio_rtt_list[i])
         
-        # output the first-hop ratio
-        for ratio in sorted(ratio_rtt_list):
-            print ratio
+
+    # print out retransmission 
+    if options.isRLCRetxAnalysis and options.direction and options.client_ip:
+        # perform RLC retransmission analysis
+        [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(nonIPEntries, detail="simple")
+        clMap = {}
+        # Get the map between IP entry and the rlc retransmission ratio for that packet
+        if options.direction.lower() == "up":
+            clMap = rw.crossLayerMappingRLCRetxInfo(QCATEntries, options.direction, \
+                    options.client_ip, RLCULReTxCountMap)
+        else:
+            clMap = rw.crossLayerMappingRLCRetxInfo(QCATEntries, options.direction, \
+                    options.client_ip, RLCDLReTxCountMap)
+        for v in clMap.values():
+            print v
 
     # Validate the RRC inference algorithm
     # Output:
@@ -692,10 +716,8 @@ def main():
                     # RLC retransmission process
                     # Since the RLC for TCP and UDP are the same, we use a generalized method for retx analysis
                     [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(filteredQCATEntries, detail="simple")
-                    # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip)
                     pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.UL_PDU_ID, options.server_ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap)
                 else:
-                    # pw.print_tcp_and_rlc_mapping_full_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip)
                     pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap)
             elif options.client_ip:
                 if options.direction.lower() == "up":
