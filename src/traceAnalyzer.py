@@ -706,7 +706,7 @@ def main():
             if not options.direction:
                 print >> sys.stderr, "Cross-layer feasibility: Must specify the direction"
                 sys.exit(1)
-            vw.check_mapping_feasibility_uniqueness(QCATEntries, options.direction)
+            vw.check_mapping_feasibility_uniqueness(QCATEntries, options.client_ip, options.direction)
 
     # verify the TCP layer information with RRC layer by printing
     # each TCP packet and corresponding RLC packet

@@ -9,6 +9,7 @@ Validation for RRC inference, feasibility of cross layer mapping and etc.
 
 import os, sys, time
 import const
+import crossLayerWorker as clw
 
 ############################################################################
 ############################# RRC Inference ################################
@@ -28,10 +29,13 @@ def rrc_inference_validation(entryList):
 # Two possible termination of the chain (WCDMA uplink)
 # 1. HE = 2
 # 2. The last LI (most likely the second is 127)
-def check_mapping_feasibility_uniqueness(entryList, direction, network_type="wcdma"):
+def check_mapping_feasibility_uniqueness(entryList, client_ip, direction, network_type="wcdma"):
     # key is data chain, value is the total number of appearance
     uniqueCount = {}
     curKey = ""
+    # store the non unique ('dirty') tuple of (rlc_entry, sn)
+    non_unique_rlc_tuples = []
+    non_unique_buffer = []
 
     # determine the log of interest
     log_of_interest_id = None
@@ -45,22 +49,91 @@ def check_mapping_feasibility_uniqueness(entryList, direction, network_type="wcd
     for entry in entryList:
         if entry.logID == log_of_interest_id:
             pdu = find_pdu_based_on_log_id(entry, log_of_interest_id)
-            for header in pdu["header"]:
-                if header["he"] == 2 or header["li"][-1] == 127:
-                    if curKey in uniqueCount:
-                        uniqueCount[curKey] += 1
-                    else:
-                        uniqueCount[curKey] = 1
-                    # reset the key
-                    curKey = ""
+            for i in range(len(pdu["header"])):
+                header = pdu["header"][i]
+                sn = pdu["sn"][i]
+                if (header.has_key("he") and header["he"] == 2) or (header.has_key("li") and header["li"][-1] == 127):
+                    if curKey != "":
+                        if curKey in uniqueCount:
+                            uniqueCount[curKey] += 1
+                            non_unique_rlc_tuples.append(entry)
+                            non_unique_rlc_tuples += non_unique_buffer
+                            non_unique_buffer = []
+                        else:
+                            uniqueCount[curKey] = 1
+                        # reset the key
+                        curKey = ""
+                    non_unique_buffer = []
                 else:
                     curKey += "".join(header["data"])
-    
+                    non_unique_buffer.append((entry, sn))
+
+    # enforce the uniqueness by converting to a set
+    non_unique_rlc_tuples = set(non_unique_rlc_tuples)
+    print "Non unique RLC tuple length is %d" % (len(non_unique_rlc_tuples))
+
     # count the key appear twice or more
-    dupCount = float(len([x for x in uniqueCount.values if x > 1]))
-    totalCount = float(len(uniqueCount.keys()))
+    dupChainCount = 0.0
+    dupPDUCount = 0.0
+    totalChainCount = 0.0
+    totalPDUCount = 0.0
+    DEL = ","
+    sortedDuplicateCount = {}   # key is count, value is the chain bytes
+
+    for key, val in uniqueCount.items():
+        totalPDUCount += len(key) / 4 * val
+        totalChainCount += val
+        if val > 1:
+            dupPDUCount += len(key) / 4 * val
+            dupChainCount += val
+            sortedDuplicateCount[val] = key
+
+    # cross-layer analysis to check the untrusted mapping for transport layer
+    valid_transport_layer_mapping_count = {const.TCP_ID:0.0, const.UDP_ID:0.0}
+    transport_layer_total_count = {const.TCP_ID:0.0, const.UDP_ID:0.0}
+
+    for i in range(len(entryList)):
+        entry = entryList[i]
+        if entry.logID == const.PROTOCOL_ID:
+            # Exclude TCP ACK without payload and TSL without payload
+            """
+            if entry.ip["tlp_id"] == const.TCP_ID and\
+               (entry.ip["total_len"] == 40 or \
+                entry.ip["total_len"] == 52 or \
+                entry.ip["total_len"] == 83):
+                continue
+            """
+            if (log_of_interest_id == const.UL_PDU_ID and \
+               entry.ip["src_ip"] == client_ip) or \
+               (log_of_interest_id == const.DL_PDU_ID and \
+               entry.ip["dst_ip"] == client_ip):
+                if entry.ip["tlp_id"] in transport_layer_total_count:
+                    transport_layer_total_count[entry.ip["tlp_id"]] += 1
+                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i, log_of_interest_id)
+                if mapped_RLCs:
+                    if is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
+                        if entry.ip["tlp_id"] in valid_transport_layer_mapping_count:
+                            valid_transport_layer_mapping_count[entry.ip["tlp_id"]] += 1                        
+
+    # output results
+    print "Chain_occurance" + DEL + "Chain_PDU_length" + DEL + "Chain_value"
+
+    for sortedKey in sorted(sortedDuplicateCount.keys(), reverse=True):
+        print str(sortedKey) + DEL + \
+              str(len(sortedDuplicateCount[sortedKey]) / 4) + DEL + \
+              str(sortedDuplicateCount[sortedKey])
     
-    print "Duplicat percentage %f / %f = %f" % (dupCount, totalCount, dupCount / totalCount)
+    print "$" * 80
+    print "Unique Chain ratio %f / %f = %f" % (totalChainCount - dupChainCount, totalChainCount, 1 - dupChainCount / totalChainCount)
+    print "Unique PDUs ratio %f / %f = %f" % (totalPDUCount - dupPDUCount, totalPDUCount, 1 - dupPDUCount / totalPDUCount)
+    print "Unique TCP ratio %f / %f = %f" % (valid_transport_layer_mapping_count[const.TCP_ID], \
+                                             transport_layer_total_count[const.TCP_ID], \
+                                             valid_transport_layer_mapping_count[const.TCP_ID] / \
+                                             transport_layer_total_count[const.TCP_ID])
+    print "Unique UDP ratio %f / %f = %f" % (valid_transport_layer_mapping_count[const.UDP_ID], \
+                                             transport_layer_total_count[const.UDP_ID], \
+                                             valid_transport_layer_mapping_count[const.UDP_ID] / \
+                                             transport_layer_total_count[const.UDP_ID])
 
 
 # compare total bytes and total number of packet in both uplink and downlink
@@ -120,5 +193,13 @@ def find_pdu_based_on_log_id(entry, log_id):
     elif log_id == const.DL_PDU_ID:
         return entry.dl_pdu[0]
         
-
-
+# determine whether the mapped RLC packets are invalid
+def is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_id, non_unique_rlc_tuples):
+    for rlc_pdu in mapped_RLCs:
+        entry = rlc_pdu[0]
+        pdu = find_pdu_based_on_log_id(entry, log_id)
+        for sn in pdu["sn"]:
+            if (sn in mapped_sn) and \
+               ((entry, sn) in non_unique_rlc_tuples):
+                return False
+    return True
