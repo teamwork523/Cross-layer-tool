@@ -31,8 +31,12 @@ RETX_GAP = 0.003
 ############################################################################
 ################################# QCAT Related #############################
 ############################################################################
-# Map between log id with log entry
+# QxDM log of interest summary
+
+# General
 PROTOCOL_ID = int("0x11EB", 16)
+
+# WCDMA
 RRC_ID = int("0x4125", 16)
 EUL_STATS_ID = int("0x4311", 16)
 DL_CONFIG_PDU_ID = int("0x4132", 16)
@@ -41,6 +45,18 @@ DL_CTRL_PDU_ID = int("0x4134", 16)      # LIST/ACK info on UL RLC AM
 UL_PDU_ID = int("0x413B", 16)   # UL on Link Layer info
 DL_PDU_ID = int("0x418B", 16)   # DL on Link Layer info
 SIG_ID = int("0x4005", 16)  # Signal information
+
+# LTE
+LTE_UL_RLC_PDU_ID = int("0xB092", 16)
+LTE_DL_RLC_PUD_ID = int("0xB082", 16)
+LTE_UL_CONFIG_RLC_ID = int("0xB091", 16)
+LTE_DL_CONFIG_RLC_ID = int("0xB081", 16)
+LTE_CELL_MEASUREMENT_ID = int("0xB180", 16)
+
+# EVENTs
+EVENT_ID = int("0x1FFB", 16)
+
+
 LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                RRC_ID: "WCDMA RRC States",
                EUL_STATS_ID: "EUL Link Statistics", 
@@ -114,3 +130,5 @@ MIN_SN_PERIOD = 20
 
 # Maximum RLC UL sequence number
 MAX_RLC_UL_SEQ_NUM = 4096
+
+

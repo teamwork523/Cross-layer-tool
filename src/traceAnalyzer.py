@@ -46,7 +46,7 @@ def init_optParser():
                             " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
                             " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility] type\n" +\
                             " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
-                            " "*extraspace + "[--retx_cross_analysis]")
+                            " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -92,6 +92,8 @@ def init_optParser():
                          help="study the relationship between the gap period (from RRC inference measurement) to RLC layer retransmission analysis")
     optParser.add_option("--gap_rtt", action="store_true", dest="is_gap_rtt", default=False, \
                          help="Investigate the inter-packet gap time vs the UDP RTT result")
+    optParser.add_option("--network_type", dest="network_type", default="wcdma", \
+                         help="Specify the cellular network type for the trace, i.e. wcdma, lte")
     optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
                          help="Flag to enable printing throughput information based on TCP trace analysis")
     optParser.add_option("--print_retx", dest="retxType", default=None, \
