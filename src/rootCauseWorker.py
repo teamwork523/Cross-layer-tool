@@ -12,6 +12,7 @@ import os, sys, time
 import const
 import crossLayerWorker as clw
 import delayWorker as dw
+import retxWorker as rw
 import Util as util
 import validateWorker as vw
 
@@ -23,11 +24,15 @@ import validateWorker as vw
 #
 # Output the following column
 # 1. Inter-packet timing (s)
-# 2. First-hop Latency (ms)
+# 2.1 Transmission Delay (ms)
+# 2.2 OTA Delay (ms)
 # 3. RLC Retransmission Ratio
 # 4. RLC Retransmission Count
 # 5. RSCP
 # 6. ECIO
+# For mannual insepection
+# 7. UDP packet timestamp
+# 8. First mapped RLC PDU timestamp
 def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
     log_of_interest_id = None
 
@@ -40,7 +45,7 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
     # Uniqueness analysis
     non_unique_rlc_tuples, dummy = vw.uniqueness_analysis(entryList, log_of_interest_id)
     # RLC retransmission analysis
-    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(nonIPEntries, detail="simple")
+    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(entryList, detail="simple")
     # TODO: assume always use Uplink retx map
     RLCMap = RLCULReTxCountMap
     
@@ -51,11 +56,14 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
     GRANULARITY = 0.5   # assume the granularity of inter-packet timing is 0.5s
     DEL = "\t"
     print "Inter_packet_time" + DEL + \
-          "First_hop_latency" + DEL + \
+          "Transmission_delay" + DEL + \
+          "OTA_RTT" + DEL + \
           "RLC_retx_ratio" + DEL + \
           "RLC_retx_count" + DEL + \
           "RSCP" + DEL + \
-          "ECIO"
+          "ECIO" + DEL + \
+          "UDP_timestamp" + DEL + \
+          "RLC_timestamp"
 
     for i in range(len(entryList)):
         entry = entryList[i]
@@ -72,19 +80,41 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
                 # apply cross layer mapping
                 mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i, log_of_interest_id)
                 if mapped_RLCs:
-                    if is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
-                        if is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_of_interest_id):
+                    if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
+                        if vw.is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_of_interest_id):
                             # First-hop latency                            
                             transmission_delay, rlc_rtt_list = dw.calc_first_hop_latency(mapped_RLCs)
-                            cur_output_result += str((transmission_delay + util.meanValue(rlc_rtt_list))*1000) + DEL
+                            cur_output_result += str(transmission_delay * 1000) + DEL
+                            cur_output_result += str(util.meanValue(rlc_rtt_list) * 1000) + DEL
                             # RLC retx ratio and count
-                            (retxRLCCount, totalRLCCount) = countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, log_of_interest_id)
+                            (retxRLCCount, totalRLCCount) = rw.countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, log_of_interest_id)
                             cur_output_result += str(min(float(retxRLCCount) / float(totalRLCCount), 1.0)) + DEL
                             cur_output_result += str(retxRLCCount) + DEL
                             # RSCP
-                            cur_output_result += str(min(entry.sig["RSCP"])) + DEL
+                            if entry.sig["RSCP"] != []:
+                                cur_output_result += str(min(entry.sig["RSCP"])) + DEL
+                            else:
+                                cur_output_result += "N/A" + DEL
                             # ECIO
-                            cur_output_result += str(min(entry.sig["ECIO"]))
+                            if entry.sig["ECIO"] != []:
+                                cur_output_result += str(min(entry.sig["ECIO"])) + DEL
+                            else:
+                                cur_output_result += "N/A" + DEL
+
+                            # mannual insepection
+                            cur_output_result += str(entry.timestamp) + DEL + str(mapped_RLCs[0][0].timestamp) + DEL
+
+                            # Compare with previous round
+                            if priv_inter_packet_time == None:
+                                priv_inter_packet_time = cur_inter_packet_time
+                                priv_output_result = cur_output_result
+                                continue
+                            else:
+                                if cur_inter_packet_time != priv_inter_packet_time:
+                                    print priv_output_result
+                                # reset everything all the time
+                                priv_inter_packet_time = cur_inter_packet_time
+                                priv_output_result = cur_output_result
                         else:
                             print >> sys.stderr, "No polling bit ERROR: not confident about \
                                      first hop latency estimation for " + str(inject_num_list)
@@ -95,7 +125,10 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
                 else:
                     print >> sys.stderr, "Cross-layer mapping ERROR: no mapping found for " + str(inject_num_list)
                     continue
-                
+
+    # print the last result as well
+    if priv_output_result != "":
+        print priv_output_result
         
 ############################################################################
 ############################# Helper Function ##############################

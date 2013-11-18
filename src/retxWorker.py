@@ -385,12 +385,12 @@ def procRLCReTx(entries, detail="complete"):
 def crossLayerMappingRLCRetxInfo(entryList, direction, client_ip, RLCMap, network_type):
     # A cross-layer RLC retx map
     clMap = {}
-    log_of_interest_id = util.get_logID_of_interest(network_type, direction):
+    log_of_interest_id = util.get_logID_of_interest(network_type, direction)
 
     for i in range(len(entryList)):
         transportEntry = entryList[i]
         if transportEntry.logID == const.PROTOCOL_ID:
-            if transportEntry.ip["dst_ip"] == client_ip || \
+            if transportEntry.ip["dst_ip"] == client_ip or \
                transportEntry.ip["src_ip"] == client_ip:
                 mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , log_of_interest_id)
                 if mapped_RLCs:
@@ -655,7 +655,7 @@ def countRLCRetx(rlcList, retxMap, log_of_interest_id):
     count = 0
     total = 0
     for rlc in rlcList:
-        pdu = util.find_pdu_based_on_log_id(log_of_interest_id)
+        pdu = util.find_pdu_based_on_log_id(rlc, log_of_interest_id)
         pdu_sn = pdu["sn"]
 
         if retxMap.has_key(rlc):
