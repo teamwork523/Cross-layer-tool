@@ -33,6 +33,7 @@ import validateWorker as vw
 # For mannual insepection
 # 7. UDP packet timestamp
 # 8. First mapped RLC PDU timestamp
+# 9. Last mapped RLC PDU timestamp
 def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
     log_of_interest_id = None
 
@@ -63,7 +64,8 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
           "RSCP" + DEL + \
           "ECIO" + DEL + \
           "UDP_timestamp" + DEL + \
-          "RLC_timestamp"
+          "First_Mapped_RLC_timestamp" + DEL + \
+          "Last_Mapped_RLC_timestamp"
 
     for i in range(len(entryList)):
         entry = entryList[i]
@@ -102,7 +104,9 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
                                 cur_output_result += "N/A" + DEL
 
                             # mannual insepection
-                            cur_output_result += str(entry.timestamp) + DEL + str(mapped_RLCs[0][0].timestamp) + DEL
+                            cur_output_result += util.convert_ts_in_human(entry.timestamp) + DEL + \
+                                                 util.convert_ts_in_human(mapped_RLCs[0][0].timestamp) + DEL + \
+                                                 util.convert_ts_in_human(mapped_RLCs[-1][0].timestamp) + DEL
 
                             # Compare with previous round
                             if priv_inter_packet_time == None:
