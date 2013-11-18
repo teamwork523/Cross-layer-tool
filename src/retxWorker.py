@@ -382,23 +382,19 @@ def procRLCReTx(entries, detail="complete"):
 # Output:
 # 1. Map between transport layer mapping and the lower layer retransmission
 #    information
-def crossLayerMappingRLCRetxInfo(entryList, direction, client_ip, RLCMap):
+def crossLayerMappingRLCRetxInfo(entryList, direction, client_ip, RLCMap, network_type):
     # A cross-layer RLC retx map
     clMap = {}
+    log_of_interest_id = util.get_logID_of_interest(network_type, direction):
 
     for i in range(len(entryList)):
         transportEntry = entryList[i]
         if transportEntry.logID == const.PROTOCOL_ID:
-            if direction.lower() == "up" and transportEntry.ip["src_ip"] == client_ip:
-                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , const.UL_PDU_ID)
+            if transportEntry.ip["dst_ip"] == client_ip || \
+               transportEntry.ip["src_ip"] == client_ip:
+                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , log_of_interest_id)
                 if mapped_RLCs:
-                    (count, total) = countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, direction)
-                    if total > 0:
-                        clMap[transportEntry] = min(float(count) / float(total), 1.0)
-            elif direction.lower() != "up" and transportEntry.ip["dst_ip"] == client_ip:
-                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , const.DL_PDU_ID)
-                if mapped_RLCs:
-                    (count, total) = countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, direction)
+                    (count, total) = countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, log_of_interest_id)
                     if total > 0:
                         clMap[transportEntry] = min(float(count) / float(total), 1.0)
         
@@ -654,15 +650,13 @@ def retxCountSimpleTransform(snBasedMapList):
 # Output
 # 1. retransmitted SN count
 # 2. Total SN count
-def countRLCRetx(rlcList, retxMap, direction):
+# TODO: change this to not require direction
+def countRLCRetx(rlcList, retxMap, log_of_interest_id):
     count = 0
     total = 0
     for rlc in rlcList:
-        pdu_sn = []
-        if direction.lower() == "up":
-            pdu_sn = rlc.ul_pdu[0]["sn"]
-        else:
-            pdu_sn = rlc.dl_pdu[0]["sn"]
+        pdu = util.find_pdu_based_on_log_id(log_of_interest_id)
+        pdu_sn = pdu["sn"]
 
         if retxMap.has_key(rlc):
             for sn in pdu_sn:

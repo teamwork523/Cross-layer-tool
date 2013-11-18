@@ -19,7 +19,9 @@ then
     #scp -r pcap/UDP/seq/* haokun@ep2.eecs.umich.edu:$ep2_folder/pcap/UDP/seq/
     scp -r $prj_folder/src/*.py haokun@ep2.eecs.umich.edu:$ep2_folder/src/
     if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-d' ];then
-        scp -r $prj_folder/data/TCP/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/TCP/
+        # scp -r $prj_folder/data/TCP/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/TCP/
+        # Root cause analysis
+        scp -r $prj_folder/data/UDP/Root_cause/11-18.07-30_root_cause_rrc_infer_3G_whole_night.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/UDP/Root_cause/
     fi
     if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-p' ];then
         scp -r $prj_folder/data/PCAP/*.pcap haokun@ep2.eecs.umich.edu:$ep2_folder/data/PCAP/

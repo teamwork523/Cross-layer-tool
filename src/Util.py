@@ -858,6 +858,23 @@ def merge_two_entry_lists(nonIP, IP):
 
     return merged_entry
 
+# Get log of interest based on the network type and direction
+def get_logID_of_interest(network_type, direction):
+    # TODO: add LTE if necessary
+    if network_type.lower() == "wcdma":
+        if direction.lower() == "up":
+            return const.UL_PDU_ID
+        else:
+            return const.DL_PDU_ID
+
+# return the corresponding pdu entry based on id
+def find_pdu_based_on_log_id(entry, log_id):
+    # TODO: add LTE if necessary
+    if log_id == const.UL_PDU_ID:
+        return entry.ul_pdu[0]
+    elif log_id == const.DL_PDU_ID:
+        return entry.dl_pdu[0]
+
 #############################################################################
 ############################ Bianry Search ##################################
 ############################################################################# 

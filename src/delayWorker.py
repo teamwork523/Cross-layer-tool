@@ -162,8 +162,7 @@ def first_hop_latency_evaluation(entryList, pduID):
             # perform cross-layer mapping
             mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , pduID)
             if mapped_RLCs:
-                transmission_delay = mapped_RLCs[-1][0].timestamp - mapped_RLCs[0][0].timestamp
-                rlc_rtt_list = [rlc[0].rtt["rlc"] for rlc in mapped_RLCs if rlc[0].rtt["rlc"] != None]
+                transmission_delay, rlc_rtt_list = calc_first_hop_latency(mapped_RLCs)
                 tcp_rtt_list.append(entry.rtt["tcp"])
                 first_hop_rtt_list.append(transmission_delay + util.meanValue(rlc_rtt_list))
                 transmission_delay_ratio_rtt_list.append(min(transmission_delay / entry.rtt["tcp"], 1.0))
@@ -219,3 +218,11 @@ def find_tcp_ack_entry(entryList, server_ip, direction, ack_num):
                         return None
     return None
 
+# Calculate the first-hop latency given a list of mapped RLC PDU list
+# Output:
+# 1. transmission delay
+# 2. list of OTA RTT estimation
+def calc_first_hop_latency(mapped_RLCs):
+    transmission_delay = mapped_RLCs[-1][0].timestamp - mapped_RLCs[0][0].timestamp
+    rlc_rtt_list = [rlc[0].rtt["rlc"] for rlc in mapped_RLCs if rlc[0].rtt["rlc"] != None]
+    return transmission_delay, rlc_rtt_list

@@ -10,6 +10,7 @@ Validation for RRC inference, feasibility of cross layer mapping and etc.
 import os, sys, time
 import const
 import crossLayerWorker as clw
+import Util as util
 
 ############################################################################
 ############################# RRC Inference ################################
@@ -30,46 +31,14 @@ def rrc_inference_validation(entryList):
 # 1. HE = 2
 # 2. The last LI (most likely the second is 127)
 def check_mapping_feasibility_uniqueness(entryList, client_ip, direction, network_type="wcdma"):
-    # key is data chain, value is the total number of appearance
-    uniqueCount = {}
-    curKey = ""
-    # store the non unique ('dirty') tuple of (rlc_entry, sn)
-    non_unique_rlc_tuples = []
-    non_unique_buffer = []
-
     # determine the log of interest
     log_of_interest_id = None
-    # TODO: add LTE if necessary
-    if network_type.lower() == "wcdma":
-        if direction.lower() == "up":
-            log_of_interest_id = const.UL_PDU_ID
-        else:
-            log_of_interest_id = const.DL_PDU_ID
+    
+    # Determine the log of interest we wanna focus on
+    log_of_interest_id = util.get_logID_of_interest(network_type, direction)
 
-    for entry in entryList:
-        if entry.logID == log_of_interest_id:
-            pdu = find_pdu_based_on_log_id(entry, log_of_interest_id)
-            for i in range(len(pdu["header"])):
-                header = pdu["header"][i]
-                sn = pdu["sn"][i]
-                if (header.has_key("he") and header["he"] == 2) or (header.has_key("li") and header["li"][-1] == 127):
-                    if curKey != "":
-                        if curKey in uniqueCount:
-                            uniqueCount[curKey] += 1
-                            non_unique_rlc_tuples.append(entry)
-                            non_unique_rlc_tuples += non_unique_buffer
-                            non_unique_buffer = []
-                        else:
-                            uniqueCount[curKey] = 1
-                        # reset the key
-                        curKey = ""
-                    non_unique_buffer = []
-                else:
-                    curKey += "".join(header["data"])
-                    non_unique_buffer.append((entry, sn))
+    non_unique_rlc_tuples, uniqueCount = uniqueness_analysis(entryList, log_of_interest_id)
 
-    # enforce the uniqueness by converting to a set
-    non_unique_rlc_tuples = set(non_unique_rlc_tuples)
     print "Non unique RLC tuple length is %d" % (len(non_unique_rlc_tuples))
 
     # count the key appear twice or more
@@ -89,8 +58,9 @@ def check_mapping_feasibility_uniqueness(entryList, client_ip, direction, networ
             sortedDuplicateCount[val] = key
 
     # cross-layer analysis to check the untrusted mapping for transport layer
+    transport_layer_total_count = {const.TCP_ID:0.0, const.UDP_ID:0.0}    
     valid_transport_layer_mapping_count = {const.TCP_ID:0.0, const.UDP_ID:0.0}
-    transport_layer_total_count = {const.TCP_ID:0.0, const.UDP_ID:0.0}
+    valid_RLC_first_hop_esimation_count = {const.TCP_ID:0.0, const.UDP_ID:0.0}
 
     for i in range(len(entryList)):
         entry = entryList[i]
@@ -113,7 +83,10 @@ def check_mapping_feasibility_uniqueness(entryList, client_ip, direction, networ
                 if mapped_RLCs:
                     if is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
                         if entry.ip["tlp_id"] in valid_transport_layer_mapping_count:
-                            valid_transport_layer_mapping_count[entry.ip["tlp_id"]] += 1                        
+                            valid_transport_layer_mapping_count[entry.ip["tlp_id"]] += 1
+                    if is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_of_interest_id):
+                        if entry.ip["tlp_id"] in valid_RLC_first_hop_esimation_count:
+                            valid_RLC_first_hop_esimation_count[entry.ip["tlp_id"]] += 1                   
 
     # output results
     print "Chain_occurance" + DEL + "Chain_PDU_length" + DEL + "Chain_value"
@@ -133,6 +106,16 @@ def check_mapping_feasibility_uniqueness(entryList, client_ip, direction, networ
     print "Unique UDP ratio %f / %f = %f" % (valid_transport_layer_mapping_count[const.UDP_ID], \
                                              transport_layer_total_count[const.UDP_ID], \
                                              valid_transport_layer_mapping_count[const.UDP_ID] / \
+                                             transport_layer_total_count[const.UDP_ID])
+    print "Valid TCP first hop esitmation ratio %f / %f = %f" % \
+                                            (valid_RLC_first_hop_esimation_count[const.TCP_ID], \
+                                             transport_layer_total_count[const.TCP_ID], \
+                                             valid_RLC_first_hop_esimation_count[const.TCP_ID] / \
+                                             transport_layer_total_count[const.TCP_ID])
+    print "Valid UDP first hop esitmation ratio %f / %f = %f" % \
+                                            (valid_RLC_first_hop_esimation_count[const.UDP_ID], \
+                                             transport_layer_total_count[const.UDP_ID], \
+                                             valid_RLC_first_hop_esimation_count[const.UDP_ID] / \
                                              transport_layer_total_count[const.UDP_ID])
 
 
@@ -184,22 +167,59 @@ def check_mapping_feasibility_use_bytes(mainEntryList, client_ip):
 
 ############################################################################
 ################################# Helper ###################################
-############################################################################
-# return the corresponding pdu entry based on id
-def find_pdu_based_on_log_id(entry, log_id):
-    # TODO: add LTE if necessary
-    if log_id == const.UL_PDU_ID:
-        return entry.ul_pdu[0]
-    elif log_id == const.DL_PDU_ID:
-        return entry.dl_pdu[0]
-        
-# determine whether the mapped RLC packets are invalid
+############################################################################        
+# Valid the uniqueness of the cross-layer mapping
 def is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_id, non_unique_rlc_tuples):
     for rlc_pdu in mapped_RLCs:
         entry = rlc_pdu[0]
-        pdu = find_pdu_based_on_log_id(entry, log_id)
+        pdu = util.find_pdu_based_on_log_id(entry, log_id)
         for sn in pdu["sn"]:
             if (sn in mapped_sn) and \
                ((entry, sn) in non_unique_rlc_tuples):
                 return False
     return True
+
+# check whether a polling bit existing for the mapped RLC list
+def is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_id):
+    for rlc_pdu in mapped_RLCs:
+        entry = rlc_pdu[0]
+        pdu = util.find_pdu_based_on_log_id(entry, log_id)
+        for i in range(len(pdu["sn"])):
+            sn = pdu["sn"][i]
+            if (pdu["header"][i]["p"] != None) and \
+               (sn in mapped_sn):
+                return True
+    return False
+
+# Uniqueness analysis -- filter out the non-unique RLC entries
+# Output:
+# 1. A set of nonunique RLC tuples with (rlc_entry, sn)
+# 2. A map between RLC data chain to the count
+def uniqueness_analysis(entryList, log_of_interest_id):
+    curKey = ""
+    non_unique_rlc_tuples = []
+    non_unique_buffer = []
+    uniqueCount = {}
+
+    for entry in entryList:
+        if entry.logID == log_of_interest_id:
+            pdu = util.find_pdu_based_on_log_id(entry, log_of_interest_id)
+            for i in range(len(pdu["header"])):
+                header = pdu["header"][i]
+                sn = pdu["sn"][i]
+                if (header.has_key("he") and header["he"] == 2) or (header.has_key("li") and header["li"][-1] == 127):
+                    if curKey != "":
+                        if curKey in uniqueCount:
+                            uniqueCount[curKey] += 1
+                            non_unique_rlc_tuples += non_unique_buffer
+                            non_unique_buffer = []
+                        else:
+                            uniqueCount[curKey] = 1
+                        # reset the key
+                        curKey = ""
+                    non_unique_buffer = []
+                else:
+                    curKey += "".join(header["data"])
+                    non_unique_buffer.append((entry, sn))
+
+    return set(non_unique_rlc_tuples), uniqueCount

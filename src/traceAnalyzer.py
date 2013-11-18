@@ -23,6 +23,7 @@ import crossLayerWorker as clw
 import retxWorker as rw
 import delayWorker as dw
 import lossWorker as lw
+import rootCauseWorker as rcw
 import rrcTimerWorker as rtw
 import validateWorker as vw
 
@@ -46,7 +47,8 @@ def init_optParser():
                             " "*extraspace + "[--draw_percent] draw, [--loss_analysis], [--udp_hash_target] hash_target\n" + \
                             " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility] type\n" +\
                             " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
-                            " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type")
+                            " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type\n" +\
+                            " "*extraspace + "[--root_cause_analysis] analysis_type")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -104,6 +106,8 @@ def init_optParser():
                          help="Map transport layer packet with RLC ayer")
     optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
                          help="Relate retransmission signal strength with retransmission count")
+    optParser.add_option("--root_cause_analysis", dest="root_cause_analysis_type", default="rrc_infer", \
+                         help="Perform root cause analysis, i.e. for abnormal inferred RRC state")
     optParser.add_option("--rrc_timer", action="store_true", dest="isValidateRRCTimer", default=False, \
                          help="Include if you want to validate RRC Timer")
     optParser.add_option("--src_ip", dest="srcIP", default=None, \
@@ -217,8 +221,8 @@ def main():
         print "Delete Dup IP takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
 
-    # determine the client address if user don't pass one
-    if options.client_ip == None:
+    # determine the client address if user don't pass any IP address hints
+    if options.client_ip == None and options.server_ip == None:
         options.client_ip = util.findClientIP(QCATEntries)
     
     if IP_DUP_DEBUG:
@@ -283,7 +287,9 @@ def main():
     # this used for keep the non-IP entries in the logs
     cond["keep_non_ip_entries"] = False
     # To verify the cross analysis, must include the non ip entries
-    if options.cross_mapping_detail or options.keep_non_ip_entries:
+    if options.root_cause_analysis_type or \
+       options.cross_mapping_detail or \
+       options.keep_non_ip_entries:
         cond["keep_non_ip_entries"] = True
     if options.srcIP != None:
         if util.validateIP(options.srcIP) == None:
@@ -687,28 +693,37 @@ def main():
         # Get the map between IP entry and the rlc retransmission ratio for that packet
         if options.direction.lower() == "up":
             clMap = rw.crossLayerMappingRLCRetxInfo(QCATEntries, options.direction, \
-                    options.client_ip, RLCULReTxCountMap)
+                    options.client_ip, RLCULReTxCountMap, options.network_type)
         else:
             clMap = rw.crossLayerMappingRLCRetxInfo(QCATEntries, options.direction, \
-                    options.client_ip, RLCDLReTxCountMap)
+                    options.client_ip, RLCDLReTxCountMap, options.network_type)
         for v in clMap.values():
             print v
 
     # Validate the RRC inference algorithm
     if options.isValidateInference:
-        vw.rrc_inference_validation(QCATEntries)        
+        vw.rrc_inference_validation(QCATEntries) 
 
     # Check cross-layer mapping feasibility
     if options.validate_cross_layer_feasibility and options.client_ip:
         # Count total number of bytes in the lower layer
         if options.validate_cross_layer_feasibility.lower() == "byte":
             vw.check_mapping_feasibility_use_bytes(QCATEntries, options.client_ip)
-        # Check the uniqueness of RLC layer trace
+        # Check the uniqueness of RLC layer trace (uniqueness analysis)
         if options.validate_cross_layer_feasibility.lower() == "unique":
             if not options.direction:
                 print >> sys.stderr, "Cross-layer feasibility: Must specify the direction"
                 sys.exit(1)
             vw.check_mapping_feasibility_uniqueness(QCATEntries, options.client_ip, options.direction)
+
+    # ROOT CAUSE analysis
+    if options.root_cause_analysis_type:
+        if options.root_cause_analysis_type.lower() == "rrc_infer":
+            # analyze the root cause of the abnormal delay
+            if options.server_ip == None:
+                print >> sys.stderr, "Root Cause Analysis Parameter Error: no server ip"
+                sys.exit(1)
+            rcw.abnormal_rrc_fach_analysis(QCATEntries, options.server_ip, options.network_type)
 
     # verify the TCP layer information with RRC layer by printing
     # each TCP packet and corresponding RLC packet
