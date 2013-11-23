@@ -1,0 +1,46 @@
+Filtered QCAT Entry # is 6555
+TCP flow length is 1
+TCP ReTx happens 0 times
+TCP Fast ReTx happens 0 times
+{2: None, 3: None, 4: None, 5: None, 6: None}
+{2: None, 3: None, 4: None, 5: None, 6: None}
+No entries of interest
+Max Product is -1
+No entries of interest
+Max Product is -1
+RTO: Short FACH ratio is 0.000000
+RTO: timer distribution []
+RTO: Min value of timer is N/A
+RTO: poll timer distribution is []
+RTO: Average poll timer enabled 0.000000
+Fast Retx: Short FACH promote ratio is 0.000000
+Fast Retx: timer distribution []
+Fast Retx: Min value of timer is N/A
+Fast Retx: Mean value timer is 0.000000
+Fast Retx: Average poll timer enabled 0.000000
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+RTO: Dup_ACK_ratio is 0.000000 / 0.000000 = 0.000000
+Fast Retx: Dup_ACK_ratio is 0.000000 / 0.000000 = 0.000000
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+Total number of duplicate ACK is 173
+RLC uplink:
+2.77073549174e-05	0.21990634914	0.0	0.000498732388513	0.0	
+Retx_count / Total_count: 2.77073549174e-05	0.21990634914	0.0	0.000498732388513	0.0	
+Total_count: 144366.0	144366.0	144366.0	144366.0	144366.0	
+Each State count: 4.0	31747.0	0.0	72.0	0.0	
+Per state ratio: 1.0	0.220122864433	0	0.521739130435	0	
+****************************************
+TCP RTO uplink:
+0.0	0.0	0.0	0.0	0.0	
+Retx_count / Total_count: 0.0	0.0	0.0	0.0	0.0	
+Total_count: 23445.0	23445.0	23445.0	23445.0	23445.0	
+Each State count: 0.0	0.0	0.0	0.0	0.0	
+Per state ratio: 0	0.0	0	0.0	0.0	
+****************************************
+TCP Fast Retx uplink:
+0.0	0.0	0.0	0.0	0.0	
+Retx_count / Total_count: 0.0	0.0	0.0	0.0	0.0	
+Total_count: 23445.0	23445.0	23445.0	23445.0	23445.0	
+Each State count: 0.0	0.0	0.0	0.0	0.0	
+Per state ratio: 0	0.0	0	0.0	0.0	
+****************************************

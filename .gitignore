@@ -1,4 +1,6 @@
-Plot/*.txt
 *.pyc
 *~
 server/*
+data/*
+Debug/*
+src/Data_structure_summary

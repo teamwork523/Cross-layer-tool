@@ -1,0 +1,95 @@
+Filtered QCAT Entry # is 7773
+TCP flow length is 1
+TCP ReTx happens 2 times
+TCP Fast ReTx happens 2 times
+{2: None, 3: {"{'radio_bearer_id': 5, 'chan': 19, 'is_report_missing_pdu': True, 'min_time_btw_poll': 40, 'is_pdu_order_preserved': True, 'receive_win_size': 2047}": 3.0}, 4: None, 5: {"{'radio_bearer_id': 5, 'chan': 19, 'is_report_missing_pdu': True, 'min_time_btw_poll': 40, 'is_pdu_order_preserved': True, 'receive_win_size': 1536}": 1.0}, 6: None}
+{2: None, 3: {"{'reset_timer': 300, 'is_discard': False, 'poll': {'poll_win_size': 0, 'poll_proh_timer': 0, 'poll_timer': 0, 'poll_periodic_timer': 300, 'is_last_retx_pdu_poll': True, 'poll_sdu': 0, 'is_last_tx_pdu_poll': True, 'poll_pdu': 128}, 'radio_bearer_id': 5, 'max_tx': 15, 'chan': 19, 'tx_win_size': 7, 'max_reset': 24}": 4.0}, 4: None, 5: None, 6: None}
+Max Product is 1512
+Corresponding RLC count map:
+{664: 1, 665: 1, 666: 1, 667: 1, 668: 1, 669: 1, 670: 1, 671: 1, 672: 1, 673: 1, 674: 1, 675: 1, 676: 1, 677: 1, 678: 1, 679: 1, 680: 1, 681: 1, 682: 1, 683: 1, 684: 1, 685: 1, 686: 1, 687: 1, 688: 1, 689: 1, 690: 1, 691: 1, 692: 1, 693: 1, 694: 1, 695: 1, 696: 1, 697: 1, 698: 1, 699: 1}
+Retx TCP entries:
+20:28:01.454000	162.171.128.69	141.212.113.208	0x1c93e043	0xb7e6e49bL	1440	1388	CELL_DCH	-89
+20:28:05.280000	162.171.128.69	141.212.113.208	0x1c93e043	0xb7e6e49bL	1440	1388	PROMOTE_TO_DCH	-88
+being index is 47558
+end index is 47628
+Total Fach promote 1
+Fach retx is 0
+The FACH promote retx ratio is 0.000000
+The retx dist is 
+{664: [], 665: [], 666: [], 667: [], 668: [], 669: [], 670: [], 671: [], 672: [], 673: [], 674: [], 675: [], 676: [], 677: [], 678: [], 679: [], 680: [], 681: [], 682: [], 683: [], 684: [], 685: [], 686: [], 687: [], 688: [], 689: [], 690: [], 691: [], 692: [], 693: [], 694: [], 695: [], 696: [], 697: [], 698: [], 699: []}
+The average retx is 0.000000
+0	3	0	1	3
+3825	3	0	1	5
+2992	0	2	1	5
+4256	0	2	1	3
+4259	0	2	1	3
+4260	0	2	1	3
+4262	0	2	1	3
+4265	0	2	1	3
+4266	0	2	1	3
+4269	0	2	1	3
+4270	0	2	1	3
+4272	0	2	1	3
+4275	0	2	1	3
+4276	0	2	1	3
+4279	0	2	1	3
+No entries of interest
+Max Product is 1512
+Corresponding RLC count map:
+{2176: 1, 2177: 1, 2178: 1, 2179: 1, 2180: 1, 2181: 1, 2182: 1, 2183: 1, 2184: 1, 2185: 1, 2186: 1, 2187: 1, 2188: 1, 2189: 1, 2190: 1, 2191: 1, 2192: 1, 2193: 1, 2194: 1, 2195: 1, 2196: 1, 2197: 1, 2198: 1, 2199: 1, 2200: 1, 2201: 1, 2202: 1, 2203: 1, 2204: 1, 2205: 1, 2170: 1, 2171: 1, 2172: 1, 2173: 1, 2174: 1, 2175: 1}
+Retx TCP entries:
+20:29:21.935000	162.171.128.69	141.212.113.208	0x1c97109b	0xb7e6e49bL	1440	1388	CELL_DCH	-86
+20:29:22.225000	162.171.128.69	141.212.113.208	0x1c97109b	0xb7e6e49bL	1440	1388	CELL_DCH	-86
+being index is 50371
+end index is 50451
+Total Fach promote 0
+Fach retx is 0
+The FACH promote retx ratio is 0.000000
+The retx dist is 
+{2176: [], 2177: [], 2178: [], 2179: [], 2180: [], 2181: [], 2182: [], 2183: [], 2184: [], 2185: [], 2186: [], 2187: [], 2188: [], 2189: [], 2190: [], 2191: [], 2192: [], 2193: [], 2194: [], 2195: [], 2196: [], 2197: [], 2198: [], 2199: [], 2200: [], 2201: [], 2202: [], 2203: [], 2204: [], 2205: [], 2170: [], 2171: [], 2172: [], 2173: [], 2174: [], 2175: []}
+The average retx is 0.000000
+0	3	0	1	3
+289	3	0	1	3
+154	0	2	1	3
+156	0	2	1	3
+159	0	2	1	3
+160	0	2	1	3
+163	0	2	1	3
+164	0	2	1	3
+166	0	2	1	3
+RTO: Short FACH ratio is 0.000000
+RTO: timer distribution []
+RTO: Min value of timer is N/A
+RTO: poll timer distribution is []
+RTO: Average poll timer enabled 0.000000
+Fast Retx: Short FACH promote ratio is 0.000000
+Fast Retx: timer distribution []
+Fast Retx: Min value of timer is N/A
+Fast Retx: Mean value timer is 0.000000
+Fast Retx: Average poll timer enabled 0.000000
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+RTO: Dup_ACK_ratio is 0.000000 / 2.000000 = 0.000000
+Fast Retx: Dup_ACK_ratio is 0.000000 / 2.000000 = 0.000000
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+Total number of duplicate ACK is 56
+RLC uplink:
+0.0	0.0747517936082	0.0	0.000188419450685	0.0	
+Retx_count / Total_count: 0.0	0.0747517936082	0.0	0.000188419450685	0.0	
+Total_count: 137990.0	137990.0	137990.0	137990.0	137990.0	
+Each State count: 0.0	10315.0	0.0	26.0	0.0	
+Per state ratio: 0.0	0.0747740106851	0	0.666666666667	0	
+****************************************
+TCP RTO uplink:
+0.0	0.000372148412787	0.0	0.0	0.0	
+Retx_count / Total_count: 0.0	0.000372148412787	0.0	0.0	0.0	
+Total_count: 26871.0	26871.0	26871.0	26871.0	26871.0	
+Each State count: 0.0	10.0	0.0	0.0	0.0	
+Per state ratio: 0.0	0.000373106484591	0	0.0	0.0	
+****************************************
+TCP Fast Retx uplink:
+0.0	0.00186074206394	0.0	0.0	0.0	
+Retx_count / Total_count: 0.0	0.00186074206394	0.0	0.0	0.0	
+Total_count: 26871.0	26871.0	26871.0	26871.0	26871.0	
+Each State count: 0.0	50.0	0.0	0.0	0.0	
+Per state ratio: 0.0	0.00186553242295	0	0.0	0.0	
+****************************************

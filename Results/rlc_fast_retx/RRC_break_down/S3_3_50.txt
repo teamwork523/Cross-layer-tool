@@ -1,0 +1,548 @@
+#############################################
+Running up 3 high...
+Before remove dup: 56804 entries
+After remove dup: 50081 entries
+TCP ReTx happens 12 times
+TCP Fast ReTx happens 2 times
+Does the bit map matches? True
+All Map length is 42510, with True number 1193
+RTO OR FAST retx map length is 42510, with True number 1193
+Total Count is 2
+Win	draw_plus	draw	loss
+0.000000	0.000000	1.000000	1.000000
+0.000000	0.000000	0.500000	0.500000
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.000000
+Draw avg cost RTT: 0.000002
+Loss avg cost RTT: 0.000000
+Orignal RTT: 0.040034
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.000000
+Draw avg count percent: 0.000940
+Loss avg count percent: 0.000000
+Total Count is 112811.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (0.000000 - 0.212010) / 4516.277754 = 
+>>>>>>>> -0.000047
+'Improved Benefit' RTT ratio: 0.000000 / 4516.277754 = 
+<<<<<<<< 0.000000
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.000000
+Draw overhead RTT ratio: 0.000047
+Loss overhead RTT ratio: 0.000000
+Total RTT is: 4516.277754
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 106.000000 / 112811.000000 = 
+!!!!!!! 0.000940
+RRC:  CELL_FACH
+Benefit time is  0.0
+RRC:  CELL_DCH
+Benefit time is  -0.212009906769
+Total state RTT is  4515.89575386
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  0.0
+Total state RTT is  0.381999969482
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	-4.69435048783e-05	0.0	0.0	0.0	
+!!!Benefit RTT ratio per state is
+0	-4.6947475833e-05	0	0.0	0	
+#############################################
+Running up 3.5 high...
+Before remove dup: 81890 entries
+After remove dup: 74488 entries
+TCP ReTx happens 1 times
+TCP Fast ReTx happens 1 times
+Does the bit map matches? True
+All Map length is 66441, with True number 194
+RTO OR FAST retx map length is 66441, with True number 194
+Total Count is 153
+Win	draw_plus	draw	loss
+0.000000	108.000000	45.000000	0.000000
+0.000000	0.705882	0.294118	0.000000
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.001418
+Draw avg cost RTT: 0.000848
+Loss avg cost RTT: 0.000000
+Orignal RTT: 0.034427
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.046247
+Draw avg count percent: 0.038077
+Loss avg count percent: 0.000000
+Total Count is 165482.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (234.666733 - 140.377924) / 5696.981707 = 
+>>>>>>>> 0.016551
+'Improved Benefit' RTT ratio: 234.666733 / 5696.981707 = 
+<<<<<<<< 0.041191
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.041191
+Draw overhead RTT ratio: 0.024641
+Loss overhead RTT ratio: 0.000000
+Total RTT is: 5696.981707
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 6301.000000 / 165482.000000 = 
+!!!!!!! 0.038077
+RRC:  CELL_FACH
+Benefit time is  0.223000526428
+Total state RTT is  42.5769979954
+RRC:  CELL_DCH
+Benefit time is  78.6618094444
+Total state RTT is  5654.40470862
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  13.8199989796
+Total state RTT is  42.5769979954
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+3.91436269085e-05	0.0138076289332	0.0	0.00242584577084	0.0	
+!!!Benefit RTT ratio per state is
+0.00523758219056	0.0139115987443	0	0.32458838411	0	
+#############################################
+Running up 4 high...
+Before remove dup: 79675 entries
+After remove dup: 71661 entries
+TCP ReTx happens 2 times
+TCP Fast ReTx happens 2 times
+Does the bit map matches? True
+All Map length is 63190, with True number 291
+RTO OR FAST retx map length is 63190, with True number 291
+Total Count is 28
+Win	draw_plus	draw	loss
+0.000000	19.000000	2.000000	7.000000
+0.000000	0.678571	0.071429	0.250000
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.000158
+Draw avg cost RTT: 0.000018
+Loss avg cost RTT: 0.000091
+Orignal RTT: 0.034898
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.006327
+Draw avg count percent: 0.001015
+Loss avg count percent: 0.002406
+Total Count is 137990.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (21.858920 - 15.011986) / 4815.614968 = 
+>>>>>>>> 0.001422
+'Improved Benefit' RTT ratio: 21.858920 / 4815.614968 = 
+<<<<<<<< 0.004539
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.004539
+Draw overhead RTT ratio: 0.000522
+Loss overhead RTT ratio: 0.002596
+Total RTT is: 4815.614968
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 472.000000 / 137990.000000 = 
+!!!!!!! 0.003421
+RRC:  CELL_FACH
+Benefit time is  0.0
+Total state RTT is  6.72399973869
+RRC:  CELL_DCH
+Benefit time is  4.06493377686
+Total state RTT is  4808.89096785
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  2.78200078011
+Total state RTT is  6.72399973869
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	0.000844115196962	0.0	0.000577704155924	0.0	
+!!!Benefit RTT ratio per state is
+0.0	0.000845295475409	0	0.413741952442	0	
+#############################################
+Running up 4.5 high...
+Before remove dup: 86177 entries
+After remove dup: 78361 entries
+TCP ReTx happens 2 times
+TCP Fast ReTx happens 2 times
+Does the bit map matches? True
+All Map length is 68896, with True number 2002
+RTO OR FAST retx map length is 68896, with True number 2002
+Total Count is 109
+Win	draw_plus	draw	loss
+0.000000	83.000000	25.000000	1.000000
+0.000000	0.761468	0.229358	0.009174
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.000943
+Draw avg cost RTT: 0.000723
+Loss avg cost RTT: 0.000030
+Orignal RTT: 0.033473
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.039082
+Draw avg count percent: 0.023458
+Loss avg count percent: 0.001264
+Total Count is 159052.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (149.969799 - 119.881875) / 5323.908900 = 
+>>>>>>>> 0.005651
+'Improved Benefit' RTT ratio: 149.969799 / 5323.908900 = 
+<<<<<<<< 0.028169
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.028169
+Draw overhead RTT ratio: 0.021612
+Loss overhead RTT ratio: 0.000906
+Total RTT is: 5323.908900
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 3932.000000 / 159052.000000 = 
+!!!!!!! 0.024721
+RRC:  CELL_FACH
+Benefit time is  0.0
+Total state RTT is  31.8840017319
+RRC:  CELL_DCH
+Benefit time is  16.9959235191
+Total state RTT is  5292.02489877
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  12.1750004292
+Total state RTT is  31.8840017319
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	0.00319237684881	0.0	0.00228685363643	0.0	
+!!!Benefit RTT ratio per state is
+0.0	0.0032116106489	0	0.381852959724	0	
+#############################################
+Running up 5 high...
+Before remove dup: 93748 entries
+After remove dup: 85606 entries
+TCP ReTx happens 4 times
+TCP Fast ReTx happens 3 times
+Does the bit map matches? True
+All Map length is 74227, with True number 2780
+RTO OR FAST retx map length is 74227, with True number 2780
+Total Count is 86
+Win	draw_plus	draw	loss
+2.000000	66.000000	15.000000	3.000000
+0.023256	0.767442	0.174419	0.034884
+****************************** RTT improved time:
+Win avg improved RTT: 0.000066
+Draw Plus avg improved RTT: 0.000936
+Draw avg cost RTT: 0.000123
+Loss avg cost RTT: 0.000000
+Orignal RTT: 0.034756
+****************************** Count Ratio:
+Win avg count percent: 0.001581
+Draw Plus avg count percent: 0.026926
+Draw avg count percent: 0.012129
+Loss avg count percent: 0.000000
+Total Count is 160032.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (160.474852 - 19.744989) / 5562.052986 = 
+>>>>>>>> 0.025302
+'Improved Benefit' RTT ratio: 160.474852 / 5562.052986 = 
+<<<<<<<< 0.028852
+Win improved RTT ratio: 0.001911 
+Draw Plus improved RTT ratio: 0.026941
+Draw overhead RTT ratio: 0.003550
+Loss overhead RTT ratio: 0.000000
+Total RTT is: 5562.052986
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 1941.000000 / 160032.000000 = 
+!!!!!!! 0.012129
+RRC:  CELL_FACH
+Benefit time is  0.0
+Total state RTT is  36.2609982491
+RRC:  CELL_DCH
+Benefit time is  131.204865217
+Total state RTT is  5525.79198813
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  8.69299817085
+Total state RTT is  36.2609982491
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	0.023589287182	0.0	0.00156291178673	0.0	
+!!!Benefit RTT ratio per state is
+0.0	0.0237440832914	0	0.23973411077	0	
+#############################################
+Running up 3 low...
+Before remove dup: 51399 entries
+After remove dup: 45282 entries
+TCP ReTx happens 4 times
+TCP Fast ReTx happens 0 times
+Does the bit map matches? True
+All Map length is 37594, with True number 243
+RTO OR FAST retx map length is 37594, with True number 243
+Total Count is 0
+Win	draw_plus	draw	loss
+0.000000	0.000000	0.000000	0.000000
+0.000000	0.000000	0.000000	0.000000
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.000000
+Draw avg cost RTT: 0.000000
+Loss avg cost RTT: 0.000000
+Orignal RTT: 0.036046
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.000000
+Draw avg count percent: 0.000000
+Loss avg count percent: 0.000000
+Total Count is 88528.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (0.000000 - 0.000000) / 3191.116395 = 
+>>>>>>>> 0.000000
+'Improved Benefit' RTT ratio: 0.000000 / 3191.116395 = 
+<<<<<<<< 0.000000
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.000000
+Draw overhead RTT ratio: 0.000000
+Loss overhead RTT ratio: 0.000000
+Total RTT is: 3191.116395
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 0.000000 / 88528.000000 = 
+!!!!!!! 0.000000
+RRC:  CELL_FACH
+Benefit time is  0.0
+Total state RTT is  0.912000656128
+RRC:  CELL_DCH
+Benefit time is  0.0
+Total state RTT is  3190.20439434
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  0.0
+Total state RTT is  0.912000656128
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	0.0	0.0	0.0	0.0	
+!!!Benefit RTT ratio per state is
+0.0	0.0	0	0.0	0	
+#############################################
+Running up 3.5 low...
+Before remove dup: 94240 entries
+After remove dup: 86812 entries
+TCP ReTx happens 3 times
+TCP Fast ReTx happens 1 times
+Does the bit map matches? True
+All Map length is 79733, with True number 386
+RTO OR FAST retx map length is 79733, with True number 386
+Total Count is 138
+Win	draw_plus	draw	loss
+0.000000	106.000000	27.000000	5.000000
+0.000000	0.768116	0.195652	0.036232
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.002188
+Draw avg cost RTT: 0.000541
+Loss avg cost RTT: 0.000007
+Orignal RTT: 0.045390
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.043374
+Draw avg count percent: 0.021553
+Loss avg count percent: 0.001151
+Total Count is 190231.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (416.292094 - 104.187942) / 8634.647977 = 
+>>>>>>>> 0.036146
+'Improved Benefit' RTT ratio: 416.292094 / 8634.647977 = 
+<<<<<<<< 0.048212
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.048212
+Draw overhead RTT ratio: 0.011914
+Loss overhead RTT ratio: 0.000152
+Total RTT is: 8634.647977
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 4319.000000 / 190231.000000 = 
+!!!!!!! 0.022704
+RRC:  CELL_FACH
+Benefit time is  0.0
+Total state RTT is  57.4410002232
+RRC:  CELL_DCH
+Benefit time is  295.987152576
+Total state RTT is  8577.20697665
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  15.8199996948
+Total state RTT is  57.4410002232
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	0.0342790063207	0.0	0.00183215340535	0.0	
+!!!Benefit RTT ratio per state is
+0.0	0.0345085706084	0	0.27541302612	0	
+#############################################
+Running up 4 low...
+Before remove dup: 77483 entries
+After remove dup: 69604 entries
+TCP ReTx happens 0 times
+TCP Fast ReTx happens 2 times
+Does the bit map matches? True
+All Map length is 60971, with True number 234
+RTO OR FAST retx map length is 60971, with True number 234
+Total Count is 62
+Win	draw_plus	draw	loss
+0.000000	51.000000	0.000000	11.000000
+0.000000	0.822581	0.000000	0.177419
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.000173
+Draw avg cost RTT: 0.000000
+Loss avg cost RTT: 0.000337
+Orignal RTT: 0.031972
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.012385
+Draw avg count percent: 0.000000
+Loss avg count percent: 0.011065
+Total Count is 155270.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (26.880948 - 52.328068) / 4964.308848 = 
+>>>>>>>> -0.005126
+'Improved Benefit' RTT ratio: 26.880948 / 4964.308848 = 
+<<<<<<<< 0.005415
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.005415
+Draw overhead RTT ratio: 0.000000
+Loss overhead RTT ratio: 0.010541
+Total RTT is: 4964.308848
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 1718.000000 / 155270.000000 = 
+!!!!!!! 0.011065
+RRC:  CELL_FACH
+Benefit time is  0.0
+Total state RTT is  2.55099868774
+RRC:  CELL_DCH
+Benefit time is  -25.5861194134
+Total state RTT is  4961.75784969
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  0.138999462128
+Total state RTT is  2.55099868774
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	-0.00515401442473	0.0	2.79997611698e-05	0.0	
+!!!Benefit RTT ratio per state is
+0.0	-0.00515666426868	0	0.0544882530891	0	
+#############################################
+Running up 4.5 low...
+Before remove dup: 83766 entries
+After remove dup: 75925 entries
+TCP ReTx happens 3 times
+TCP Fast ReTx happens 4 times
+Does the bit map matches? True
+All Map length is 66872, with True number 557
+RTO OR FAST retx map length is 66872, with True number 557
+Total Count is 102
+Win	draw_plus	draw	loss
+0.000000	77.000000	22.000000	3.000000
+0.000000	0.754902	0.215686	0.029412
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.001151
+Draw avg cost RTT: 0.001049
+Loss avg cost RTT: 0.000000
+Orignal RTT: 0.040447
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.028533
+Draw avg count percent: 0.015882
+Loss avg count percent: 0.000000
+Total Count is 165214.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (190.178054 - 173.385975) / 6682.399194 = 
+>>>>>>>> 0.002513
+'Improved Benefit' RTT ratio: 190.178054 / 6682.399194 = 
+<<<<<<<< 0.028460
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.028460
+Draw overhead RTT ratio: 0.025947
+Loss overhead RTT ratio: 0.000000
+Total RTT is: 6682.399194
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 2624.000000 / 165214.000000 = 
+!!!!!!! 0.015882
+RRC:  CELL_FACH
+Benefit time is  0.0
+RRC:  CELL_DCH
+Benefit time is  6.77508115768
+Total state RTT is  6657.22919893
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  9.29999828339
+Total state RTT is  25.1699955463
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	0.00101386956399	0.0	0.00139171546218	0.0	
+!!!Benefit RTT ratio per state is
+0	0.00101770285433	0	0.369487482279	0	
+#############################################
+Running up 5 low...
+Before remove dup: 99662 entries
+After remove dup: 91676 entries
+TCP ReTx happens 1 times
+TCP Fast ReTx happens 3 times
+Does the bit map matches? True
+All Map length is 82324, with True number 858
+RTO OR FAST retx map length is 82324, with True number 858
+Total Count is 83
+Win	draw_plus	draw	loss
+1.000000	60.000000	15.000000	7.000000
+0.012048	0.722892	0.180723	0.084337
+****************************** RTT improved time:
+Win avg improved RTT: 0.000000
+Draw Plus avg improved RTT: 0.000677
+Draw avg cost RTT: 0.000176
+Loss avg cost RTT: 0.000000
+Orignal RTT: 0.047625
+****************************** Count Ratio:
+Win avg count percent: 0.000000
+Draw Plus avg count percent: 0.016716
+Draw avg count percent: 0.006913
+Loss avg count percent: 0.000000
+Total Count is 166364.000000
+****************************** Overall RTT ratio:
+Correct Benefit RTT ratio: (112.672025 - 29.218908) / 7923.022789 = 
+>>>>>>>> 0.010533
+'Improved Benefit' RTT ratio: 112.672025 / 7923.022789 = 
+<<<<<<<< 0.014221
+Win improved RTT ratio: 0.000000 
+Draw Plus improved RTT ratio: 0.014221
+Draw overhead RTT ratio: 0.003688
+Loss overhead RTT ratio: 0.000000
+Total RTT is: 7923.022789
+****************************** Count Overhead Ratio:
+Cost count (draw+loss) overhead ratio: 1150.000000 / 166364.000000 = 
+!!!!!!! 0.006913
+RRC:  CELL_FACH
+Benefit time is  0.0
+Total state RTT is  20.5889997482
+RRC:  CELL_DCH
+Benefit time is  76.2901155949
+Total state RTT is  7902.43378878
+RRC:  CELL_PCH
+Benefit time is  0.0
+RRC:  PROMOTE_TO_DCH
+Benefit time is  6.58500123024
+Total state RTT is  20.5889997482
+RRC:  PROMOTE_TO_FACH
+Benefit time is  0.0
+!!!Benefit RTT ratio overall is
+0.0	0.00962891533082	0.0	0.000831122338784	0.0	
+!!!Benefit RTT ratio per state is
+0.0	0.00965400250531	0	0.31983104137	0	

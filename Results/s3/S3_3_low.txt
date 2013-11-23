@@ -1,0 +1,61 @@
+Filtered QCAT Entry # is 6093
+TCP flow length is 1
+TCP ReTx happens 4 times
+TCP Fast ReTx happens 0 times
+{2: None, 3: {"{'radio_bearer_id': 5, 'chan': 19, 'is_report_missing_pdu': True, 'min_time_btw_poll': 40, 'is_pdu_order_preserved': True, 'receive_win_size': 2047}": 8.0}, 4: None, 5: None, 6: None}
+{2: None, 3: None, 4: None, 5: None, 6: None}
+Max Product is 1344
+Corresponding RLC count map:
+{1064: 1, 1065: 1, 1066: 1, 1067: 1, 1068: 1, 1069: 1, 1070: 1, 1071: 1, 1072: 1, 1073: 1, 1074: 1, 1075: 1, 1076: 1, 1077: 1, 1078: 1, 1079: 1, 1080: 1, 1081: 1, 1082: 1, 1083: 1, 1084: 1, 1085: 1, 1086: 1, 1087: 1, 1088: 1, 1089: 1, 1090: 1, 1091: 1, 1092: 1, 1093: 1, 1094: 1, 1095: 1}
+Retx TCP entries:
+00:51:43.380000	162.171.128.69	141.212.113.208	0x36fdb87f	0x2074c0c2	1304	1252	CELL_DCH	-99
+being index is 11717
+end index is 11771
+Total Fach promote 0
+Fach retx is 0
+The FACH promote retx ratio is 0.000000
+The retx dist is 
+{1064: [], 1065: [], 1066: [], 1067: [], 1068: [], 1069: [], 1070: [], 1071: [], 1072: [], 1073: [], 1074: [], 1075: [], 1076: [], 1077: [], 1078: [], 1079: [], 1080: [], 1081: [], 1082: [], 1083: [], 1084: [], 1085: [], 1086: [], 1087: [], 1088: [], 1089: [], 1090: [], 1091: [], 1092: [], 1093: [], 1094: [], 1095: []}
+The average retx is 0.093981
+0	3	0	1	3
+1293	0	2	1	3
+1303	0	2	1	3
+1313	0	2	1	3
+No entries of interest
+Max Product is -1
+RTO: Short FACH ratio is 0.000000
+RTO: timer distribution []
+RTO: Min value of timer is N/A
+RTO: poll timer distribution is []
+RTO: Average poll timer enabled 0.000000
+Fast Retx: Short FACH promote ratio is 0.000000
+Fast Retx: timer distribution []
+Fast Retx: Min value of timer is N/A
+Fast Retx: Mean value timer is 0.000000
+Fast Retx: Average poll timer enabled 0.000000
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+RTO: Dup_ACK_ratio is 0.000000 / 3.000000 = 0.000000
+Fast Retx: Dup_ACK_ratio is 0.000000 / 0.000000 = 0.000000
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+Total number of duplicate ACK is 0
+RLC uplink:
+0.0	0.0156673594795	0.0	0.0	0.0	
+Retx_count / Total_count: 0.0	0.0156673594795	0.0	0.0	0.0	
+Total_count: 88528.0	88528.0	88528.0	88528.0	88528.0	
+Each State count: 0.0	1387.0	0.0	0.0	0.0	
+Per state ratio: 0.0	0.0156693064609	0	0.0	0	
+****************************************
+TCP RTO uplink:
+0.0	0.00263680986573	0.0	0.0	0.0	
+Retx_count / Total_count: 0.0	0.00263680986573	0.0	0.0	0.0	
+Total_count: 24651.0	24651.0	24651.0	24651.0	24651.0	
+Each State count: 0.0	65.0	0.0	0.0	0.0	
+Per state ratio: 0.0	0.00264292103765	0	0.0	0	
+****************************************
+TCP Fast Retx uplink:
+0.0	0.0	0.0	0.0	0.0	
+Retx_count / Total_count: 0.0	0.0	0.0	0.0	0.0	
+Total_count: 24651.0	24651.0	24651.0	24651.0	24651.0	
+Each State count: 0.0	0.0	0.0	0.0	0.0	
+Per state ratio: 0.0	0.0	0	0.0	0	
+****************************************

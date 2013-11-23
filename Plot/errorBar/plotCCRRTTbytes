@@ -1,0 +1,31 @@
+#! /bin/bash
+name='130501_021305108_tcp_down_up_ccr_hat_lte'
+eps='ccrrttbytes.eps'
+namedown='130501_021750517_tcp_down_thrpt_hat_lte'
+nameup='130501_020801802_tcp_up_thrpt_hat_lte'
+statup='_smplstatup.txt'
+statdown='_smplstatdown.txt'
+gnuplot -persist <<EOF
+set terminal postscript eps color linewidth 2 "Arial" 24
+set size 1, 0.9
+set key font "Arial, 20"
+set key left
+set style line 1 lt 1 lc rgb "red" lw 2
+set style line 2 lt 1 lc rgb "pink" lw 2
+set style line 3 lt 1 lc rgb "orange" lw 2
+set style line 4 lt 1 lc rgb "yellow" lw 2
+set style line 5 lt 1 lc rgb "green" lw 2
+set style line 6 lt 1 lc rgb "sea-green" lw 2
+set style line 7 lt 1 lc rgb "cyan" lw 2
+set style line 8 lt 1 lc rgb "blue" lw 2
+set style line 9 lt 1 lc rgb "purple" lw 2
+set style line 10 lt 1 lc rgb "brown" lw 2
+set xlabel 'Bytes in Flight (kB)'
+set ylabel 'RTT (ms)'
+set xrange[0:900]
+set yrange[0:1400]
+set output '$eps'
+set ytics nomirror
+plot "$name$statup" using (\$1/1000.0):(\$3) w l lt 1 lw 2 lc rgb "blue" notitle, "$name$statup" using (\$1/1000.0):(\$3):(\$3-\$4):(\$3+\$4) with errorbars title "Uplink" lt 1 lc rgb "blue" pt 9 ps 1.5 lw 1.5,\
+	"$name$statdown" using (\$1/1000.0):(\$3) w l lt 1 lw 2 lc rgb "purple" notitle, "$name$statdown" using (\$1/1000.0):(\$3):(\$3-\$4):(\$3+\$4) with errorbars title "Downlink" lt 1 lc rgb "purple" pt 11 ps 1.5 lw 1.5
+EOF
