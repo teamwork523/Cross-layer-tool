@@ -26,7 +26,7 @@ RRC_DEBUG = False
 ############################################################################
 ################## Cross Layer Based on RLC Layer ##########################
 ############################################################################
-# Map TCP / UDP packet with corresponding RLCs
+# Map TCP / UDP packet with corresponding RLCs (WCDMA uplink)
 # Basic idea is to track the first byte information from RLC
 # and incrementally map with the existing TCP data
 # until three conditions:
@@ -42,7 +42,7 @@ RRC_DEBUG = False
 #          [(entry1, index1), (entry2, index2), ...]
 #       2. a list of corresponding sequnce number
 
-def map_SDU_to_PDU(entries, tcp_index, logID, hint_index = -1):
+def cross_layer_mapping_WCDMA_uplink(entries, tcp_index, logID, hint_index = -1):
     # fetch the actual payload
     tcp_payload = findIPPacketData(entries, tcp_index)
 
@@ -323,7 +323,7 @@ def TCP_RLC_Retx_Mapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
         keyChain = []
         origTCPPacket = retxTimeMap[key][0][0]
         # map with original packet
-        mapped_RLCs, orig_mapped_sn = map_SDU_to_PDU(QCATEntries, entryIndexMap[origTCPPacket], pduID)
+        mapped_RLCs, orig_mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, entryIndexMap[origTCPPacket], pduID)
 
         if not mapped_RLCs:
             if DEBUG:
@@ -348,8 +348,8 @@ def TCP_RLC_Retx_Mapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
             TCPRetxTimeDistMap[origTCPPacket.tcp["seq_num"]].append(retxEntry.timestamp - privTime)
             privTime = retxEntry.timestamp
             # TODO: detection anything wrong here
-            temp_list, mapped_sn = map_SDU_to_PDU(QCATEntries, entryIndexMap[retxEntry], pduID, hint_index = mapped_RLCs[-1][1])
-            # temp_list, mapped_sn = map_SDU_to_PDU(QCATEntries, entryIndexMap[retxEntry], pduID)
+            temp_list, mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, entryIndexMap[retxEntry], pduID, hint_index = mapped_RLCs[-1][1])
+            # temp_list, mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, entryIndexMap[retxEntry], pduID)
             if temp_list:
                 # add the first RLC in the map list as a break point, the last
                 # break point is used for the divider to count retransmission
@@ -366,9 +366,9 @@ def TCP_RLC_Retx_Mapper (QCATEntries, entryIndexMap, retxTimeMap, pduID):
         entryAfterLastRetx = retxTimeMap[key][1]
         if entryAfterLastRetx:
             if mapped_RLCs:
-                lastMapped_list, mapped_sn = map_SDU_to_PDU(QCATEntries, entryIndexMap[entryAfterLastRetx], pduID, hint_index = mapped_RLCs[-1][1])
+                lastMapped_list, mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, entryIndexMap[entryAfterLastRetx], pduID, hint_index = mapped_RLCs[-1][1])
             else:
-                lastMapped_list, mapped_sn = map_SDU_to_PDU(QCATEntries, entryIndexMap[entryAfterLastRetx], pduID, hint_index = mapped_RLCs[-1][1])
+                lastMapped_list, mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, entryIndexMap[entryAfterLastRetx], pduID, hint_index = mapped_RLCs[-1][1])
         # use the first matched RLC as the ending mapping indicator
 
         if lastMapped_list:
@@ -794,10 +794,10 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                                 # original mapped RLC
                                 first_mapped_RLC_index = entryIndexMap[all_retx_map[i][0][0]]
                                 last_mapped_RLC_index = entryIndexMap[all_retx_map[i][0][-1]]
-                                first_mapped_RLCs, first_mapped_sn = map_SDU_to_PDU(QCATEntries, first_mapped_RLC_index, const.UL_PDU_ID)
-                                last_mapped_RLCs, last_mapped_sn = map_SDU_to_PDU(QCATEntries, last_mapped_RLC_index, const.UL_PDU_ID)
+                                first_mapped_RLCs, first_mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, first_mapped_RLC_index, const.UL_PDU_ID)
+                                last_mapped_RLCs, last_mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, last_mapped_RLC_index, const.UL_PDU_ID)
                                 tcp_index = entryIndexMap[all_retx_map[i][-1]]
-                                post_mapped_RLCs, post_mapped_sn = map_SDU_to_PDU(QCATEntries, tcp_index, const.UL_PDU_ID)
+                                post_mapped_RLCs, post_mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, tcp_index, const.UL_PDU_ID)
                                 if post_mapped_RLCs and first_mapped_RLCs:
                                     print "Post mapped result is %d"
                                     index_result = str(entryIndexMap[all_retx_map[i][0][0]]) + " -> " + str(first_mapped_RLCs[0][1]) + " -> " + str(post_mapped_RLCs[0][1])
@@ -829,14 +829,14 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                             # find the second retransmission and calculate the gain
                             first_retx_index = entryIndexMap[all_retx_map[retxEntryTS][0][1]]       
                             # TODO: assume uplink here
-                            mapped_RLCs, mapped_sn = map_SDU_to_PDU(QCATEntries, first_retx_index, const.UL_PDU_ID)
+                            mapped_RLCs, mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, first_retx_index, const.UL_PDU_ID)
 
                             if mapped_RLCs:
                                 benefit_time = mapped_RLCs[0][0].timestamp - QCATEntries[dup_ack_index_temp_buffer[dup_ack_threshold-1]].timestamp
                                 orig_tcp_index = entryIndexMap[all_retx_map[retxEntryTS][0][0]]
                                 last_retx_tcp_index = entryIndexMap[all_retx_map[retxEntryTS][0][-1]]
-                                first_mapped_RLCs, first_mapped_sn = map_SDU_to_PDU(QCATEntries, orig_tcp_index, const.UL_PDU_ID)
-                                last_mapped_RLCs, last_mapped_sn = map_SDU_to_PDU(QCATEntries, last_retx_tcp_index, const.UL_PDU_ID)
+                                first_mapped_RLCs, first_mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, orig_tcp_index, const.UL_PDU_ID)
+                                last_mapped_RLCs, last_mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, last_retx_tcp_index, const.UL_PDU_ID)
                                 
                                 # Real Win detection
                                 is_true_win = False
@@ -920,7 +920,7 @@ def rlc_fast_retx_benefit_overhead_analysis(QCATEntries, entryIndexMap, win_size
                                     if DUP_DEBUG:
                                         # TODO: delete after testing
                                         post_retx_first_index = entryIndexMap[all_retx_map[retxEntryTS][1]]
-                                        post_mapped_RLCs, post_mapped_sn = map_SDU_to_PDU(QCATEntries, post_retx_first_index, const.UL_PDU_ID)
+                                        post_mapped_RLCs, post_mapped_sn = cross_layer_mapping_WCDMA_uplink(QCATEntries, post_retx_first_index, const.UL_PDU_ID)
                                         if post_mapped_RLCs:
                                             post_TCP_benefit_time = post_mapped_RLCs[0][0].timestamp - QCATEntries[dup_ack_index_temp_buffer[dup_ack_threshold-1]].timestamp
                                             start = entryIndexMap[all_retx_map[retxEntryTS][0][0]]

@@ -134,7 +134,7 @@ def UDP_loss_cross_analysis(QCATEntries, loss_index_list, logID):
 
     for loss_index in loss_index_list:
         cur_entry = QCATEntries[loss_index] 
-        mapped_rlc_tuple_list, mapped_sn_list = clw.map_SDU_to_PDU(QCATEntries, loss_index, logID)
+        mapped_rlc_tuple_list, mapped_sn_list = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, loss_index, logID)
         
         if mapped_rlc_tuple_list and cur_entry.rrcID:
             first_mapped_rlc_index = mapped_rlc_tuple_list[0][1]
@@ -296,8 +296,8 @@ def rlc_retx_based_on_gap (QCATEntries, direction):
                 print "Current index is %d" % index
                 print "Last map index is %d" % last_map_index
             # map the current UDP packet to the RLC layer PDUs
-            first_rlc_list, first_sn_list = clw.map_SDU_to_PDU(QCATEntries, index, const.UL_PDU_ID)
-            last_rlc_list, last_sn_list = clw.map_SDU_to_PDU(QCATEntries, last_map_index, const.UL_PDU_ID)
+            first_rlc_list, first_sn_list = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, index, const.UL_PDU_ID)
+            last_rlc_list, last_sn_list = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, last_map_index, const.UL_PDU_ID)
             # get the corresponding RLC log message
             if first_rlc_list and last_rlc_list and last_sn_list:
                 rlc_begin_index = first_rlc_list[0][1]

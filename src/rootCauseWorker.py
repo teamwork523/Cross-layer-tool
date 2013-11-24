@@ -80,7 +80,7 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
                 cur_output_result = str(cur_inter_packet_time) + DEL
 
                 # apply cross layer mapping
-                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i, log_of_interest_id)
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i, log_of_interest_id)
                 if mapped_RLCs:
                     if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
                         if vw.is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_of_interest_id):

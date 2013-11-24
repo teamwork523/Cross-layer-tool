@@ -160,7 +160,7 @@ def first_hop_latency_evaluation(entryList, pduID):
         entry = entryList[i]
         if entry.rtt["tcp"] != None and entry.rtt["tcp"] > 0:
             # perform cross-layer mapping
-            mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , pduID)
+            mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i , pduID)
             if mapped_RLCs:
                 transmission_delay, rlc_rtt_list = calc_first_hop_latency(mapped_RLCs)
                 tcp_rtt_list.append(entry.rtt["tcp"])

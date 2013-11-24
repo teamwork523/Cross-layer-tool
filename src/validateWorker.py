@@ -79,7 +79,7 @@ def check_mapping_feasibility_uniqueness(entryList, client_ip, direction, networ
                entry.ip["dst_ip"] == client_ip):
                 if entry.ip["tlp_id"] in transport_layer_total_count:
                     transport_layer_total_count[entry.ip["tlp_id"]] += 1
-                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i, log_of_interest_id)
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i, log_of_interest_id)
                 if mapped_RLCs:
                     if is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
                         if entry.ip["tlp_id"] in valid_transport_layer_mapping_count:

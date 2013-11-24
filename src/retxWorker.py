@@ -392,7 +392,7 @@ def crossLayerMappingRLCRetxInfo(entryList, direction, client_ip, RLCMap, networ
         if transportEntry.logID == const.PROTOCOL_ID:
             if transportEntry.ip["dst_ip"] == client_ip or \
                transportEntry.ip["src_ip"] == client_ip:
-                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(entryList, i , log_of_interest_id)
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i , log_of_interest_id)
                 if mapped_RLCs:
                     (count, total) = countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, log_of_interest_id)
                     if total > 0:

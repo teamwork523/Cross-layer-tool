@@ -7,7 +7,7 @@ if [ $# -ne 1 ] && [ $# -ne 2 ];then
     echo $USAGE
     exit 1
 fi
-prj_folder=/home/teamwork523/Desktop/UMich/RRC_postAnalysis/Analysis
+prj_folder=/home/teamwork523/Desktop/UMich/Cross-layer/Analysis
 owl_folder=/home/haokun/RRC_Analysis_UDP/QCATAnalysis
 ep2_folder=/home/haokun/cross-layer
 if [ $OPTION = '-o' ]

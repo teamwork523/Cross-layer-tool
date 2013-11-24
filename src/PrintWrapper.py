@@ -154,7 +154,7 @@ def printRetxCountMapList (countMap):
         	print v[2]
 
 # Given TCP retransmission find the nearest retransmission
-def printmap_SDU_to_PDURetx (tcpRetxMap, RLCRetxMap):
+def printcross_layer_mapping_WCDMA_uplinkRetx (tcpRetxMap, RLCRetxMap):
     # TCP map format: A map of retransmission TCP packet -- {orig_ts: [(orig_entry, retx_entry, 2nd_retx_entry...), (another)]}
     # RLC map format: {ts: {sn1:(count1,duration1, [entries]), sn2:(count2, duration2, [entries]), ...}
     ahead_th = 3
@@ -690,7 +690,7 @@ def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, sr
                 print "Before mapping"
                 printTCPEntry(tcpEntry)
             
-            mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(QCATEntries, i , pduID)
+            mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, i , pduID)
             print ("+" + "-"*15)*4
             print ">>> TCP Packet:"
             printTCPEntry(tcpEntry)
@@ -733,7 +733,7 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
             (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
             # make sure it is the first of TCP packet
             TCP_entry_count += 1
-            mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(QCATEntries, i , pduID, hint_index = last_mapped_RLC_entry_index)
+            mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, i , pduID, hint_index = last_mapped_RLC_entry_index)
 
             # Cross-layer mapping information
             if mapped_RLCs:
@@ -741,7 +741,7 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                 last_mapped_RLC_entry_index = mapped_RLCs[-1][1]
             else:
                 # reset the last mapped RLC index and retry mapping again
-                mapped_RLCs, mapped_sn = clw.map_SDU_to_PDU(QCATEntries, i , pduID)
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, i , pduID)
                 if mapped_RLCs:
                     Mapped_TCP_entry_count += 1
                 last_mapped_RLC_entry_index = 0
