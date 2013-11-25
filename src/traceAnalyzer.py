@@ -48,7 +48,7 @@ def init_optParser():
                             " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility] type\n" +\
                             " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
                             " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type\n" +\
-                            " "*extraspace + "[--root_cause_analysis] analysis_type")
+                            " "*extraspace + "[--root_cause_analysis] analysis_type, [--validate_downlink]")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -106,7 +106,7 @@ def init_optParser():
                          help="Map transport layer packet with RLC ayer")
     optParser.add_option("--retx_count_sig", action="store_true", dest="isRetxCountVSSig", default=False, \
                          help="Relate retransmission signal strength with retransmission count")
-    optParser.add_option("--root_cause_analysis", dest="root_cause_analysis_type", default="rrc_infer", \
+    optParser.add_option("--root_cause_analysis", dest="root_cause_analysis_type", default=None, \
                          help="Perform root cause analysis, i.e. for abnormal inferred RRC state")
     optParser.add_option("--rrc_timer", action="store_true", dest="isValidateRRCTimer", default=False, \
                          help="Include if you want to validate RRC Timer")
@@ -116,6 +116,8 @@ def init_optParser():
                          help="Filter out entries with source port number")
     optParser.add_option("--srv_ip", dest="server_ip", default=None, \
     					 help="Used combined with direction option to filter useful retransmission packets")
+    optParser.add_option("--validate_downlink", action="store_true", dest="validate_downlink", default=False, \
+                         help="Validate WCDMA downlink cross-layer mapping")
     optParser.add_option("--validate_rrc_state_inference", action="store_true", dest="isValidateInference", default=False, \
                          help="Validate the RRC inference algorithm by output desired output")
     optParser.add_option("--udp_hash_target", dest="hash_target", default="seq", \
@@ -144,7 +146,6 @@ def main():
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
 
-    # TODO: debug
     if options.ptof_timer:
         const.TIMER["PCH_TO_FACH_ID"] = float(options.ptof_timer)
     if options.ftod_timer:
@@ -725,6 +726,11 @@ def main():
                 sys.exit(1)
             rcw.abnormal_rrc_fach_analysis(QCATEntries, options.server_ip, options.network_type)
 
+    # WCDMA downlink cross-layer mapping validation
+    if options.validate_downlink and options.client_ip:
+        vw.count_cross_layer_mapping_WCDMA_downlink(QCATEntries, options.client_ip)
+
+    ################### For Tmobile ############################
     # verify the TCP layer information with RRC layer by printing
     # each TCP packet and corresponding RLC packet
     if options.cross_mapping_detail and options.enable_tcp_retx_test:

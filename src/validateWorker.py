@@ -166,6 +166,28 @@ def check_mapping_feasibility_use_bytes(mainEntryList, client_ip):
                                    / downlink_stat["ip"]["counts"])
 
 ############################################################################
+######################## Cross-layer Accuracy ##############################
+############################################################################
+# Count the number of mapped downlink RLC PDUs
+def count_cross_layer_mapping_WCDMA_downlink(entryList, client_ip):
+    total_transport_layer_protocol = 0.0
+    mapped_transport_layer_protocol = 0.0
+
+    for entryIndex in range(len(entryList)):
+        entry = entryList[entryIndex]
+        if entry.logID == const.PROTOCOL_ID and \
+           entry.ip["dst_ip"] == client_ip:
+            (rlc_list, rlc_sn_list) = clw.cross_layer_mapping_WCDMA_downlink(entryList, entryIndex, const.DL_PDU_ID)
+            if rlc_list:
+                mapped_transport_layer_protocol += 1
+            total_transport_layer_protocol += 1
+
+    print "WCDMA downlink mapping accuracy is %f / %f = %f" % \
+          (mapped_transport_layer_protocol, \
+           total_transport_layer_protocol, \
+           mapped_transport_layer_protocol / total_transport_layer_protocol)
+
+############################################################################
 ################################# Helper ###################################
 ############################################################################        
 # Valid the uniqueness of the cross-layer mapping

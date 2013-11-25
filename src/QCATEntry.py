@@ -104,13 +104,13 @@ class QCATEntry:
         # since sn could be duplicated, bad idea to use it as a key in header
         # Header has one to one correlation with sn
         # Notice: numPDU is not accurate, since it include for both ctrl and data message 
-        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[], "len": None},...]
+        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[], "len": None, "sn": None},...]
         self.ul_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
                         "size": [], # bytes
                         "header":[]}]
-        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[], "len": None},...]
+        # The header is in the form of [{"p": None, "he": None, "li": [], "e": None, "data":[], "len": None, "sn": None},...]
         self.dl_pdu = [{"chan": None,
                         "sn": [],
                         "numPDU": None,
@@ -245,6 +245,7 @@ class QCATEntry:
                     if i.find("DATA PDU") != -1:
                         info = i.split("::")[1].strip().split(", ")
                         self.ul_pdu[0]["chan"] = int(info[0].split(":")[1])
+                        # TODO: fix SN by avoid this decoupling
                         cur_seq = int(info[1].split(" ")[1], 16)
                         self.ul_pdu[0]["sn"].append(cur_seq)
                         self.extractRLCHeaderInfo(self.ul_pdu[0], info, cur_seq, True)
@@ -296,6 +297,9 @@ class QCATEntry:
                                     length = int(status_line.split(", ")[-1].split()[-1])
                                     self.dl_ctrl["list"].append((seq_num, length))
                     index += 1
+                if self.dl_pdu[0].has_key("li") and len(self.dl_pdu[0]["li"]) > 1:
+                    print >> sys.err, "%s, FOUND multiple LI in Downlink!!!" % (util.convert_ts_in_human(self.timestamp))
+                #self.__debugDownlinkRLC()
             # Parse the Signal Strength state
             # Assume the number of cell we get is always in WCDMA
             elif self.logID == const.SIG_ID:
@@ -554,6 +558,7 @@ class QCATEntry:
         cur_index += 1
         header["he"] = int(info[cur_index].split(delimiter)[1])
         header["data"] = []
+        header["sn"] = cur_seq
         cur_index += 1
         if header["he"] == 1:
             # extract length indicator and extended bit
@@ -563,14 +568,17 @@ class QCATEntry:
             header["e"] = int(info[cur_index].split(delimiter)[1])
             cur_index += 1
             info_len = len(info)
-            # each additional header is one byte
-            header_len += 1
+            # determine the LI header length
+            li_len = 1
+            if pdu_field["size"][-1] > const.RLC_LI_THRESHOLD:
+                li_len = 2
+            header_len += li_len
             while header["e"] == 1 and cur_index < info_len:
                 header["li"].append(int(info[cur_index].split(delimiter)[1]))
                 cur_index += 1
                 header["e"] = int(info[cur_index].split(delimiter)[1])
                 cur_index += 1
-                header_len += 1
+                header_len += li_len
         # append the rest of info as data
         for i in range(cur_index, len(info)):
             # strip off the first 
@@ -636,4 +644,14 @@ class QCATEntry:
         print "Power ED is %f" % self.eul["t2p_ed"]
         print "scheduled buffer is %f" % self.eul["sched_buffer"]
         print "non scheduled buffer is %f" % self.eul["non_sched_buffer"]
+
+    def __debugDownlinkRLC(self):
+        pdu = self.dl_pdu[0]
+        print "*" * 40
+        print util.convert_ts_in_human(self.timestamp)
+        print "PDU sizes: %s" % (str(pdu["size"]))
+        print "PDU SN: %s" % (str(pdu["sn"]))
+        print "Data PDU detail: "
+        for i in range(len(pdu["header"])):
+            print "%dth PDU: %s" % (i, str(pdu["header"][i]))
                 

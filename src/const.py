@@ -56,7 +56,6 @@ LTE_CELL_MEASUREMENT_ID = int("0xB180", 16)
 # EVENTs
 EVENT_ID = int("0x1FFB", 16)
 
-
 LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                RRC_ID: "WCDMA RRC States",
                EUL_STATS_ID: "EUL Link Statistics", 
@@ -67,7 +66,9 @@ LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                UL_CONFIG_PDU_ID: "Uplink RLC configuration",
                DL_CTRL_PDU_ID: "Downlink control PDU"}
 
-############ UDP packet
+####################################
+############### UDP ################
+####################################
 UDP_RTT_LIMIT = 5
 # instrumented index value
 UDP_WAIT_LIMIT = 32
@@ -77,7 +78,9 @@ UDP_GRAN_LIMIT = 1024
 # TODO: hard configured, to be changed
 DATA_LOGIC_CHANNEL_ID = 19
 
-############ RRC State
+####################################
+############ RRC State #############
+####################################
 # map between RRC id and RRC state
 FACH_ID = 2
 DCH_ID = 3
@@ -116,6 +119,11 @@ Payload_Header_Len = 8
 IP_Header_Len = 20
 TCP_Header_Len = 20 + 12 # include option
 UDP_Header_Len = 8
+
+####################################
+############### RLC ################
+####################################
+RLC_LI_THRESHOLD = 126 # If the current PDU size is greater than 126, then LI length is 15 bits (2 bytes including E bit)
 
 # Retransmission mapping (heuristics)
 MAX_ENTRIES_LIST = 10000

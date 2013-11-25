@@ -4,7 +4,7 @@
 @Author Haokun Luo
 @Date   03/20/2013
 
-Procise one-to-one mapping between TCP packet and RLC PDUs
+Procise one-to-one mapping between Transport Layer and RLC PDUs
 """
 import os, sys, re
 import const
@@ -22,6 +22,7 @@ CONFIG_DEBUG = False
 DUP_DEBUG = False
 TRUE_WIN_DEBUG = False
 RRC_DEBUG = False
+DOWNLINK_DEBUG = True
 
 ############################################################################
 ################## Cross Layer Based on RLC Layer ##########################
@@ -37,7 +38,7 @@ RRC_DEBUG = False
 #          All the sequence number must increase by one each time!!!
 # @input: list of entries, index of the TCP packet in the list, entry logID,
 #         index_hint is useful if you know the starting index in the entry
-# @output: 
+# @output: (TODO: maybe a single output of [(RLC_entry, index, PDU_sequence_number)])
 #       1. a sequence of RLC entries that maps with the current TCP packet
 #          [(entry1, index1), (entry2, index2), ...]
 #       2. a list of corresponding sequnce number
@@ -198,18 +199,89 @@ def cross_layer_mapping_WCDMA_uplink(entries, tcp_index, logID, hint_index = -1)
         print "@@@@@@@@@@@@ NOOOOO MATCH Found @@@@@@@@@@@@"
     return (None, None)
 
-# match the existing data with payload
-def isDataMatch(dataList, payload, matching_index):
-    # handle PDU no PDU entry no payload case
-    if not dataList and payload:
-        return False
-        #return True
-    payloadLen = len(payload)
-    for dataIndex in range(len(dataList)):
-        if matching_index + dataIndex >= payloadLen or \
-           dataList[dataIndex] != payload[matching_index + dataIndex]:
-            return False
-    return True
+# Cross layer mapping between transport layer and RLC layer for WCDMA downlink
+# Apply reverse version of "long jump" mapping
+# 
+# Assume:
+# 1. Downlink RLC PDU log entries always appear before the IP packet
+# 2. IP packet pre-processing is done, namely no fragmentation and no redundancy
+# 3. Only one LI exist in downlink
+# 
+# Output:
+# 1. List of mapped RLC entries with format of [(entry, entry_index, SN)]
+# 2. List of mapped sequence number (just to be compatible with existing format)
+def cross_layer_mapping_WCDMA_downlink(entries, tlp_index, log_of_interest_ID, hint_index = -1):
+    mapped_rlc_list = []
+
+    # tracking the total mapped RLC PDU length
+    target_len = entries[tlp_index].ip["total_len"]
+    target_payload = entries[tlp_index].hex_dump["payload"][const.Payload_Header_Len:]
+    mapped_len = 0
+
+    # If hint index is not -1, then take it into consideration
+    start_index = tlp_index - 1
+    if hint_index != -1 and start_index > hint_index:
+        start_index = hint_index
+    
+    # Reverse Traversal
+    for cur_index in range(start_index, -1, -1):
+        cur_entry = entries[cur_index]
+        if log_of_interest_ID == cur_entry.logID:
+            cur_pdu = util.find_pdu_based_on_log_id(cur_entry, log_of_interest_ID)
+            
+            if cur_pdu["header"] != []:
+                header_index_list = range(len(cur_pdu["header"]))
+                header_index_list.reverse()
+                # Reverse iterate through all the PDUs
+                for cur_header_index in header_index_list:
+                    cur_header = cur_pdu["header"][cur_header_index]
+                    # Three cases:
+                    # 1. Regular Data -> check data matching and increase the mapped length
+                    # 2. LI != 127 or (LI == 127 and LEN != 127) -> increase the mapped length
+                    # 3. HE == 2 or (LI == 127 and LEN == 127) -> reset the mapped length
+                    li_len = -1
+                    if cur_header.has_key("li") and cur_header["li"] != []:
+                        li_len = cur_header["li"][-1]
+
+                    if (cur_header.has_key("he") and cur_header["he"] == 2) or \
+                       (li_len != -1 and li_len == const.RLC_LI_THRESHOLD + 1 and \
+                        cur_header["len"] == const.RLC_LI_THRESHOLD + 1):
+                        # Reset the mapped length
+                        mapped_len = cur_header["len"]
+                        mapped_rlc_list = []
+                    elif li_len != -1 and (li_len != const.RLC_LI_THRESHOLD + 1 or \
+                       (li_len == const.RLC_LI_THRESHOLD + 1 and \
+                        cur_header["len"] != const.RLC_LI_THRESHOLD + 1)):
+                        # Increase the mapped length by the rest of the li
+                        mapped_len += cur_header["len"] - li_len
+                        if mapped_len == target_len:
+                            mapped_rlc_list.append((cur_entry, cur_index, cur_header["sn"]))
+                            break
+                        else:
+                            mapped_len = li_len
+                            mapped_rlc_list = []
+                    else:
+                        mapped_len += cur_header["len"]
+                        if isDataMatch(cur_header["data"], target_payload, target_len - mapped_len):
+                            mapped_rlc_list.append((cur_entry, cur_index, cur_header["sn"]))
+                            if mapped_len == target_len:
+                                break
+                        else:
+                            # reset the mapped length
+                            mapped_len = 0
+                            mapped_rlc_list = []                            
+
+                if mapped_len == target_len:
+                    break
+
+    # double check for last round failed to match
+    if mapped_len != target_len:
+        return (None, None)
+
+    # Reverse the order the list to match the time sequence order
+    mapped_rlc_list.reverse()
+    mapped_sn_list = [a[2] for a in mapped_rlc_list]
+    return (mapped_rlc_list, mapped_sn_list)
 
 # Find the entire IP packets in hex
 # Assume the pro-processing of eliminating IP redundancy and fragmentation are done
@@ -502,6 +574,7 @@ def cal_dup_ack_ratio_and_fast_retx_benefit (QCATEntries, entryIndexMap, crossMa
     
     return dup_ack_ratio, count_dup_ack, float(len(crossMap["ts_entry"]["TCP"])), retx_bit_map
 
+# DEPRECATED!!!S
 # Detect all duplicate ACKs for the trace and break down into four cases.
 # In detail, we calculate the benefit by transmit the retransmission packets ahead
 # OR we retransmit before TCP RTO
@@ -1125,6 +1198,20 @@ def figure_out_best_timer(QCATEntries, FACH_state_list, logID):
 ############################################################################
 ############################# Helper functions #############################
 ############################################################################
+# match the existing data with payload
+def isDataMatch(dataList, payload, matching_index):
+    # handle PDU no PDU entry no payload case
+    if not dataList and payload:
+        return False
+        #return True
+    payloadLen = len(payload)
+    for dataIndex in range(len(dataList)):
+        if matching_index + dataIndex >= payloadLen or \
+           matching_index + dataIndex < 0 or \
+           dataList[dataIndex] != payload[matching_index + dataIndex]:
+            return False
+    return True
+
 # RLC_FAST_RETX_ANALYSIS
 # check whether we have an FACH or FACH promotion or PCH promotion state
 # within the given range
