@@ -205,7 +205,7 @@ def cross_layer_mapping_WCDMA_uplink(entries, tcp_index, logID, hint_index = -1)
 # Assume:
 # 1. Downlink RLC PDU log entries always appear before the IP packet
 # 2. IP packet pre-processing is done, namely no fragmentation and no redundancy
-# 3. Only one LI exist in downlink
+# 3. Only one LI exist in downlink (due to the 4 bytes partial logging problem)
 # 
 # Output:
 # 1. List of mapped RLC entries with format of [(entry, entry_index, SN)]
@@ -237,21 +237,18 @@ def cross_layer_mapping_WCDMA_downlink(entries, tlp_index, log_of_interest_ID, h
                     cur_header = cur_pdu["header"][cur_header_index]
                     # Three cases:
                     # 1. Regular Data -> check data matching and increase the mapped length
-                    # 2. LI != 127 or (LI == 127 and LEN != 127) -> increase the mapped length
-                    # 3. HE == 2 or (LI == 127 and LEN == 127) -> reset the mapped length
+                    # 2. LI != RLC_LI_LIMIT -> increase the mapped length
+                    # 3. HE == 2 or LI == RLC_LI_LIMIT -> reset the mapped length
                     li_len = -1
                     if cur_header.has_key("li") and cur_header["li"] != []:
                         li_len = cur_header["li"][-1]
 
                     if (cur_header.has_key("he") and cur_header["he"] == 2) or \
-                       (li_len != -1 and li_len == const.RLC_LI_THRESHOLD + 1 and \
-                        cur_header["len"] == const.RLC_LI_THRESHOLD + 1):
+                       (li_len != -1 and li_len == const.RLC_LI_LIMIT):
                         # Reset the mapped length
                         mapped_len = cur_header["len"]
                         mapped_rlc_list = []
-                    elif li_len != -1 and (li_len != const.RLC_LI_THRESHOLD + 1 or \
-                       (li_len == const.RLC_LI_THRESHOLD + 1 and \
-                        cur_header["len"] != const.RLC_LI_THRESHOLD + 1)):
+                    elif li_len != -1 and li_len != const.RLC_LI_LIMIT:
                         # Increase the mapped length by the rest of the li
                         mapped_len += cur_header["len"] - li_len
                         if mapped_len == target_len:
@@ -259,7 +256,10 @@ def cross_layer_mapping_WCDMA_downlink(entries, tlp_index, log_of_interest_ID, h
                             break
                         else:
                             mapped_len = li_len
-                            mapped_rlc_list = []
+                            mapped_rlc_list.append((cur_entry, cur_index, cur_header["sn"]))
+                            # The whole payload burried under a single PDU
+                            if mapped_len == target_len:
+                                break
                     else:
                         mapped_len += cur_header["len"]
                         if isDataMatch(cur_header["data"], target_payload, target_len - mapped_len):

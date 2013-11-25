@@ -10,6 +10,7 @@ Validation for RRC inference, feasibility of cross layer mapping and etc.
 import os, sys, time
 import const
 import crossLayerWorker as clw
+import PrintWrapper as pw
 import Util as util
 
 ############################################################################
@@ -172,6 +173,7 @@ def check_mapping_feasibility_use_bytes(mainEntryList, client_ip):
 def count_cross_layer_mapping_WCDMA_downlink(entryList, client_ip):
     total_transport_layer_protocol = 0.0
     mapped_transport_layer_protocol = 0.0
+    unmapped_entry_list = []
 
     for entryIndex in range(len(entryList)):
         entry = entryList[entryIndex]
@@ -180,7 +182,19 @@ def count_cross_layer_mapping_WCDMA_downlink(entryList, client_ip):
             (rlc_list, rlc_sn_list) = clw.cross_layer_mapping_WCDMA_downlink(entryList, entryIndex, const.DL_PDU_ID)
             if rlc_list:
                 mapped_transport_layer_protocol += 1
+            else:
+                unmapped_entry_list.append(entry)
             total_transport_layer_protocol += 1
+    
+    size_list = [entry.ip["total_len"] for entry in unmapped_entry_list]
+    tcp_unmapped_count = 0.0
+    total_unmapped_count = float(len(unmapped_entry_list))
+    for entry in unmapped_entry_list:
+        if entry.ip["tlp_id"] == const.TCP_ID:
+            tcp_unmapped_count += 1
+    print "Unmapped transport layer size distribution is %s" % (str(util.quartileResult(size_list)))
+    print "Unmapped TCP protocol portion is %f / %f = %f" % (tcp_unmapped_count, total_unmapped_count, \
+                                                             tcp_unmapped_count / total_unmapped_count)
 
     print "WCDMA downlink mapping accuracy is %f / %f = %f" % \
           (mapped_transport_layer_protocol, \

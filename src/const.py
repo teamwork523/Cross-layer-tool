@@ -124,6 +124,7 @@ UDP_Header_Len = 8
 ############### RLC ################
 ####################################
 RLC_LI_THRESHOLD = 126 # If the current PDU size is greater than 126, then LI length is 15 bits (2 bytes including E bit)
+RLC_LI_LIMIT = 32677
 
 # Retransmission mapping (heuristics)
 MAX_ENTRIES_LIST = 10000
