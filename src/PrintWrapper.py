@@ -13,6 +13,7 @@ import PCAPPacket as pp
 import crossLayerWorker as clw
 from datetime import datetime
 import Util as util
+import validateWorker as vw
 
 DEBUG = True
 BINARY_SEARCH = True
@@ -706,16 +707,30 @@ def print_tcp_and_rlc_mapping_full_version(QCATEntries, entryIndexMap, pduID, sr
 
 # Verify the correctness of TCP and RLC one-to-all Mapping in terms of sequence number
 # Notice: both TCP and RLC retransmission analysis are pre-processed
-# Print TCP sequence number plus a line of mapped RLC sequence number 
-def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_ip, tcpAllRetxMap, RLCULRetxMap, RLCDLRetxMap, withHeader=True, client_ip=None):
+# Print TCP sequence number plus a line of mapped RLC sequence number
+#
+# Return:
+# 
+def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, \
+                                         srv_ip, tcpAllRetxMap, RLCULRetxMap, \
+                                         RLCDLRetxMap, non_unique_rlc_tuples, \
+                                         withHeader=True, client_ip=None):
     TCP_entry_count = 0.0
-    Mapped_TCP_entry_count = 0.0
+    Unique_mapped_TCP_entry_count = 0.0
     DEL = ","
     if withHeader:
         if client_ip:
-            print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
+            print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + \
+                  "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + \
+                  "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + \
+                  "RLC_Sequence_Number_and_Retransmission_Count" + DEL + \
+                  "HTTP_Type" + DEL + "Note"
         else:
-            print "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
+            print "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + \
+                  "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + \
+                  "RLC_Timestamp(first_mapped)" + DEL + \
+                  "RLC_Sequence_Number_and_Retransmission_Count" + DEL + \
+                  "HTTP_Type" + DEL + "Note"
 
     cross_mapping_found_count = 0.0
     cross_mapping_not_found_count = 0.0
@@ -723,6 +738,9 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
 
     # Trace previous mapped index
     last_mapped_RLC_entry_index = 0
+
+    # Note field inforamtion
+    note_info = ""
 
     for i in range(len(QCATEntries)):
         tcpEntry = QCATEntries[i]
@@ -733,23 +751,44 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
             (pduID == const.DL_PDU_ID and tcpEntry.ip["src_ip"] == srv_ip)):
             # make sure it is the first of TCP packet
             TCP_entry_count += 1
-            mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, i , pduID, hint_index = last_mapped_RLC_entry_index)
+
+            mapped_RLCs = mapped_sn = None
+            if pduID == const.UL_PDU_ID:
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, \
+                                         i , pduID, hint_index = last_mapped_RLC_entry_index)
+            elif pduID == const.DL_PDU_ID:
+                # hint index is problematic at this moment
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_downlink(QCATEntries, \
+                                         i , pduID)
 
             # Cross-layer mapping information
             if mapped_RLCs:
-                Mapped_TCP_entry_count += 1
                 last_mapped_RLC_entry_index = mapped_RLCs[-1][1]
+                if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, pduID, non_unique_rlc_tuples):
+                    Unique_mapped_TCP_entry_count += 1
+                    note_info = ""
+                else:
+                    note_info = const.NON_UNIQUE_MAPPING_WARNING
             else:
                 # reset the last mapped RLC index and retry mapping again
-                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, i , pduID)
+                if pduID == const.UL_PDU_ID:
+                    mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(QCATEntries, i , pduID)
                 if mapped_RLCs:
-                    Mapped_TCP_entry_count += 1
-                last_mapped_RLC_entry_index = 0
+                    last_mapped_RLC_entry_index = mapped_RLCs[-1][1]
+                    if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, pduID, non_unique_rlc_tuples):
+                        Unique_mapped_TCP_entry_count += 1
+                        note_info = ""
+                    else:
+                        note_info = const.NON_UNIQUE_MAPPING_WARNING
+                else:
+                    last_mapped_RLC_entry_index = -1
+                    note_info = ""
 
             line = ""
             if client_ip:
                 line += client_ip + DEL
-            line += srv_ip + DEL + str(tcpEntry.timestamp) + DEL + str(int(tcpEntry.tcp["seq_num"]))[:-1] + DEL
+            line += srv_ip + DEL + util.convert_ts_in_human(tcpEntry.timestamp, year=True) \
+                    + DEL + str(int(tcpEntry.tcp["seq_num"]))[:-1] + DEL
             # TCP retransmission information
             if tcpAllRetxMap.has_key(tcpEntry.timestamp):
                 line += str(len(tcpAllRetxMap[tcpEntry.timestamp][0]) - 1)
@@ -760,27 +799,30 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
             # RLC information
             if mapped_RLCs:
                 # DEBUG:
-                line += str(mapped_RLCs[0][0].timestamp) + DEL
-                # line += str(util.convert_ts_in_human(mapped_RLCs[0][0].timestamp, year=True)) + DEL
+                #line += str(mapped_RLCs[0][0].timestamp) + DEL
+                line += str(util.convert_ts_in_human(mapped_RLCs[0][0].timestamp, year=True)) + DEL
                 # RLC retransmission count information
-                # TODO: add downlink later
                 tmpCountResults = ""
-                for (RLCEntry, index) in mapped_RLCs:
-                    rlc_mapped_count += 1
-                    # DEBUG
-                    """
-                    print str(RLCEntry.timestamp) + ": " + str(RLCEntry.ul_pdu[0]["sn"]) + " of entry " + str(RLCEntry)
-                    if RLCEntry in RLCULRetxMap:
-                        print "Found!!!"
-                    else:
-                        print "Not Exist!!!!"
-                    """
-                    for sn in RLCEntry.ul_pdu[0]["sn"]:
-                        if sn in mapped_sn and \
-                           RLCEntry in RLCULRetxMap and \
-                           sn in RLCULRetxMap[RLCEntry]:
+                if pduID == const.UL_PDU_ID:
+                    for (RLCEntry, index) in mapped_RLCs:
+                        rlc_mapped_count += 1
+                        
+                        for sn in RLCEntry.ul_pdu[0]["sn"]:
+                            if sn in mapped_sn and \
+                               RLCEntry in RLCULRetxMap and \
+                               sn in RLCULRetxMap[RLCEntry]:
+                                cross_mapping_found_count += 1
+                                tmpCountResults += str(sn) + ":" + str(RLCULRetxMap[RLCEntry][sn])
+                            else:
+                                cross_mapping_not_found_count += 1
+                                tmpCountResults += str(sn) + ":" + str(0)
+                            tmpCountResults += "/"
+                elif pduID == const.DL_PDU_ID:
+                    for (RLCEntry, index, sn) in mapped_RLCs:
+                        if RLCEntry in RLCDLRetxMap and \
+                           sn in RLCDLRetxMap[RLCEntry]:
                             cross_mapping_found_count += 1
-                            tmpCountResults += str(sn) + ":" + str(RLCULRetxMap[RLCEntry][sn])
+                            tmpCountResults += str(sn) + ":" + str(RLCDLRetxMap[RLCEntry][sn])
                         else:
                             cross_mapping_not_found_count += 1
                             tmpCountResults += str(sn) + ":" + str(0)
@@ -797,11 +839,12 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
                 line += tcpEntry.http["type"]
             else:
                 line += "N/A"
+            line += DEL + note_info
             print line
 
     tcp_mapped_ratio = 0.0
     if TCP_entry_count > 0:
-        tcp_mapped_ratio = Mapped_TCP_entry_count / TCP_entry_count
+        tcp_mapped_ratio = Unique_mapped_TCP_entry_count / TCP_entry_count
     
     rlc_mapped_ratio = 0.0
     if cross_mapping_not_found_count + cross_mapping_found_count > 0:
@@ -810,7 +853,7 @@ def print_tcp_and_rlc_mapping_sn_version(QCATEntries, entryIndexMap, pduID, srv_
     """
     print
     print "*" * 80
-    print "TCP mapped ratio is %f / %f = %f" % (Mapped_TCP_entry_count, TCP_entry_count, tcp_mapped_ratio)
+    print "TCP mapped ratio is %f / %f = %f" % (Unique_mapped_TCP_entry_count, TCP_entry_count, tcp_mapped_ratio)
     print
     print "Total mapped RLC count is %d" % (rlc_mapped_count)
     print "RLC mapped ratio is %f / %f = %f" % (cross_mapping_found_count, cross_mapping_not_found_count + cross_mapping_found_count, rlc_retx_ratio)

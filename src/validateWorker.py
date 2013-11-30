@@ -74,20 +74,24 @@ def check_mapping_feasibility_uniqueness(entryList, client_ip, direction, networ
                 entry.ip["total_len"] == 83):
                 continue
             """
+            mapped_RLCs = mapped_sn = None
             if (log_of_interest_id == const.UL_PDU_ID and \
-               entry.ip["src_ip"] == client_ip) or \
-               (log_of_interest_id == const.DL_PDU_ID and \
-               entry.ip["dst_ip"] == client_ip):
+               entry.ip["src_ip"] == client_ip):
                 if entry.ip["tlp_id"] in transport_layer_total_count:
                     transport_layer_total_count[entry.ip["tlp_id"]] += 1
                 mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i, log_of_interest_id)
-                if mapped_RLCs:
-                    if is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
-                        if entry.ip["tlp_id"] in valid_transport_layer_mapping_count:
-                            valid_transport_layer_mapping_count[entry.ip["tlp_id"]] += 1
-                    if is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_of_interest_id):
-                        if entry.ip["tlp_id"] in valid_RLC_first_hop_esimation_count:
-                            valid_RLC_first_hop_esimation_count[entry.ip["tlp_id"]] += 1                   
+            elif (log_of_interest_id == const.DL_PDU_ID and \
+                   entry.ip["dst_ip"] == client_ip):
+                if entry.ip["tlp_id"] in transport_layer_total_count:
+                    transport_layer_total_count[entry.ip["tlp_id"]] += 1
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_downlink(entryList, i, log_of_interest_id)
+            if mapped_RLCs:
+                if is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
+                    if entry.ip["tlp_id"] in valid_transport_layer_mapping_count:
+                        valid_transport_layer_mapping_count[entry.ip["tlp_id"]] += 1
+                if is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_of_interest_id):
+                    if entry.ip["tlp_id"] in valid_RLC_first_hop_esimation_count:
+                        valid_RLC_first_hop_esimation_count[entry.ip["tlp_id"]] += 1                   
 
     # output results
     print "Chain_occurance" + DEL + "Chain_PDU_length" + DEL + "Chain_value"

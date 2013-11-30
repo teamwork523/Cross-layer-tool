@@ -140,4 +140,8 @@ MIN_SN_PERIOD = 20
 # Maximum RLC UL sequence number
 MAX_RLC_UL_SEQ_NUM = 4096
 
-
+############################################################################
+################################# Log Message ##############################
+############################################################################
+# Non-unique cross-layer mapping
+NON_UNIQUE_MAPPING_WARNING = "WARNING: Non-unique Mapping"

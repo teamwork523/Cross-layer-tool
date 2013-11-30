@@ -241,7 +241,7 @@ def detectReTx (entry, entryHist, is_up, srv_ip):
 def procRLCReTx(entries, detail="complete"):
     ULCounter = 0
     DLCounter = 0
-    ULPrivIndex = 0  # track for the period of index
+    ULPrivIndex = 0  # track for the period of inde x
     DLPrivIndex = 0  # track for the period of index
     # Track on the time based entry value
     DLPrivZeroTS = None
@@ -336,10 +336,10 @@ def procRLCReTx(entries, detail="complete"):
                         DLPrivZeroTS = ts_dl
                 """
                 # check if duplication exist
-                if (curSN_DL in DLSNMap) and (DLLastPeriod == -1 or DLCounter - DLSNMap[curSN_DL][0] < DLLastPeriod*2/3):
+                check_period = max(DLLastPeriod, curSN_DL)
+                if (curSN_DL in DLSNMap) and (DLLastPeriod == -1 or DLCounter - DLSNMap[curSN_DL][0] < check_period*2/3):
                     # duplication detected
-                    ts_dl_formatted = datetime.fromtimestamp(ts_dl).strftime('%Y-%m-%d %H:%M:%S.%f')
-                    #print "DL: %s\t%d\t%d\t%d" % (ts_dl_formatted, curSN_DL, DLCounter - DLSNMap[curSN_DL][0], DLLastPeriod)
+                    # print "DL: %s\t%d\t%d\t%d" % (util.convert_ts_in_human(ts_dl), curSN_DL, DLCounter - DLSNMap[curSN_DL][0], check_period)
                     if curSN_DL not in entry.retx["dl"]:
                         entry.retx["dl"][curSN_DL] = [entry.dl_pdu[0]["size"][i]]
                     else:

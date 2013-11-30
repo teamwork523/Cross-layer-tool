@@ -744,22 +744,33 @@ def main():
                 else:
                     pw.print_tcp_and_rlc_mapping_sn_version(filteredQCATEntries, filteredEntryToIndexMap, const.DL_PDU_ID, options.server_ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap)
             elif options.client_ip:
+                # perform RLC retransmission analysis
+                [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(nonIPEntries, detail="simple")
+                
                 if options.direction.lower() == "up":
+                    # WCDMA Uplink
+                    # Uniqueness Analysis
+                    non_unique_rlc_tuples, dummy = vw.uniqueness_analysis(nonIPEntries, const.UL_PDU_ID)
+
                     tcp_mapped_ratio_list = []
                     length_list = []
                     retx_list = []
                     rlc_mapped_ratio_list = []
                     
-                    # perform RLC retransmission analysis
-                    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(nonIPEntries, detail="simple")
                     if IP_DUP_DEBUG:
                         print "Orig RLC PDU UL #: " + str(util.count_entry_number(nonIPEntries, const.UL_PDU_ID))
                         print "Retx RLC PDU UL #: " + str(util.count_entry_number(RLCULReTxCountMap.keys(), const.UL_PDU_ID))
 
                     # New: perform multiple server IP mapping
                     DEL = ","
-                    print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + "RLC_Sequence_Number_and_Retransmission_Count" + DEL + "HTTP_Type"
+                    # "Note" field indicates whether the cross-layer mapping is unique or not
+                    print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + \
+                          "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + \
+                          "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + \
+                          "RLC_Sequence_Number_and_Retransmission_Count" + DEL + \
+                          "HTTP_Type" + DEL + "Note"
                     count = 0
+
                     for ip in IPEntriesMap.keys():
                         # print ">.<" * 40
                         length_list.append(len(IPEntriesMap[ip]))
@@ -770,17 +781,54 @@ def main():
                         # print "No. %dth: TCP flow length is %d" % (count, len(tcpflows))
                         tcpReTxMap, tcpFastReTxMap, tcpAllRetxMap = rw.procTCPReTx(tcpflows, options.direction, ip)
                         retx_list.append(len(tcpAllRetxMap))
-                        ratios = pw.print_tcp_and_rlc_mapping_sn_version(mergedEntries, util.createEntryMap(mergedEntries), const.UL_PDU_ID, ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap, withHeader=False, client_ip = options.client_ip)
+                        ratios = pw.print_tcp_and_rlc_mapping_sn_version(mergedEntries, util.createEntryMap(mergedEntries), \
+                                 const.UL_PDU_ID, ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap, non_unique_rlc_tuples, \
+                                 withHeader=False, client_ip = options.client_ip)
                         tcp_mapped_ratio_list.append(ratios[0])
                         rlc_mapped_ratio_list.append(ratios[1])
 
-                    print "\n" + ":)" * 40
-                    print "TCP mapping ratio is %f" % (util.meanValue(tcp_mapped_ratio_list))
-                    print "TCP mapping ratio distribution is %s" % (util.quartileResult(tcp_mapped_ratio_list))
-                    print "RLC mapped average ratio is %f" % (util.meanValue(rlc_mapped_ratio_list))
-                    print "RLC mapped ratio distribution is %s" % (util.quartileResult(rlc_mapped_ratio_list))
+                    if IP_DUP_DEBUG:
+                        print "\n" + ":)" * 40
+                        print "TCP mapping ratio is %f" % (util.meanValue(tcp_mapped_ratio_list))
+                        print "TCP mapping ratio distribution is %s" % (util.quartileResult(tcp_mapped_ratio_list))
+                        print "RLC mapped average ratio is %f" % (util.meanValue(rlc_mapped_ratio_list))
+                        print "RLC mapped ratio distribution is %s" % (util.quartileResult(rlc_mapped_ratio_list))
 
-                # TODO: add downlink
+                elif options.direction.lower() == "down":
+                    # WCDMA Downlink
+                    # Uniqueness Analysis
+                    non_unique_rlc_tuples, dummy = vw.uniqueness_analysis(nonIPEntries, const.DL_PDU_ID)
+
+                    tcp_mapped_ratio_list = []
+                    retx_list = []
+                    rlc_mapped_ratio_list = []
+
+                    # New: perform multiple server IP mapping
+                    DEL = ","
+                    # "Note" field indicates whether the cross-layer mapping is unique or not
+                    print "Client_IP" + DEL + "Server_IP" + DEL + "Timestamp" + DEL + \
+                          "TCP_Sequence_Number" + DEL + "TCP_Retranmission_Count" + DEL + \
+                          "TCP_Flag_Info" + DEL + "RLC_Timestamp(first_mapped)" + DEL + \
+                          "RLC_Sequence_Number_and_Retransmission_Count" + DEL + \
+                          "HTTP_Type" + DEL + "Note"
+
+                    for ip in IPEntriesMap.keys():
+                        mergedEntries = util.merge_two_entry_lists(nonIPEntries, IPEntriesMap[ip])
+                        tcpflows = rw.extractFlows(IPEntriesMap[ip])
+                        tcpReTxMap, tcpFastReTxMap, tcpAllRetxMap = rw.procTCPReTx(tcpflows, options.direction, ip)
+                        retx_list.append(len(tcpAllRetxMap))
+                        ratios = pw.print_tcp_and_rlc_mapping_sn_version(mergedEntries, util.createEntryMap(mergedEntries), \
+                                 const.DL_PDU_ID, ip, tcpAllRetxMap, RLCULReTxCountMap, RLCDLReTxCountMap, non_unique_rlc_tuples, \
+                                 withHeader=False, client_ip = options.client_ip)
+                        tcp_mapped_ratio_list.append(ratios[0])
+                        rlc_mapped_ratio_list.append(ratios[1])
+
+                    if IP_DUP_DEBUG:                    
+                        print "\n" + ":)" * 40
+                        print "TCP mapping ratio is %f" % (util.meanValue(tcp_mapped_ratio_list))
+                        print "TCP mapping ratio distribution is %s" % (util.quartileResult(tcp_mapped_ratio_list))
+                        print "RLC mapped average ratio is %f" % (util.meanValue(rlc_mapped_ratio_list))
+                        print "RLC mapped ratio distribution is %s" % (util.quartileResult(rlc_mapped_ratio_list))
 
 if __name__ == "__main__":
     main()
