@@ -85,16 +85,26 @@ DATA_LOGIC_CHANNEL_ID = 19
 FACH_ID = 2
 DCH_ID = 3
 PCH_ID = 4
+# Promotion transition
 FACH_TO_DCH_ID = 5
 PCH_TO_FACH_ID = 6
-# TODO: Assign the DCH later
-# DCH_LATER_ID = 7
+# Demotion transition
+DCH_TO_FACH_ID = 7
+FACH_TO_PCH_ID = 8
+# RRC state transition group
+RRC_TRANSITION_ID_GROUP = \
+    set([FACH_TO_DCH_ID, \
+         PCH_TO_FACH_ID, \
+         DCH_TO_FACH_ID, \
+         FACH_TO_PCH_ID])
 
-RRC_MAP = {FACH_ID: "CELL_FACH", \
-           DCH_ID: "CELL_DCH", \
-           PCH_ID: "CELL_PCH", \
-           FACH_TO_DCH_ID: "PROMOTE_TO_DCH", \
-           PCH_TO_FACH_ID: "PROMOTE_TO_FACH"}
+RRC_MAP = {FACH_ID: "FACH", \
+           DCH_ID: "DCH", \
+           PCH_ID: "PCH", \
+           FACH_TO_DCH_ID: "FACH_TO_DCH", \
+           PCH_TO_FACH_ID: "PCH_TO_FACH", \
+           DCH_TO_FACH_ID: "DCH_TO_FACH", \
+           FACH_TO_PCH_ID: "FACH_TO_PCH"}
 
 # Generic RRC states in UMTS w/o Arteficial RRC State
 RRC_ORIG_MAP = {FACH_ID: "CELL_FACH", \

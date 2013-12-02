@@ -310,7 +310,7 @@ def main():
         cond["tlp_id"] = const.TLPtoID_MAP[options.protocolType.upper()]
     if options.server_ip != None:
     	if not options.direction:
-    		print >> sys.stderr, "Must specify direction information if you want to filter based on server ip"
+    		print >> sys.stderr, "ERROR: Must specify direction information if you want to filter based on server ip"
     		sys.exit(1)
     	else:
     		cond["ip_relation"] = "or"
@@ -598,7 +598,7 @@ def main():
         if options.direction:
             cw.calThrouhgput(filteredQCATEntries, options.direction)
         else:
-            print >> sys.stderr, "Must specifiy trace direction!!!"
+            print >> sys.stderr, "ERROR: Must specifiy trace direction!!!"
 
     # Print RLC mapping to RRC (timestamp based heuristic)
     # Deprecated
@@ -610,7 +610,7 @@ def main():
             else:
                 pw.printMapRLCtoTCPRetx(tcpReTxMap, DLReTxCountMap)
         else:
-            print >> sys.stderr, "Direction is required to print the TCP and RLC mapping"
+            print >> sys.stderr, "ERROR: Direction is required to print the TCP and RLC mapping"
     """
     
     # print the retx ratio for each state
@@ -633,7 +633,7 @@ def main():
             else:
                 pw.printRLCRetxCountAndRSCP(DLReTxCountMap)
         else:
-            print >> sys.stderr, "Direction is required to print retransmission count vs signal s   trength"
+            print >> sys.stderr, "ERROR: Direction is required to print retransmission count vs signal strength"
     
     
     # print timeseries plot
@@ -664,7 +664,7 @@ def main():
     # LIMIT: only support TCP uplink at this moment
     if options.isFirstHopLatencyAnalysis and options.client_ip and options.direction:
         # TCP RTT
-        dw.calc_tcp_rtt(QCATEntries, options.client_ip, options.direction)
+        dw.calc_tcp_rtt(QCATEntries, options.client_ip)
 
         tcp_rtt_list = first_hop_rtt_list = ratio_rtt_list = []
         # only support uplink now
@@ -713,18 +713,25 @@ def main():
         # Check the uniqueness of RLC layer trace (uniqueness analysis)
         if options.validate_cross_layer_feasibility.lower() == "unique":
             if not options.direction:
-                print >> sys.stderr, "Cross-layer feasibility: Must specify the direction"
+                print >> sys.stderr, "ERROR: Cross-layer feasibility: Must specify the direction"
                 sys.exit(1)
             vw.check_mapping_feasibility_uniqueness(QCATEntries, options.client_ip, options.direction)
 
     # ROOT CAUSE analysis
     if options.root_cause_analysis_type:
         if options.root_cause_analysis_type.lower() == "rrc_infer":
-            # analyze the root cause of the abnormal delay
+            # Analyze the root cause of the abnormal delay
             if options.server_ip == None:
-                print >> sys.stderr, "Root Cause Analysis Parameter Error: no server ip"
+                print >> sys.stderr, "ERROR: Abnormal RRC state root cause analysis parameter error -- no server ip"
                 sys.exit(1)
             rcw.abnormal_rrc_fach_analysis(QCATEntries, options.server_ip, options.network_type)
+        elif options.root_cause_analysis_type.lower() == "rrc_state_transition":
+            # Analyze the root cause for RRC state transition
+            if options.direction == None:
+                print >> sys.stderr, "ERROR: RRC state transition root cause analysis parameter error -- no direction"
+                sys.exit(1)
+            rcw.rrc_state_transition_analysis(QCATEntries, options.client_ip, options.network_type, options.direction)
+            
 
     # WCDMA downlink cross-layer mapping validation
     if options.validate_downlink and options.client_ip:

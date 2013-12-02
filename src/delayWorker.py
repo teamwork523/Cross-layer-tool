@@ -20,32 +20,34 @@ TCP_RTT_DEBUG = False
 #################################################################
 ##################### TCP RTT releated ##########################
 #################################################################
-# Calculate the TCP RTT
+# Calculate the TCP RTT for all TCP packet
 # Time(Sender) - Time(ACK = Sender's seq + TCP payload size)
-def calc_tcp_rtt(Entries, client_ip, direction):
+def calc_tcp_rtt(Entries, client_ip):
     entryLen = len(Entries)
+
     for i in range(entryLen):
         curEntry = Entries[i]
         if curEntry.logID == const.PROTOCOL_ID and \
-           curEntry.ip["tlp_id"] == const.TCP_ID:
-            if direction.lower() == "up":
-                if curEntry.ip["src_ip"] == client_ip:
-                    tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
-                    ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["dst_ip"], direction,\
-                                curEntry.tcp["seq_num"] + tcp_len)
-                    if ack_entry:
-                        curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
-                        
-                        if TCP_RTT_DEBUG:
-                            print "Found one: " + str(curEntry.timestamp) + "\t" + str(curEntry.rtt["tcp"])
-            else:
-                if curEntry.ip["dst_ip"] == client_ip:
-                    tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
-                    ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["src_ip"], direction,\
-                                curEntry.tcp["seq_num"] + tcp_len)
-                    if ack_entry:
-                        curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
-                
+           curEntry.ip["tlp_id"] == const.TCP_ID and \
+           (curEntry.ip["total_len"] != curEntry.ip["header_len"] + curEntry.tcp["header_len"]):
+            if curEntry.ip["src_ip"] == client_ip:
+                tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
+                ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["dst_ip"], "up",\
+                            curEntry.tcp["seq_num"] + tcp_len)
+                if ack_entry:
+                    curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
+                    
+                    if TCP_RTT_DEBUG:
+                        print "Found one in uplink: " + str(curEntry.timestamp) + "\t" + str(curEntry.rtt["tcp"])
+            elif curEntry.ip["dst_ip"] == client_ip:
+                tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
+                ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["src_ip"], "down",\
+                            curEntry.tcp["seq_num"] + tcp_len)
+                if ack_entry:
+                    curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
+
+                if TCP_RTT_DEBUG:
+                        print "Found one in downlink: " + str(curEntry.timestamp) + "\t" + str(curEntry.rtt["tcp"])
 
 
 #################################################################
@@ -200,9 +202,11 @@ def check_polling_bit(header_list):
 
 # find the ACK packet entry by given TCP ack number
 def find_tcp_ack_entry(entryList, server_ip, direction, ack_num):
+    # Define ACK packet as IP length = IP header length + TCP header length
     for entry in entryList:
         if entry.logID == const.PROTOCOL_ID and \
-           entry.ip["tlp_id"] == const.TCP_ID:
+           entry.ip["tlp_id"] == const.TCP_ID and \
+           (entry.ip["total_len"] == entry.ip["header_len"] + entry.tcp["header_len"]):
             # terminate search at a FIN packet
             if direction.lower() == "up":
                 if entry.ip["src_ip"] == server_ip:
