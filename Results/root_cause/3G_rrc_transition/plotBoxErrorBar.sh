@@ -1,7 +1,7 @@
 #!/bin/bash
 
 file=$1
-xlabel="RRC states"
+xlabel="RRC states and RRC state transitions"
 ylabel=$2
 #y_max=$3
 #y_min=$4
