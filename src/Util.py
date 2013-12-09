@@ -881,6 +881,12 @@ def gen_RRC_state_count_map():
     for rrc in const.RRC_MAP.keys():
         countMap[rrc] = 0.0
     return countMap
+
+# help to append keys with same value to a map
+def add_multiple_key_same_value_to_map(Map, keys, value):
+    for key in keys:
+        Map[key] = value
+
 #############################################################################
 ############################ Bianry Search ##################################
 ############################################################################# 

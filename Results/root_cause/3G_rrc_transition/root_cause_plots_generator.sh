@@ -3,15 +3,15 @@
 app_names=$@
 
 # TODO: add RSCP and ECIO later
-feature_array=("tcp_rtt" "transmission_delay" "ota_rtt" "rlc_retx_ratio" "rlc_retx_count")
+feature_array=("tcp_rtt" "transmission_delay" "normalized_transmission_delay" "ota_rtt" "rlc_retx_ratio" "rlc_retx_count")
 feature_total=${#feature_array[*]}
-feature_detail_array=('TCP RTT (s)' 'RLC Transmission Delay (ms)' 'RLC OTA RTT (ms)' \
+feature_detail_array=('TCP RTT (s)' 'RLC Transmission Delay (ms)' 'Normalized Transmission Delay\n(ms)' 'RLC OTA RTT (ms)' \
                       'RLC Retransmission Ratio' 'RLC Retransmission Count')
 direction_array=("uplink" "downlink")
 
 for app_name in $app_names; do
     folder_path="raw/$app_name"
-    input_filename="root_cause_rrt_transition_${app_name}"
+    input_filename="root_cause_rrc_transition_${app_name}"
     for (( i=0; i<=$(( ${feature_total} -1 )); i++ )); do
         echo "Starting ${app_name[@]^} ${feature_array[$i]} ..."
         input_path="${folder_path}/${input_filename}"

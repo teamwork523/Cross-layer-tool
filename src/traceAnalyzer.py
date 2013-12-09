@@ -263,7 +263,8 @@ def main():
     # Make sure no change to QCATEntries later on
     QCATEntries = cw.extractEntriesOfInterest(QCATEntries, \
                   set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID,\
-                       const.DL_CONFIG_PDU_ID, const.UL_CONFIG_PDU_ID, const.DL_CTRL_PDU_ID)))
+                       const.DL_CONFIG_PDU_ID, const.UL_CONFIG_PDU_ID, const.DL_CTRL_PDU_ID,\
+                       const.SIG_MSG_ID)))
 
     # create a map between entry and QCATEntry index
     entryIndexMap = util.createEntryMap(QCATEntries)

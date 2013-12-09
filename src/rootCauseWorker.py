@@ -16,6 +16,8 @@ import retxWorker as rw
 import Util as util
 import validateWorker as vw
 
+RRC_STATE_TRANSITION_DEBUG = False
+
 ############################################################################
 ############################### RRC States #################################
 ############################################################################
@@ -140,7 +142,7 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
 # 1. RRC state count
 def rrc_state_transition_analysis(entryList, client_ip, network_type, direction):
     # statistics summarize the occurance of each state
-    rrc_occurance_map = util.gen_RRC_state_count_map()    
+    rrc_occurance_map = util.gen_RRC_state_count_map()
 
     # determine the network type
     log_of_interest_id = util.get_logID_of_interest(network_type, direction)
@@ -298,7 +300,9 @@ def gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, 
 def label_RRC_state_for_IP_packets(entryList):
     pktRRCMap = {}
     privPacket = None
-
+    
+    """
+    # old labeling methods
     for entry in entryList:
         if entry.logID == const.PROTOCOL_ID and \
            entry.rrcID != None and \
@@ -319,6 +323,84 @@ def label_RRC_state_for_IP_packets(entryList):
                         if entry.rrcID == const.FACH_ID:
                             pktRRCMap[entry] = const.DCH_TO_FACH_ID
             privPacket = entry
+    """
+    
+    rrc_transit_state_pkt_buffer = None
+    rrc_transit_state = None
+    non_rrc_transit_count = 0
 
+    for entry in entryList:
+        if entry.logID == const.SIG_MSG_ID:
+            # FACH -> PCH (case 1)
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfiguration":
+                rrc_transit_state_pkt_buffer = []
+                continue
+            # reset FACH -> PCH (case 1)
+            if rrc_transit_state_pkt_buffer != None and \
+               entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfigurationComplete":
+                util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, const.FACH_TO_PCH_ID)
+                rrc_transit_state_pkt_buffer = None
+                continue
+            # FACH -> PCH (case 2)
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdate":
+                rrc_transit_state_pkt_buffer = []
+                continue
+            # reset FACH -> PCH (case 2)
+            if rrc_transit_state_pkt_buffer != None and \
+               entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdateConfirm" and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.PCH_ID:
+                if RRC_STATE_TRANSITION_DEBUG and len(rrc_transit_state_pkt_buffer) > 0:
+                    print "RRC state transition: FACH_TO_PCH with count %d" % (len(rrc_transit_state_pkt_buffer))
+                util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, const.FACH_TO_PCH_ID)
+                rrc_transit_state_pkt_buffer = None
+                continue
+            # PCH -> FACH same as FACH -> PCH (case 2)
+            # reset PCH -> FACH
+            # TODO: current ignore cell-reselection special case
+            if rrc_transit_state_pkt_buffer != None and \
+               entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdateConfirm" and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.PCH_ID:
+                if RRC_STATE_TRANSITION_DEBUG and len(rrc_transit_state_pkt_buffer) > 0:
+                    print "RRC state transition: PCH_TO_FACH with count %d" % (len(rrc_transit_state_pkt_buffer))
+                util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, const.PCH_TO_FACH_ID)
+                rrc_transit_state_pkt_buffer = None
+                continue
+            # FACH -> DCH
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfiguration" and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
+                rrc_transit_state_pkt_buffer = []
+                rrc_transit_state = const.FACH_TO_DCH_ID
+                continue
+            # reset FACH -> DCH & DCH -> FACH
+            if rrc_transit_state != None and rrc_transit_state_pkt_buffer != None and \
+               entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfigurationComplete":
+                if RRC_STATE_TRANSITION_DEBUG and len(rrc_transit_state_pkt_buffer) > 0:
+                    print "RRC state transition: %s with count %d" % (const.RRC_MAP[rrc_transit_state], len(rrc_transit_state_pkt_buffer))
+                util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, rrc_transit_state) 
+                rrc_transit_state_pkt_buffer = None
+                rrc_transit_state == None
+                continue
+            # DCH -> FACH
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfiguration" and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                rrc_transit_state_pkt_buffer = []
+                rrc_transit_state = const.DCH_TO_FACH_ID
+                continue
+        elif entry.logID == const.PROTOCOL_ID and \
+             entry.rrcID != None and \
+             entry.ip["tlp_id"] == const.TCP_ID:
+            if rrc_transit_state_pkt_buffer != None and rrc_transit_state != None:
+                rrc_transit_state_pkt_buffer.append(entry)
+            else:
+                pktRRCMap[entry] = entry.rrcID
+    
     return pktRRCMap
 
