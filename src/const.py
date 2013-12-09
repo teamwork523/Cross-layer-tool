@@ -44,7 +44,8 @@ UL_CONFIG_PDU_ID = int("0x4133", 16)    # polling configurations included
 DL_CTRL_PDU_ID = int("0x4134", 16)      # LIST/ACK info on UL RLC AM
 UL_PDU_ID = int("0x413B", 16)   # UL on Link Layer info
 DL_PDU_ID = int("0x418B", 16)   # DL on Link Layer info
-SIG_ID = int("0x4005", 16)  # Signal information
+CELL_RESELECTION_ID = int("0x4005", 16)  # Cell reselection information (power)
+SIG_MSG_ID = int("0x412F", 16) # WCDMA signaling message
 
 # LTE
 LTE_UL_RLC_PDU_ID = int("0xB092", 16)
@@ -58,13 +59,32 @@ EVENT_ID = int("0x1FFB", 16)
 
 LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                RRC_ID: "WCDMA RRC States",
-               EUL_STATS_ID: "EUL Link Statistics", 
-               UL_PDU_ID: "UL PDU information", 
-               DL_PDU_ID: "DL PDU information",
-               SIG_ID: "Signal Strength related",
-               DL_CONFIG_PDU_ID: "Downlink RLC configuration",
-               UL_CONFIG_PDU_ID: "Uplink RLC configuration",
-               DL_CTRL_PDU_ID: "Downlink control PDU"}
+               EUL_STATS_ID: "WCDMA EUL Link Statistics", 
+               UL_PDU_ID: "WCDMA UL PDU information", 
+               DL_PDU_ID: "WCDMA DL PDU information",
+               CELL_RESELECTION_ID: "WCDMA Signal Strength related",
+               DL_CONFIG_PDU_ID: "WCDMA Downlink RLC configuration",
+               UL_CONFIG_PDU_ID: "WCDMA Uplink RLC configuration",
+               DL_CTRL_PDU_ID: "WCDMA Downlink control PDU"}
+
+# WCDMA signaling message
+CH_TYPE_OF_INTEREST = set([
+    "DL_CCCH",
+    "DL_DCCH",
+    "UL_CCCH",
+    "UL_DCCH"])
+
+MSG_TYPE_OF_INTEREST = set([
+    "physicalChannelReconfiguration",
+    "physicalChannelReconfigurationComplete",
+    "cellUpdate",
+    "cellUpdateConfirm",
+    "radioBearerReconfiguration",
+    "radioBearerReconfigurationComplete"])
+
+MSG_OF_INTEREST = set([
+    "rrc-StateIndicator", # from DL_DCCH
+    "cellUpdateCause"]) # from UL_DCCH
 
 ####################################
 ############### UDP ################
@@ -110,6 +130,12 @@ RRC_MAP = {FACH_ID: "FACH", \
 RRC_ORIG_MAP = {FACH_ID: "CELL_FACH", \
                 DCH_ID: "CELL_DCH", \
                 PCH_ID: "CELL_PCH"}
+
+# For WCDMA signaling message parsing
+RRC_REVERSE_MAP = {
+    "cell-PCH": PCH_ID,
+    "cell-FACH": FACH_ID,
+    "cell-DCH": DCH_ID}
 
 # 1 sec for DCH promotion, and 0.2 sections for PCH promotion
 TIMER = { FACH_TO_DCH_ID: 1, \

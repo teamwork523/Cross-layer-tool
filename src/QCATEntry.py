@@ -170,6 +170,17 @@ class QCATEntry:
         self.sig = {"num_cells": None,
                     "ECIO": [],
                     "RSCP": []}
+        # Record WCDMA signal messages: 
+        # 1. channel type
+        # 2. message Detail
+        # 2.1 message type
+        # 2.2 cell_update_cause (speciallized for UL_CCCH message)
+        # 2.3 rrc state indicator (convert to same RRC ID we used)
+        self.sig_msg = {"ch_type": None,
+                        "msg": {"type": None,
+                                "cell_update_cause": None,
+                                "rrc_indicator": None}
+                        }
         # TCP Throughput information based on ACK calculation
         self.throughput = -1
         # TCP / RLC RTT based on ARQ mechanism
@@ -302,7 +313,7 @@ class QCATEntry:
                 #self.__debugDownlinkRLC()
             # Parse the Signal Strength state
             # Assume the number of cell we get is always in WCDMA
-            elif self.logID == const.SIG_ID:
+            elif self.logID == const.CELL_RESELECTION_ID:
                 # check for number of cell reached
                 if self.detail[2].find("Num cells searched") != -1:
                     self.sig["num_cells"] = int(self.detail[2].split()[4])
@@ -425,6 +436,30 @@ class QCATEntry:
                             self.dl_config["min_time_btw_poll"] = int(line.split()[-2])
                         if line.find("UE should send status report for missing PU") != -1:
                             self.dl_config["is_report_missing_pdu"] = (line.split()[-1] == "TRUE")
+            # Parsing the WCDMA signaling messages
+            elif self.logID == const.SIG_MSG_ID:
+                # Find the channel in the first line
+                self.sig_msg["ch_type"] = self.detail[0].split(", ")[0].split(" = ")[-1]
+                # check whether the channel type is what we want
+                if self.sig_msg["ch_type"] in const.CH_TYPE_OF_INTEREST:
+                    for line in self.detail[1:]:
+                        # hunting for the message type
+                        splittedLine = line.split()
+                        if splittedLine[0] == "message":
+                            self.sig_msg["msg"]["type"] = splittedLine[1]
+                            if self.sig_msg["msg"]["type"] not in const.MSG_TYPE_OF_INTEREST:
+                                break
+                        if self.sig_msg["msg"]["type"] and splittedLine[0] in const.MSG_OF_INTEREST:
+                            # get rid of the comma
+                            if splittedLine[1][-1] == ",":
+                                splittedLine[1] = splittedLine[1][:-1]
+                            if splittedLine[0] == "rrc-StateIndicator":
+                                if const.RRC_REVERSE_MAP.has_key(splittedLine[1]):
+                                    self.sig_msg["msg"]["rrc_indicator"] = const.RRC_REVERSE_MAP[splittedLine[1]]
+                                    break
+                            elif splittedLine[0] == "cellUpdateCause":
+                                self.sig_msg["msg"]["cell_update_cause"] = splittedLine[1]
+                                break
             # TODO: process other type of log entry
 
     def __procHexDump(self):

@@ -22,7 +22,7 @@ then
         # scp -r $prj_folder/data/TCP/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/TCP/
         # Root cause analysis
         #scp -r $prj_folder/data/UDP/Root_cause/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/UDP/Root_cause/
-        scp -r $prj_folder/data/App/WCDMA/* haokun@ep2.eecs.umich.edu:$ep2_folder/data/App/WCDMA/
+        scp -r $prj_folder/data/TCP/complete_events.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/TCP/
     fi
     if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-p' ];then
         scp -r $prj_folder/data/PCAP/*.pcap haokun@ep2.eecs.umich.edu:$ep2_folder/data/PCAP/

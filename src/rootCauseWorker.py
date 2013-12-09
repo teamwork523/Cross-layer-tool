@@ -24,7 +24,8 @@ import validateWorker as vw
 #
 # Output the following column
 # 1. Inter-packet timing (s)
-# 2. Transmission Delay (ms)
+# 2.1 Transmission Delay (ms)
+# 2.2 Normalized Transmission Delay (ms)
 # 3. OTA Delay (ms)
 # 4. RLC Retransmission Ratio
 # 5. RLC Retransmission Count
@@ -58,6 +59,7 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
     DEL = "\t"
     print "Inter_packet_time" + DEL + \
           "Transmission_delay" + DEL + \
+          "Normalized_transmission_delay" + DEL + \
           "OTA_RTT" + DEL + \
           "RLC_retx_ratio" + DEL + \
           "RLC_retx_count" + DEL + \
@@ -122,7 +124,8 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
 # Output the following column
 # 1. RRC state type
 # 2. TCP RTT
-# 3. Transmission Delay (ms)
+# 3.1 Transmission Delay (ms)
+# 3.2 Normalized Transmission Delay (ms)
 # 4. OTA Delay (ms)
 # 5. RLC Retransmission Ratio
 # 6. RLC Retransmission Count
@@ -132,7 +135,13 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
 # 9. UDP packet timestamp
 # 10. First mapped RLC PDU timestamp
 # 11. Last mapped RLC PDU timestamp
+#
+# Return
+# 1. RRC state count
 def rrc_state_transition_analysis(entryList, client_ip, network_type, direction):
+    # statistics summarize the occurance of each state
+    rrc_occurance_map = util.gen_RRC_state_count_map()    
+
     # determine the network type
     log_of_interest_id = util.get_logID_of_interest(network_type, direction)
 
@@ -157,6 +166,7 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
     print "RRC_state" + DEL + \
           "TCP_RTT" + DEL + \
           "Transmission_delay" + DEL + \
+          "Normalized_transmission_delay" + DEL + \
           "OTA_RTT" + DEL + \
           "RLC_retx_ratio" + DEL + \
           "RLC_retx_count" + DEL + \
@@ -182,6 +192,8 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
                                             str(entry.rtt["tcp"]) + DEL
                         cur_output_result += gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, DEL)
                         print cur_output_result
+                        # increment that RRC state's count
+                        rrc_occurance_map[pktRRCMap[entry]] += 1.0
                     else:
                         if entry in pktRRCMap:
                             print >> sys.stderr, "TCP RTT estimation failed ERROR at " + util.convert_ts_in_human(entry.timestamp) \
@@ -197,6 +209,8 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
                     print >> sys.stderr, "Cross-layer mapping ERROR at " + util.convert_ts_in_human(entry.timestamp) \
                                          + " with " + const.RRC_MAP[pktRRCMap[entry]]
                 continue
+
+    return rrc_occurance_map
 
 ############################################################################
 ############################# Helper Function ##############################
@@ -226,7 +240,8 @@ def extract_inject_information(payload):
 # Generate a single line of output information
 #
 # Output the following column
-# 1. Transmission Delay (ms)
+# 1.1 Transmission Delay (ms)
+# 1.2 Normalized Transmission Delay (ms)
 # 2. OTA Delay (ms)
 # 3. RLC Retransmission Ratio
 # 4. RLC Retransmission Count
@@ -241,6 +256,12 @@ def gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, 
     # First-hop latency                            
     transmission_delay, rlc_rtt_list = dw.calc_first_hop_latency(mapped_RLCs)
     cur_output_result += str(transmission_delay * 1000) + DEL
+    # normalized transmission delay (per PDU transmission delay)
+    mapped_RLCs_len = len(mapped_RLCs)
+    if mapped_RLCs_len != 0:
+        cur_output_result += str(transmission_delay * 1000 / mapped_RLCs_len) + DEL
+    else:
+        cur_output_result += str(0) + DEL
     cur_output_result += str(util.meanValue(rlc_rtt_list) * 1000) + DEL
     # RLC retx ratio and count
     (retxRLCCount, totalRLCCount) = rw.countRLCRetx([rlc[0] for rlc in mapped_RLCs], RLCMap, log_of_interest_id)

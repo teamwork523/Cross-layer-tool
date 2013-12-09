@@ -116,7 +116,7 @@ def assignSignalStrengthValue(entries):
     mostRecentECIO = None
     mostRecentRSCP = None
     for entry in entries:
-        if entry.logID == const.SIG_ID:
+        if entry.logID == const.CELL_RESELECTION_ID:
             if entry.sig["ECIO"]:
                 mostRecentECIO = entry.sig["ECIO"]
             else:

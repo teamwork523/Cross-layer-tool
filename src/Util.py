@@ -875,6 +875,12 @@ def find_pdu_based_on_log_id(entry, log_id):
     elif log_id == const.DL_PDU_ID:
         return entry.dl_pdu[0]
 
+# generate a map between all the RRC state to a number
+def gen_RRC_state_count_map():
+    countMap = {}
+    for rrc in const.RRC_MAP.keys():
+        countMap[rrc] = 0.0
+    return countMap
 #############################################################################
 ############################ Bianry Search ##################################
 ############################################################################# 

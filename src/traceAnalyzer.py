@@ -730,7 +730,13 @@ def main():
             if options.direction == None:
                 print >> sys.stderr, "ERROR: RRC state transition root cause analysis parameter error -- no direction"
                 sys.exit(1)
-            rcw.rrc_state_transition_analysis(QCATEntries, options.client_ip, options.network_type, options.direction)
+            rrc_occurance_map = rcw.rrc_state_transition_analysis(QCATEntries, options.client_ip, \
+                                options.network_type, options.direction)
+            print "*" * 80
+            total_occurance = sum(rrc_occurance_map.values())
+            for rrc in sorted(const.RRC_MAP.keys()):
+                print str(const.RRC_MAP[rrc]) + (" occurance ratio is %f / %f = %f" % \
+                      (rrc_occurance_map[rrc], total_occurance, rrc_occurance_map[rrc] / total_occurance))
             
 
     # WCDMA downlink cross-layer mapping validation
