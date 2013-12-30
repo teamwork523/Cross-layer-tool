@@ -24,7 +24,8 @@ RRC_STATE_TRANSITION_DEBUG = False
 # Root cause analysis for the abnormal state information (injected UDP uplink WCDMA)
 # Only the last UDP trial packet is instrumented
 #
-# Output the following column
+# Output
+# (a) tabluar result for lower layer features
 # 1. Inter-packet timing (s)
 # 2.1 Transmission Delay (ms)
 # 2.2 Normalized Transmission Delay (ms)
@@ -33,10 +34,13 @@ RRC_STATE_TRANSITION_DEBUG = False
 # 5. RLC Retransmission Count
 # 6. RSCP
 # 7. ECIO
+# 8. # of PRACH Reset message
+# 9. # of PRACH Done message
 # For mannual insepection
-# 8. UDP packet timestamp
-# 9. First mapped RLC PDU timestamp
-# 10. Last mapped RLC PDU timestamp
+# 10. UDP packet timestamp
+# 11. First mapped RLC PDU timestamp
+# 12. Last mapped RLC PDU timestamp
+
 def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
     log_of_interest_id = None
 
@@ -67,6 +71,8 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
           "RLC_retx_count" + DEL + \
           "RSCP" + DEL + \
           "ECIO" + DEL + \
+          "PRACH_Reset" + DEL + \
+          "PRACH_Done" + DEL + \
           "UDP_timestamp" + DEL + \
           "First_Mapped_RLC_timestamp" + DEL + \
           "Last_Mapped_RLC_timestamp"
@@ -88,7 +94,7 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
                 if mapped_RLCs:
                     if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
                         if vw.is_valid_first_hop_latency_estimation(mapped_RLCs, mapped_sn, log_of_interest_id):
-                            cur_output_result += gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, DEL)
+                            cur_output_result += gen_line_of_root_cause_info(entryList, i, mapped_RLCs, RLCMap, log_of_interest_id, DEL)
 
                             # Compare with previous round to make sure 
                             # print out the last control message
@@ -133,29 +139,44 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
 # 6. RLC Retransmission Count
 # 7. RSCP
 # 8. ECIO
+# 8. # of PRACH Reset message
+# 9. # of PRACH Done message
 # For mannual insepection
-# 9. UDP packet timestamp
-# 10. First mapped RLC PDU timestamp
-# 11. Last mapped RLC PDU timestamp
+# 10. UDP packet timestamp
+# 11. First mapped RLC PDU timestamp
+# 12. Last mapped RLC PDU timestamp
 #
 # Return
 # 1. RRC state count
+# 2. count map for detailed packet missing 
 def rrc_state_transition_analysis(entryList, client_ip, network_type, direction):
     # statistics summarize the occurance of each state
     rrc_occurance_map = util.gen_RRC_state_count_map()
+
+    print >> sys.stderr, "Finish RRC state count ..."
 
     # determine the network type
     log_of_interest_id = util.get_logID_of_interest(network_type, direction)
 
     # Label each IP packet with its corresponding RRC state
-    pktRRCMap = label_RRC_state_for_IP_packets(entryList)
+    (pktRRCMap, dummy) = label_RRC_state_for_IP_packets(entryList)
+
+    print >> sys.stderr, "Finish label IP packets ..."
 
     # Assign TCP RTT
-    dw.calc_tcp_rtt(entryList, client_ip)
+    dw.calc_tcp_rtt(entryList)
+
+    print >> sys.stderr, "Finish TCP RTT calculation ..."
+
     # Uniqueness analysis
     non_unique_rlc_tuples, dummy = vw.uniqueness_analysis(entryList, log_of_interest_id)
+
+    print >> sys.stderr, "Finish uniqueness analysis ..."
+
     # RLC retransmission analysis
     [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(entryList, detail="simple")
+
+    print >> sys.stderr, "Finish retransmission analysis ..."
 
     RLCMap = None
     if direction.lower() == "up":
@@ -177,22 +198,31 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
           "UDP_timestamp" + DEL + \
           "First_Mapped_RLC_timestamp" + DEL + \
           "Last_Mapped_RLC_timestamp"
+    
+    packet_count = {"total":0.0, "mapped":0.0, "unique":0.0, "valid_rtt":0.0}
 
     for i in range(len(entryList)):
         entry = entryList[i]
         if entry.logID == const.PROTOCOL_ID and \
            entry.ip["tlp_id"] == const.TCP_ID:
+            if direction.lower() == "up" and entry.ip["src_ip"] != client_ip or \
+               direction.lower() == "down" and entry.ip["dst_ip"] != client_ip:
+                continue
             mapped_RLCs = mapped_sn = None
             if direction.lower() == "up" and entry.ip["src_ip"] == client_ip:
                 mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i, log_of_interest_id)
             elif direction.lower() == "down" and entry.ip["dst_ip"] == client_ip:
                 mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_downlink(entryList, i, log_of_interest_id)
+            packet_count["total"] += 1
             if mapped_RLCs:
+                packet_count["mapped"] += 1
                 if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
+                    packet_count["unique"] += 1
                     if entry.rtt["tcp"] and entry in pktRRCMap:
+                        packet_count["valid_rtt"] += 1
                         cur_output_result = str(const.RRC_MAP[pktRRCMap[entry]]) + DEL + \
                                             str(entry.rtt["tcp"]) + DEL
-                        cur_output_result += gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, DEL)
+                        cur_output_result += gen_line_of_root_cause_info(entryList, i, mapped_RLCs, RLCMap, log_of_interest_id, DEL)
                         print cur_output_result
                         # increment that RRC state's count
                         rrc_occurance_map[pktRRCMap[entry]] += 1.0
@@ -212,7 +242,13 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
                                          + " with " + const.RRC_MAP[pktRRCMap[entry]]
                 continue
 
-    return rrc_occurance_map
+    return rrc_occurance_map, packet_count
+
+# print transition timer values
+def rrc_state_transition_timers(entryList):
+    (dummy, rrc_trans_timer_map) = label_RRC_state_for_IP_packets(entryList)
+    for rrc in rrc_trans_timer_map.keys():
+        print "%s has distirbution %s" % (const.RRC_MAP[rrc], util.quartileResult(rrc_trans_timer_map[rrc]))
 
 ############################################################################
 ############################# Helper Function ##############################
@@ -249,13 +285,16 @@ def extract_inject_information(payload):
 # 4. RLC Retransmission Count
 # 5. RSCP
 # 6. ECIO
+# 7. # of PRACH Reset message
+# 8. # of PRACH Done message
 # For mannual insepection
-# 7. UDP packet timestamp
-# 8. First mapped RLC PDU timestamp
-# 9. Last mapped RLC PDU timestamp
-def gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, DEL):
+# 9. UDP packet timestamp
+# 10. First mapped RLC PDU timestamp
+# 11. Last mapped RLC PDU timestamp
+def gen_line_of_root_cause_info(entryList, entryIndex, mapped_RLCs, RLCMap, log_of_interest_id, DEL):
+    entry = entryList[entryIndex]
     cur_output_result = ""
-    # First-hop latency                            
+    # First-hop latency                   
     transmission_delay, rlc_rtt_list = dw.calc_first_hop_latency(mapped_RLCs)
     cur_output_result += str(transmission_delay * 1000) + DEL
     # normalized transmission delay (per PDU transmission delay)
@@ -280,6 +319,11 @@ def gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, 
     else:
         cur_output_result += "N/A" + DEL
 
+    # PRACH related
+    countMap = util.count_prach_aich_status(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1])
+    cur_output_result += str(countMap[const.PRACH_ABORT]) + DEL
+    cur_output_result += str(countMap[const.PRACH_DONE]) + DEL
+
     # mannual insepection
     cur_output_result += util.convert_ts_in_human(entry.timestamp) + DEL + \
                          util.convert_ts_in_human(mapped_RLCs[0][0].timestamp) + DEL + \
@@ -296,11 +340,12 @@ def gen_line_of_root_cause_info(entry, mapped_RLCs, RLCMap, log_of_interest_id, 
 #
 # Output:
 # 1. Map between packets and its corresponding state
-#
+# 2. A state transition timer map, i.e. PCH->FACH : [list of PCH->FACH transition period]
 def label_RRC_state_for_IP_packets(entryList):
     pktRRCMap = {}
     privPacket = None
-    
+    rrc_trans_timer_map = util.gen_RRC_trans_state_list_map()
+
     """
     # old labeling methods
     for entry in entryList:
@@ -328,6 +373,7 @@ def label_RRC_state_for_IP_packets(entryList):
     rrc_transit_state_pkt_buffer = None
     rrc_transit_state = None
     non_rrc_transit_count = 0
+    rrc_trans_begin_time = None
 
     for entry in entryList:
         if entry.logID == const.SIG_MSG_ID:
@@ -335,18 +381,23 @@ def label_RRC_state_for_IP_packets(entryList):
             if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
                entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfiguration":
                 rrc_transit_state_pkt_buffer = []
+                rrc_trans_begin_time = entry.timestamp
                 continue
             # reset FACH -> PCH (case 1)
             if rrc_transit_state_pkt_buffer != None and \
                entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
                entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfigurationComplete":
                 util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, const.FACH_TO_PCH_ID)
+                if rrc_trans_begin_time != None:
+                    rrc_trans_timer_map[const.FACH_TO_PCH_ID].append(entry.timestamp - rrc_trans_begin_time)
+                    rrc_trans_begin_time = None
                 rrc_transit_state_pkt_buffer = None
                 continue
             # FACH -> PCH (case 2)
             if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
                entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdate":
                 rrc_transit_state_pkt_buffer = []
+                rrc_trans_begin_time = entry.timestamp
                 continue
             # reset FACH -> PCH (case 2)
             if rrc_transit_state_pkt_buffer != None and \
@@ -356,6 +407,9 @@ def label_RRC_state_for_IP_packets(entryList):
                 if RRC_STATE_TRANSITION_DEBUG and len(rrc_transit_state_pkt_buffer) > 0:
                     print "RRC state transition: FACH_TO_PCH with count %d" % (len(rrc_transit_state_pkt_buffer))
                 util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, const.FACH_TO_PCH_ID)
+                if rrc_trans_begin_time != None:
+                    rrc_trans_timer_map[const.FACH_TO_PCH_ID].append(entry.timestamp - rrc_trans_begin_time)
+                    rrc_trans_begin_time = None
                 rrc_transit_state_pkt_buffer = None
                 continue
             # PCH -> FACH same as FACH -> PCH (case 2)
@@ -368,6 +422,9 @@ def label_RRC_state_for_IP_packets(entryList):
                 if RRC_STATE_TRANSITION_DEBUG and len(rrc_transit_state_pkt_buffer) > 0:
                     print "RRC state transition: PCH_TO_FACH with count %d" % (len(rrc_transit_state_pkt_buffer))
                 util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, const.PCH_TO_FACH_ID)
+                if rrc_trans_begin_time != None:
+                    rrc_trans_timer_map[const.PCH_TO_FACH_ID].append(entry.timestamp - rrc_trans_begin_time)
+                    rrc_trans_begin_time = None
                 rrc_transit_state_pkt_buffer = None
                 continue
             # FACH -> DCH
@@ -376,6 +433,7 @@ def label_RRC_state_for_IP_packets(entryList):
                entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
                 rrc_transit_state_pkt_buffer = []
                 rrc_transit_state = const.FACH_TO_DCH_ID
+                rrc_trans_begin_time = entry.timestamp
                 continue
             # reset FACH -> DCH & DCH -> FACH
             if rrc_transit_state != None and rrc_transit_state_pkt_buffer != None and \
@@ -383,7 +441,10 @@ def label_RRC_state_for_IP_packets(entryList):
                entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfigurationComplete":
                 if RRC_STATE_TRANSITION_DEBUG and len(rrc_transit_state_pkt_buffer) > 0:
                     print "RRC state transition: %s with count %d" % (const.RRC_MAP[rrc_transit_state], len(rrc_transit_state_pkt_buffer))
-                util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, rrc_transit_state) 
+                util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, rrc_transit_state)
+                if rrc_trans_begin_time != None:
+                    rrc_trans_timer_map[rrc_transit_state].append(entry.timestamp - rrc_trans_begin_time)
+                    rrc_trans_begin_time = None
                 rrc_transit_state_pkt_buffer = None
                 rrc_transit_state == None
                 continue
@@ -393,6 +454,7 @@ def label_RRC_state_for_IP_packets(entryList):
                entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
                 rrc_transit_state_pkt_buffer = []
                 rrc_transit_state = const.DCH_TO_FACH_ID
+                rrc_trans_begin_time = entry.timestamp
                 continue
         elif entry.logID == const.PROTOCOL_ID and \
              entry.rrcID != None and \
@@ -401,6 +463,7 @@ def label_RRC_state_for_IP_packets(entryList):
                 rrc_transit_state_pkt_buffer.append(entry)
             else:
                 pktRRCMap[entry] = entry.rrcID
-    
-    return pktRRCMap
+   
+
+    return pktRRCMap, rrc_trans_timer_map
 

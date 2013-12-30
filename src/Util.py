@@ -882,10 +882,33 @@ def gen_RRC_state_count_map():
         countMap[rrc] = 0.0
     return countMap
 
+# generate a map between rrc state transition to an empty list
+def gen_RRC_trans_state_list_map():
+    transMap = {}
+    for rrc in const.RRC_TRANSITION_ID_GROUP:
+        transMap[rrc] = []
+    return transMap
+
 # help to append keys with same value to a map
 def add_multiple_key_same_value_to_map(Map, keys, value):
     for key in keys:
         Map[key] = value
+
+# count the PRACH messages in the length
+# Output a map between PRACH messages and their count
+def count_prach_aich_status(entries, startIndex, endIndex):
+    countMap = {}
+    for aich_state in const.PRACH_AICH_STATUS_SET:
+        countMap[aich_state] = 0
+
+    for i in range(startIndex, endIndex + 1):
+        entry = entries[i]
+        if entry.logID == const.EVENT_ID and \
+           entry.prach["aich_status"] != None and \
+           entry.prach["aich_status"] in const.PRACH_AICH_STATUS_SET:
+            countMap[entry.prach["aich_status"]] += 1
+
+    return countMap
 
 #############################################################################
 ############################ Bianry Search ##################################

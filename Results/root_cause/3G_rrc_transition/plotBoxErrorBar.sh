@@ -28,8 +28,8 @@ set boxwidth 0.25
 #set style fill transparent solid 0.4
 set style fill transparent pattern 4 border
 
-plot "$file" using (\$2-.05):3:4:xtic(1) with boxerrorbars lc 1 lw 4 title "Uplink", \
-     "" using (\$2+0.25):5:6 with boxerrorbars lc 3 lw 4 title "Downlink"
+plot "$file" using (\$2-.05):3:4:5:(0.25):xtic(1) with boxerrorbars lc 1 lw 4 title "Uplink", \
+     "" using (\$2+0.25):6:7:8:(0.25) with boxerrorbars lc 3 lw 4 title "Downlink"
 #plot "$file" using (\$2-.05):5:6:xtic(1) with boxerrorbars lc 1 lw 4 title "Device M1", \
 #     "" using (\$2+0.25):3:4 with boxerrorbars lc 3 lw 4 title "Device M2"
 EOF

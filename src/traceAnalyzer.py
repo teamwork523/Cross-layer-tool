@@ -30,7 +30,7 @@ import validateWorker as vw
 DEBUG = False
 DUP_DEBUG = False
 GAP_DEBUG = False
-TIME_DEBUG = False
+TIME_DEBUG = True
 IP_DUP_DEBUG = False
 
 def init_optParser():
@@ -151,6 +151,10 @@ def main():
     if options.ftod_timer:
         const.TIMER["FACH_TO_DCH_ID"] = float(options.ftod_timer)
 
+    if TIME_DEBUG:
+        print >> sys.stderr, "Parse options takes ", time.time() - check_point_time, "sec"
+        check_point_time = time.time()
+
     # Mapping process
     QCATEntries = util.readQCATLog(options.inQCATLogFile)
     begin = int(float(options.beginPercent)* len(QCATEntries))
@@ -163,7 +167,7 @@ def main():
         sys.exit(0)
 
     if TIME_DEBUG:
-        print "Read QxDM takes ", time.time() - check_point_time, "sec"
+        print >> sys.stderr, "Read QxDM takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
 
     #################################################################
@@ -219,7 +223,7 @@ def main():
         util.validateIPPackets(QCATEntries)
 
     if TIME_DEBUG:
-        print "Delete Dup IP takes ", time.time() - check_point_time, "sec"
+        print >> sys.stderr, "Delete Dup IP takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
 
     # determine the client address if user don't pass any IP address hints
@@ -261,10 +265,12 @@ def main():
     #              set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID)))
     # Optimize by exclude context fields
     # Make sure no change to QCATEntries later on
+    """
     QCATEntries = cw.extractEntriesOfInterest(QCATEntries, \
                   set((const.PROTOCOL_ID, const.UL_PDU_ID, const.DL_PDU_ID, const.RRC_ID,\
                        const.DL_CONFIG_PDU_ID, const.UL_CONFIG_PDU_ID, const.DL_CTRL_PDU_ID,\
                        const.SIG_MSG_ID)))
+    """
 
     # create a map between entry and QCATEntry index
     entryIndexMap = util.createEntryMap(QCATEntries)
@@ -275,7 +281,7 @@ def main():
     dw.assign_rlc_rtt(QCATEntries)
 
     if TIME_DEBUG:
-        print "Assign Context takes ", time.time() - check_point_time, "sec"
+        print >> sys.stderr, "Assign Context takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
 
 	#################################################################
@@ -343,7 +349,7 @@ def main():
         filteredEntryToIndexMap = util.createEntryMap(filteredQCATEntries)
 
     if TIME_DEBUG:
-        print "Filter packets takes ", time.time() - check_point_time, "sec"
+        print >> sys.stderr, "Filter packets takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
 
     #################################################################
@@ -383,7 +389,7 @@ def main():
     retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap = rw.collectReTxPlusRRCResult(QCATEntries, tcpReTxMap, tcpFastReTxMap)
 
     if TIME_DEBUG:
-        print "Retx analysis takes ", time.time() - check_point_time, "sec"
+        print >> sys.stderr, "Retx analysis takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time() 
 
     #################################################################
@@ -500,14 +506,14 @@ def main():
     # Apply the gap analysis by comparing the transparent work analysis
     if options.is_gap_analysis and options.direction and options.server_ip:
         if TIME_DEBUG:
-            print "Start UDP Gap Analysis ", time.time() - check_point_time, "sec"
+            print >> sys.stderr, "Start UDP Gap Analysis ", time.time() - check_point_time, "sec"
             check_point_time = time.time()
 
         #lw.rlc_retx_based_on_gap(filteredQCATEntries, options.direction)
         lw.rlc_retx_based_on_gap(QCATEntries, options.direction)
 
         if TIME_DEBUG:
-            print "Gap RTT Analyais takes ", time.time() - check_point_time, "sec"
+            print >> sys.stderr, "Gap RTT Analyais takes ", time.time() - check_point_time, "sec"
             check_point_time = time.time()
     
     # correlate the UDP RTT value with inter-packet time
@@ -522,7 +528,7 @@ def main():
             lw.get_gap_to_rtt_map(QCATEntries)
         #pw.print_loss_ratio(retxCountMap, totCountStatsMap, retxRTTMap, totalRTTMap)
         if TIME_DEBUG:
-            print "Gap RTT Analyais takes ", time.time() - check_point_time, "sec"
+            print >> sys.stderr, "Gap RTT Analyais takes ", time.time() - check_point_time, "sec"
             check_point_time = time.time()
 
     if options.is_loss_analysis:
@@ -535,7 +541,7 @@ def main():
             udp_clt_lookup_table, udp_srv_echo_lookup_table = lw.get_UDP_clt_lookup_table(QCATEntries, \
                                                               options.direction, options.server_ip, options.hash_target)
             if TIME_DEBUG:
-                print "UDP: gen clt table ", time.time() - check_point_time, "sec"
+                print >> sys.stderr, "UDP: gen clt table ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
 
             # TODO: only assign RTT if use sequence number for hashing
@@ -543,7 +549,7 @@ def main():
                 lw.assign_udp_rtt(QCATEntries, options.direction, udp_clt_lookup_table, udp_srv_echo_lookup_table)
 
             if TIME_DEBUG:
-                print "UDP: Assign RTT takes ", time.time() - check_point_time, "sec"
+                print >> sys.stderr, "UDP: Assign RTT takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
 
 
@@ -555,7 +561,7 @@ def main():
             udp_srv_lookup_table = lw.get_UDP_srv_lookup_table(options.inPCAPFile, options.direction, options.hash_target, options.server_ip)
 
         if TIME_DEBUG:
-            print "UDP: gen srv Table ", time.time() - check_point_time, "sec"
+            print >> sys.stderr, "UDP: gen srv Table ", time.time() - check_point_time, "sec"
             check_point_time = time.time()
         
         print "Start UDP data: >>>>>>"
@@ -573,7 +579,7 @@ def main():
             pw.print_loss_ratio_per_state(loss_state_stats, loss_total_stats)
 
             if TIME_DEBUG:
-                print "UDP: print loss ratio takes ", time.time() - check_point_time, "sec"
+                print >> sys.stderr, "UDP: print loss ratio takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
 
             # UDP cross analysis
@@ -665,7 +671,7 @@ def main():
     # LIMIT: only support TCP uplink at this moment
     if options.isFirstHopLatencyAnalysis and options.client_ip and options.direction:
         # TCP RTT
-        dw.calc_tcp_rtt(QCATEntries, options.client_ip)
+        dw.calc_tcp_rtt(QCATEntries)
 
         tcp_rtt_list = first_hop_rtt_list = ratio_rtt_list = []
         # only support uplink now
@@ -727,17 +733,36 @@ def main():
                 sys.exit(1)
             rcw.abnormal_rrc_fach_analysis(QCATEntries, options.server_ip, options.network_type)
         elif options.root_cause_analysis_type.lower() == "rrc_state_transition":
+            print >> sys.stderr, "RRC state transition root cause analysis starts ..."
             # Analyze the root cause for RRC state transition
             if options.direction == None:
                 print >> sys.stderr, "ERROR: RRC state transition root cause analysis parameter error -- no direction"
                 sys.exit(1)
-            rrc_occurance_map = rcw.rrc_state_transition_analysis(QCATEntries, options.client_ip, \
-                                options.network_type, options.direction)
+            rrc_occurance_map, packet_count_map = rcw.rrc_state_transition_analysis(QCATEntries, \
+                                                  options.client_ip, options.network_type, options.direction)
+
+            if TIME_DEBUG:
+                print >> sys.stderr, "Root cause analysis takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
+
+            """
             print "*" * 80
             total_occurance = sum(rrc_occurance_map.values())
             for rrc in sorted(const.RRC_MAP.keys()):
                 print str(const.RRC_MAP[rrc]) + (" occurance ratio is %f / %f = %f" % \
                       (rrc_occurance_map[rrc], total_occurance, rrc_occurance_map[rrc] / total_occurance))
+
+            print "\n"
+            print "$" * 80
+            for key in packet_count_map:
+                print "%s ratio is %f / %f = %f" % (key, packet_count_map[key], \
+                                                    packet_count_map["total"], \
+                                                    packet_count_map[key] / packet_count_map["total"])
+            """
+        elif options.root_cause_analysis_type.lower() == "rrc_trans_timer":
+            # Quantize the RRC transition timer
+            # TODO: finish the LTE part
+            rcw.rrc_state_transition_timers(QCATEntries)
             
 
     # WCDMA downlink cross-layer mapping validation

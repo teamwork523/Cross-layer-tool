@@ -22,32 +22,34 @@ TCP_RTT_DEBUG = False
 #################################################################
 # Calculate the TCP RTT for all TCP packet
 # Time(Sender) - Time(ACK = Sender's seq + TCP payload size)
-def calc_tcp_rtt(Entries, client_ip):
+# Apply to any TCP packet
+def calc_tcp_rtt(Entries):
     entryLen = len(Entries)
+    ackCount = 0.0
+    mappedCount = 0.0
+    notMappedCount = 0.0
 
     for i in range(entryLen):
         curEntry = Entries[i]
         if curEntry.logID == const.PROTOCOL_ID and \
-           curEntry.ip["tlp_id"] == const.TCP_ID and \
-           (curEntry.ip["total_len"] != curEntry.ip["header_len"] + curEntry.tcp["header_len"]):
-            if curEntry.ip["src_ip"] == client_ip:
-                tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
-                ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["dst_ip"], "up",\
-                            curEntry.tcp["seq_num"] + tcp_len)
-                if ack_entry:
-                    curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
-                    
-                    if TCP_RTT_DEBUG:
-                        print "Found one in uplink: " + str(curEntry.timestamp) + "\t" + str(curEntry.rtt["tcp"])
-            elif curEntry.ip["dst_ip"] == client_ip:
-                tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
-                ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["src_ip"], "down",\
-                            curEntry.tcp["seq_num"] + tcp_len)
-                if ack_entry:
-                    curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
-
+           curEntry.ip["tlp_id"] == const.TCP_ID:
+            if curEntry.ip["total_len"] == curEntry.ip["header_len"] + curEntry.tcp["header_len"]:
+                ackCount += 1
+                continue
+            tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
+            ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["dst_ip"], curEntry.ip["src_ip"],\
+                        curEntry.tcp["seq_num"] + tcp_len)
+            if ack_entry:
+                curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
+                mappedCount += 1
+            else:
+                notMappedCount += 1
                 if TCP_RTT_DEBUG:
-                        print "Found one in downlink: " + str(curEntry.timestamp) + "\t" + str(curEntry.rtt["tcp"])
+                    pw.printIPEntry(curEntry)
+    if TCP_RTT_DEBUG:
+        print "ACK: %f" % (ackCount)
+        print "Mapped TCP: %f" % (mappedCount)
+        print "Unmapped TCP: %f" % (notMappedCount)
 
 
 #################################################################
@@ -201,25 +203,24 @@ def check_polling_bit(header_list):
     return False
 
 # find the ACK packet entry by given TCP ack number
-def find_tcp_ack_entry(entryList, server_ip, direction, ack_num):
+def find_tcp_ack_entry(entryList, src_ip, dst_ip, ack_num):
     # Define ACK packet as IP length = IP header length + TCP header length
     for entry in entryList:
         if entry.logID == const.PROTOCOL_ID and \
            entry.ip["tlp_id"] == const.TCP_ID and \
            (entry.ip["total_len"] == entry.ip["header_len"] + entry.tcp["header_len"]):
-            # terminate search at a FIN packet
-            if direction.lower() == "up":
-                if entry.ip["src_ip"] == server_ip:
-                    if entry.tcp["ack_num"] == ack_num:
-                        return entry
-                    elif entry.tcp["FIN_FLAG"]:
-                        return None
-            else:
-                if entry.ip["dst_ip"] == server_ip:
-                    if entry.tcp["ack_num"] == ack_num:
-                        return entry
-                    elif entry.tcp["FIN_FLAG"]:
-                        return None
+            if entry.ip["src_ip"] == src_ip and entry.ip["dst_ip"] == dst_ip:
+                # Ignore previous cumulative acknowledgements
+                if entry.tcp["ack_num"] == ack_num:
+                    return entry
+                # terminate search at a FIN/ACK packet
+                elif entry.tcp["FIN_FLAG"] and entry.tcp["ACK_FLAG"]:
+                    return None
+            # terminate search at a FIN/ACK packet
+            if entry.ip["src_ip"] == dst_ip and entry.ip["dst_ip"] == src_ip and \
+               entry.tcp["FIN_FLAG"] and entry.tcp["ACK_FLAG"]:
+                return None
+
     return None
 
 # Calculate the first-hop latency given a list of mapped RLC PDU list

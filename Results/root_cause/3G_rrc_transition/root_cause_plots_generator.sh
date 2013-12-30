@@ -24,10 +24,13 @@ for app_name in $app_names; do
         # merge the two file
         Tools/common/mergeTwoFile.py "${folder_path}/${feature_array[$i]}_${direction_array[0]}" \
                                      "${folder_path}/${feature_array[$i]}_${direction_array[1]}" \
-                                     3 4 > "${folder_path}/${app_name}_${feature_array[$i]}"
+                                     3 4 5 > "${folder_path}/${app_name}_${feature_array[$i]}"
         
         # plot the graph (plus capitalize the application name)
         ./plotBoxErrorBar.sh "${folder_path}/${app_name}_${feature_array[$i]}" "${app_name[@]^}: ${feature_detail_array[$i]}"
+
+        # convert eps to png
+        convert -density 300 "${folder_path}/${app_name}_${feature_array[$i]}.eps" "${folder_path}/${app_name}_${feature_array[$i]}.png"
 
         # clean up the intermediate files
         for direction in "${direction_array[@]}"; do

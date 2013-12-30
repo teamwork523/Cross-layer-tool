@@ -187,6 +187,12 @@ class QCATEntry:
         # UDP RTT is calculated based on the sequence number that manually
         # assigned in the application
         self.rtt = {"tcp": None, "udp": None, "rlc": None}
+
+        ########################################################################
+        ############################# Event information ########################
+        ########################################################################
+        # PRACH messages 
+        self.prach = {"aich_status": None}
         # order matters
         self.__procTitle()
         self.__procDetail()
@@ -460,6 +466,13 @@ class QCATEntry:
                             elif splittedLine[0] == "cellUpdateCause":
                                 self.sig_msg["msg"]["cell_update_cause"] = splittedLine[1]
                                 break
+            # Parsing the event messages
+            elif self.logID == const.EVENT_ID:
+                for line in self.detail[1:]:
+                    if "AICH Status" in line:
+                        splittedLine = line.split()
+                        self.prach["aich_status"] = splittedLine[-1]
+                        break
             # TODO: process other type of log entry
 
     def __procHexDump(self):

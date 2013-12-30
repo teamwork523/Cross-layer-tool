@@ -35,12 +35,10 @@ def main():
             line = sys.stdin.readline()
             continue
         
-        # eliminate 0 data
-        if y_data != 0.0:
-            if x_data not in data.keys():
-                data[x_data] = [float(y_data)]
-            else:
-                data[x_data].append(float(y_data))
+        if x_data not in data.keys():
+            data[x_data] = [float(y_data)]
+        else:
+            data[x_data].append(float(y_data))
 
         line = sys.stdin.readline()
 
