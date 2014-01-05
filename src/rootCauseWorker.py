@@ -71,8 +71,8 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
           "RLC_retx_count" + DEL + \
           "RSCP" + DEL + \
           "ECIO" + DEL + \
-          "PRACH_Reset" + DEL + \
-          "PRACH_Done" + DEL + \
+          "PRACH_reset_count" + DEL + \
+          "pRACH_complete_count" + DEL + \
           "UDP_timestamp" + DEL + \
           "First_Mapped_RLC_timestamp" + DEL + \
           "Last_Mapped_RLC_timestamp"
@@ -195,6 +195,8 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
           "RLC_retx_count" + DEL + \
           "RSCP" + DEL + \
           "ECIO" + DEL + \
+          "PRACH_reset_count" + DEL + \
+          "pRACH_complete_count" + DEL + \
           "UDP_timestamp" + DEL + \
           "First_Mapped_RLC_timestamp" + DEL + \
           "Last_Mapped_RLC_timestamp"
@@ -320,7 +322,7 @@ def gen_line_of_root_cause_info(entryList, entryIndex, mapped_RLCs, RLCMap, log_
         cur_output_result += "N/A" + DEL
 
     # PRACH related
-    countMap = util.count_prach_aich_status(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1])
+    countMap = util.count_prach_aich_status(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1], const.EVENT_ID)
     cur_output_result += str(countMap[const.PRACH_ABORT]) + DEL
     cur_output_result += str(countMap[const.PRACH_DONE]) + DEL
 

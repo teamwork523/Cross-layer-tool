@@ -896,17 +896,20 @@ def add_multiple_key_same_value_to_map(Map, keys, value):
 
 # count the PRACH messages in the length
 # Output a map between PRACH messages and their count
-def count_prach_aich_status(entries, startIndex, endIndex):
+def count_prach_aich_status(entries, startIndex, endIndex, idOfInterest):
     countMap = {}
     for aich_state in const.PRACH_AICH_STATUS_SET:
         countMap[aich_state] = 0
+    countMap["Not Found"] = 0
 
     for i in range(startIndex, endIndex + 1):
         entry = entries[i]
-        if entry.logID == const.EVENT_ID and \
-           entry.prach["aich_status"] != None and \
-           entry.prach["aich_status"] in const.PRACH_AICH_STATUS_SET:
-            countMap[entry.prach["aich_status"]] += 1
+        if entry.logID == idOfInterest:
+            if entry.prach["aich_status"] != None and \
+               entry.prach["aich_status"] in const.PRACH_AICH_STATUS_SET:
+                countMap[entry.prach["aich_status"]] += 1
+            else:
+                countMap["Not Found"] += 1
 
     return countMap
 

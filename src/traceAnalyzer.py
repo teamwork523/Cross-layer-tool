@@ -161,6 +161,11 @@ def main():
     end = int(float(options.endPercent) * len(QCATEntries)) 
     QCATEntries = QCATEntries[begin:end]
     
+    # TODO: delete after checking
+    print const.LOGTYPE_MAP[const.EVENT_ID] + ": " + str(util.count_prach_aich_status(QCATEntries, 0, len(QCATEntries) - 1, const.EVENT_ID))
+    print const.LOGTYPE_MAP[const.PRACH_PARA_ID] +  ": " + str(util.count_prach_aich_status(QCATEntries, 0, len(QCATEntries) - 1, const.PRACH_PARA_ID))
+    sys.exit(1)
+
     # check if just want to print IP
     if options.pkts_examined:
         pw.printIPaddressPair(QCATEntries, options.pkts_examined)

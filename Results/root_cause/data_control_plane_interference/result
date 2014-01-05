@@ -1,0 +1,96 @@
+Start plot downlink_mobile for PRACH reset vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.000564	0.0	0.000872	0.0	0.0	
+False Ratio	0.0	0.000154	0.704038	0.0	0.293755	0.0	0.000616	
+Median Slow Rate (PRACH/normal)	N/A	N/A	1.499821	N/A	1.000000	N/A	N/A	
+Delay increase	N/A	N/A	0.001000+0.002000	N/A	0.000000+0.003000	N/A	N/A	
+Start plot downlink_mobile for PRACH reset vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.000564	0.0	0.000872	0.0	0.0	
+False Ratio	0.0	0.000154	0.704038	0.0	0.293755	0.0	0.000616	
+Median Slow Rate (PRACH/normal)	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Start plot downlink_mobile for PRACH done vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.021551	0.0	0.010827	0.0	0.0	
+False Ratio	0.0	0.000154	0.683052	0.0	0.283801	0.0	0.000616	
+Median Slow Rate (PRACH/normal)	N/A	N/A	1.000000	N/A	1.000079	N/A	N/A	
+Delay increase	N/A	N/A	0.000000+0.002000	N/A	0.000000+0.003000	N/A	N/A	
+Start plot downlink_mobile for PRACH done vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.021551	0.0	0.010827	0.0	0.0	
+False Ratio	0.0	0.000154	0.683052	0.0	0.283801	0.0	0.000616	
+Median Slow Rate (PRACH/normal)	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Start plot downlink_none_mobile for PRACH reset vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.005310	0.0	0.001375	0.0	0.0	
+False Ratio	0.0	0.000142	0.835443	0.0	0.157730	0.0	0.0	
+Median Slow Rate (PRACH/normal)	N/A	N/A	1.000000	N/A	1.000000	N/A	N/A	
+Delay increase	N/A	N/A	0.000000+0.002000	N/A	0.000000+0.002000	N/A	N/A	
+Start plot downlink_none_mobile for PRACH reset vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.005310	0.0	0.001375	0.0	0.0	
+False Ratio	0.0	0.000142	0.835443	0.0	0.157730	0.0	0.0	
+Median Slow Rate (PRACH/normal)	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Start plot downlink_none_mobile for PRACH done vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.057744	0.0	0.013038	0.0	0.0	
+False Ratio	0.0	0.000142	0.783009	0.0	0.146067	0.0	0.0	
+Median Slow Rate (PRACH/normal)	N/A	N/A	1.000000	N/A	1.000000	N/A	N/A	
+Delay increase	N/A	N/A	0.000000+0.002000	N/A	0.000000+0.002000	N/A	N/A	
+Start plot downlink_none_mobile for PRACH done vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.057744	0.0	0.013038	0.0	0.0	
+False Ratio	0.0	0.000142	0.783009	0.0	0.146067	0.0	0.0	
+Median Slow Rate (PRACH/normal)	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Start plot uplink_mobile for PRACH reset vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.0	0.0	0.0	0.0	0.0	
+False Ratio	0.000285	0.034159	0.753487	0.0	0.211500	0.0	0.000569	
+Median Slow Rate (PRACH/normal)	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Start plot uplink_mobile for PRACH reset vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.0	0.0	0.0	0.0	0.0	0.0	
+False Ratio	0.000285	0.034159	0.753487	0.0	0.211500	0.0	0.000569	
+Median Slow Rate (PRACH/normal)	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Start plot uplink_mobile for PRACH done vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.000285	0.002562	0.0	0.0	0.0	0.0	0.0	
+False Ratio	0.0	0.031597	0.753487	0.0	0.211500	0.0	0.000569	
+Median Slow Rate (PRACH/normal)	N/A	1.802048	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	0.705000+0.879000	N/A	N/A	N/A	N/A	N/A	
+Start plot uplink_mobile for PRACH done vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.000285	0.002562	0.0	0.0	0.0	0.0	0.0	
+False Ratio	0.0	0.031597	0.753487	0.0	0.211500	0.0	0.000569	
+Median Slow Rate (PRACH/normal)	N/A	32.923046	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	59.285709+1.857144	N/A	N/A	N/A	N/A	N/A	
+Start plot uplink_non_mobile for PRACH reset vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.000589	0.0	0.0	0.0	0.0	0.0	
+False Ratio	0.0	0.030901	0.814891	0.0	0.153031	0.000589	0.0	
+Median Slow Rate (PRACH/normal)	N/A	10.273205	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	8.791000+0.948000	N/A	N/A	N/A	N/A	N/A	
+Start plot uplink_non_mobile for PRACH reset vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.000589	0.0	0.0	0.0	0.0	0.0	
+False Ratio	0.0	0.030901	0.814891	0.0	0.153031	0.000589	0.0	
+Median Slow Rate (PRACH/normal)	N/A	99.951775	N/A	N/A	N/A	N/A	N/A	
+Delay increase	N/A	186.911090+1.888911	N/A	N/A	N/A	N/A	N/A	
+Start plot uplink_non_mobile for PRACH done vs TCP RTT ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.004709	0.0	0.0	0.0	0.000294	0.0	
+False Ratio	0.0	0.026780	0.814891	0.0	0.153031	0.000294	0.0	
+Median Slow Rate (PRACH/normal)	N/A	1.709052	N/A	N/A	N/A	0.474514	N/A	
+Delay increase	N/A	0.658000+0.928000	N/A	N/A	N/A	-0.567000+1.079000	N/A	
+Start plot uplink_non_mobile for PRACH done vs RLC norm trans delay ...
+Type	PCH	FACH	DCH	PCH_TO_FACH	FACH_TO_DCH	DCH_TO_FACH	FACH_TO_PCH	Total
+True Ratio	0.0	0.004709	0.0	0.0	0.0	0.000294	0.0	
+False Ratio	0.0	0.026780	0.814891	0.0	0.153031	0.000294	0.0	
+Median Slow Rate (PRACH/normal)	N/A	43.009526	N/A	N/A	N/A	1.814817	N/A	
+Delay increase	N/A	74.683754+1.777781	N/A	N/A	N/A	36.666711+44.999957	N/A	

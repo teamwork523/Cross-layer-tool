@@ -46,6 +46,7 @@ UL_PDU_ID = int("0x413B", 16)   # UL on Link Layer info
 DL_PDU_ID = int("0x418B", 16)   # DL on Link Layer info
 CELL_RESELECTION_ID = int("0x4005", 16)  # Cell reselection information (power)
 SIG_MSG_ID = int("0x412F", 16) # WCDMA signaling message
+PRACH_PARA_ID = int("0x4160", 16) # PRACH parameters
 
 # LTE
 LTE_UL_RLC_PDU_ID = int("0xB092", 16)
@@ -65,7 +66,9 @@ LOGTYPE_MAP = {PROTOCOL_ID: "Protocol Services Data",
                CELL_RESELECTION_ID: "WCDMA Signal Strength related",
                DL_CONFIG_PDU_ID: "WCDMA Downlink RLC configuration",
                UL_CONFIG_PDU_ID: "WCDMA Uplink RLC configuration",
-               DL_CTRL_PDU_ID: "WCDMA Downlink control PDU"}
+               DL_CTRL_PDU_ID: "WCDMA Downlink control PDU",
+               EVENT_ID: "Event",
+               PRACH_PARA_ID: "WCDMA RACH Parameters"}
 
 # WCDMA signaling message
 CH_TYPE_OF_INTEREST = set([
@@ -180,8 +183,10 @@ MAX_RLC_UL_SEQ_NUM = 4096
 ############# Physical #############
 ####################################
 # PRACH message
-PRACH_ABORT = "L1_PRACH_ABORT"
-PRACH_DONE = "L1_PRACH_MSG_DONE"
+PRACH_KEY_TO_ID_MAP = {"ABORT": 4,\
+                       "DONE": 1}
+PRACH_ABORT = 4
+PRACH_DONE = 1
 PRACH_AICH_STATUS_SET = set([
     PRACH_ABORT, \
     PRACH_DONE])

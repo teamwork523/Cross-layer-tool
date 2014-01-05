@@ -21,8 +21,9 @@ then
     if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-d' ];then
         #scp -r $prj_folder/data/TCP/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/TCP/
         # Root cause analysis
-        scp -r $prj_folder/data/UDP/Root_cause/11-18.07-30_root_cause_rrc_infer_3G_whole_night.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/UDP/Root_cause/
+        #scp -r $prj_folder/data/UDP/Root_cause/11-18.07-30_root_cause_rrc_infer_3G_whole_night.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/UDP/Root_cause/
         #scp -r $prj_folder/data/Verify/* haokun@ep2.eecs.umich.edu:$ep2_folder/data/Verify/
+        scp -r $prj_folder/data/App/WCDMA/browsing/12-22.21-09_browsing_5s_repeat_50.zip  haokun@ep2.eecs.umich.edu:$ep2_folder/data/App/WCDMA/browsing/
     fi
     if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-p' ];then
         scp -r $prj_folder/data/PCAP/*.pcap haokun@ep2.eecs.umich.edu:$ep2_folder/data/PCAP/

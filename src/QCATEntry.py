@@ -192,7 +192,11 @@ class QCATEntry:
         ############################# Event information ########################
         ########################################################################
         # PRACH messages 
-        self.prach = {"aich_status": None}
+        self.prach = {"aich_status": None, \
+                      "num_preambles": None, \
+                      "signature": None, \
+                      "sub_channel_num": None ,\
+                      "rf_tx_power": None}  # unit is dBm
         # order matters
         self.__procTitle()
         self.__procDetail()
@@ -471,8 +475,26 @@ class QCATEntry:
                 for line in self.detail[1:]:
                     if "AICH Status" in line:
                         splittedLine = line.split()
-                        self.prach["aich_status"] = splittedLine[-1]
+                        self.prach["aich_status"] = self.convertPRACHKeywordToID(splittedLine[-1])
                         break
+            # Parsing PRACH parameter message
+            elif self.logID == const.PRACH_PARA_ID:
+                for line in self.detail:
+                    if "AICH Status" in line:
+                        splittedLine = line.split()
+                        self.prach["aich_status"] = self.convertPRACHKeywordToID(splittedLine[-1])
+                    elif "Signature" in line:
+                        splittedLine = line.split()
+                        self.prach["signature"] = int(splittedLine[-1])
+                    elif "Num Preambles" in line:
+                        splittedLine = line.split()
+                        self.prach["num_preambles"] = int(splittedLine[-1])
+                    elif "Sub Channel Number" in line:
+                        splittedLine = line.split()
+                        self.prach["sub_channel_num"] = int(splittedLine[-1])
+                    elif "RF Tx Power" in line:
+                        splittedLine = line.split()
+                        self.prach["rf_tx_power"] = int(splittedLine[-2])
             # TODO: process other type of log entry
 
     def __procHexDump(self):
@@ -522,6 +544,8 @@ class QCATEntry:
                     # Parse TCP Packet 
                     if self.ip["tlp_id"] == const.TCP_ID:
                         start = const.Payload_Header_Len + self.ip["header_len"]
+                        if len(self.hex_dump["payload"]) - start < 20:
+                            return
                         self.tcp["src_port"] = int("".join(self.hex_dump["payload"][start:start+2]), 16)
                         self.tcp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                         self.tcp["seq_num"] = int("".join(self.hex_dump["payload"][start+4:start+8]), 16)
@@ -640,6 +664,13 @@ class QCATEntry:
             sys.exit(1)
         pdu_field["header"].append(header)
     
+    # match PRACH keyword to PRACH ID
+    def convertPRACHKeywordToID(self, keyword):
+        for key in const.PRACH_KEY_TO_ID_MAP.keys():
+            if key in keyword.upper():
+                return const.PRACH_KEY_TO_ID_MAP[key]
+        return None
+
     def __debugCustomHeader(self):
         print "Sequence number is %d" % (self.custom_header["seq_num"])
         print "Segment number is %d" % (self.custom_header["seg_num"])
