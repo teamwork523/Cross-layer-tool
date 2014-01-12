@@ -160,11 +160,6 @@ def main():
     begin = int(float(options.beginPercent)* len(QCATEntries))
     end = int(float(options.endPercent) * len(QCATEntries)) 
     QCATEntries = QCATEntries[begin:end]
-    
-    # TODO: delete after checking
-    print const.LOGTYPE_MAP[const.EVENT_ID] + ": " + str(util.count_prach_aich_status(QCATEntries, 0, len(QCATEntries) - 1, const.EVENT_ID))
-    print const.LOGTYPE_MAP[const.PRACH_PARA_ID] +  ": " + str(util.count_prach_aich_status(QCATEntries, 0, len(QCATEntries) - 1, const.PRACH_PARA_ID))
-    sys.exit(1)
 
     # check if just want to print IP
     if options.pkts_examined:
@@ -768,6 +763,10 @@ def main():
             # Quantize the RRC transition timer
             # TODO: finish the LTE part
             rcw.rrc_state_transition_timers(QCATEntries)
+        elif options.root_cause_analysis_type.lower() == "browser_control":
+            # specific for browsing control experiment
+            # extract HTTP information
+            util.parse_http_fields(QCATEntries)
             
 
     # WCDMA downlink cross-layer mapping validation

@@ -14,10 +14,15 @@ import QCATEntry as qe
 import PCAPPacket as pp
 import PrintWrapper as pw
 from datetime import datetime
+import crossLayerWorker as clw
+import delayWorker as dw
+import retxWorker as rw
+import validateWorker as vw
 
 DEBUG = False
 TIME_DEBUG = False
 IP_DEBUG = True
+HTTP_EXTRA = True
 
 ###############################################################################################
 ########################################### I/O Related #######################################
@@ -657,6 +662,83 @@ def createEntryMap(entries):
     for i in range(len(entries)):
         entryMap[entries[i]] = i
     return entryMap
+
+############################################################################
+############################## HTTP Analysis ###############################
+############################################################################
+# extract HTTP fields (Assume all the IP packets are pre-processed)
+# As HTTP fields don't have a strict order, we have to check them one by one
+# 1. Host
+# 2. Referer
+def parse_http_fields(entryList):
+    count = 0
+    goodCount = 0
+    DEL = "\t"
+
+    if HTTP_EXTRA:
+        # Assign TCP RTT
+        dw.calc_tcp_rtt(entryList)
+        log_of_interest_id = get_logID_of_interest("wcdma", "up")
+
+        # Uniqueness analysis
+        non_unique_rlc_tuples, dummy = vw.uniqueness_analysis(entryList, log_of_interest_id)
+
+        # RLC retransmission analysis
+        [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(entryList, detail="simple")
+
+    for i in range(len(entryList)):
+        entry = entryList[i]
+        if entry.logID == const.PROTOCOL_ID and \
+           entry.tcp["dst_port"] == const.HTTP_DST_PORT:
+            http_payload = entry.hex_dump["payload"][(const.Payload_Header_Len + \
+                                                     entry.ip["header_len"] + \
+                                                     entry.tcp["header_len"]):]
+            http_payload_by_field = "".join(http_payload).decode("hex").split(const.HTTP_LINE_DEL)
+            for field in http_payload_by_field:
+                splitted_field = field.split(const.HTTP_FIELD_DEL)
+                if splitted_field[0].lower() == "host":
+                    entry.http["host"] = splitted_field[1]
+                elif splitted_field[0].lower() == "referer":
+                    entry.http["referer"] = splitted_field[1]
+                # move on to the next entry when we get what we want
+                #if entry.http["host"] and entry.http["referer"]:
+                    # TODO: delete after debugging
+                    #break
+            line = ""
+            if entry.http["host"] or entry.http["referer"]:
+                count += 1
+                line += convert_ts_in_human(entry.timestamp) + DEL + \
+                        str(const.RRC_MAP[entry.rrcID]) + DEL + \
+                        str(entry.http) + DEL
+                if HTTP_EXTRA:
+                    # check whether interference exist
+                    mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i, log_of_interest_id)
+                    if mapped_RLCs:
+                        if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
+                            if entry.rtt["tcp"]:
+                                paraCountMap = count_prach_aich_status(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1], const.PRACH_PARA_ID)
+                                line += str(paraCountMap[const.PRACH_ABORT]) + DEL
+                                line += str(paraCountMap[const.PRACH_DONE]) + DEL
+                                eventCountMap = count_prach_aich_status(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1], const.EVENT_ID)
+                                line += str(eventCountMap[const.PRACH_ABORT]) + DEL
+                                line += str(eventCountMap[const.PRACH_DONE]) + DEL
+                                if paraCountMap[const.PRACH_ABORT] > 0 or \
+                                   paraCountMap[const.PRACH_DONE] > 0 or \
+                                   eventCountMap[const.PRACH_ABORT] > 0 or \
+                                   eventCountMap[const.PRACH_DONE] > 0:
+                                    goodCount += 1    
+                                    line += "Interred_request"
+                            else:
+                                line += "ERROR: fail to estimate TCP rtt"
+                        else:
+                            line += "ERROR: not unique mapping"
+                    else:
+                        line += "ERROR: not mapped RLC PDUs"
+                    print line
+    if HTTP_EXTRA:
+        print "*"*80
+        print "In total, " + str(count) + " requests."
+        print "Interfered URL is " + str(goodCount)
 
 #############################################################################
 ############################ helper functions ###############################

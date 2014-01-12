@@ -3,7 +3,7 @@
 app_names=$@
 
 fileArray=("downlink_mobile" "downlink_none_mobile" \
-           "uplink_mobile" "uplink_non_mobile")
+           "uplink_mobile" "uplink_none_mobile")
 
 for app_name in $app_names;do
     # clear previous eps and png plot

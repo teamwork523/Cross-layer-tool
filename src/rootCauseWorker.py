@@ -72,7 +72,7 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type):
           "RSCP" + DEL + \
           "ECIO" + DEL + \
           "PRACH_reset_count" + DEL + \
-          "pRACH_complete_count" + DEL + \
+          "PRACH_complete_count" + DEL + \
           "UDP_timestamp" + DEL + \
           "First_Mapped_RLC_timestamp" + DEL + \
           "Last_Mapped_RLC_timestamp"
@@ -196,7 +196,7 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
           "RSCP" + DEL + \
           "ECIO" + DEL + \
           "PRACH_reset_count" + DEL + \
-          "pRACH_complete_count" + DEL + \
+          "PRACH_complete_count" + DEL + \
           "UDP_timestamp" + DEL + \
           "First_Mapped_RLC_timestamp" + DEL + \
           "Last_Mapped_RLC_timestamp"
@@ -250,7 +250,8 @@ def rrc_state_transition_analysis(entryList, client_ip, network_type, direction)
 def rrc_state_transition_timers(entryList):
     (dummy, rrc_trans_timer_map) = label_RRC_state_for_IP_packets(entryList)
     for rrc in rrc_trans_timer_map.keys():
-        print "%s has distirbution %s" % (const.RRC_MAP[rrc], util.quartileResult(rrc_trans_timer_map[rrc]))
+        print "%s has distirbution %s" % (const.RRC_MAP[rrc], util.quartileResult(rrc_trans_timer_map[rrc]))    
+    
 
 ############################################################################
 ############################# Helper Function ##############################
@@ -322,7 +323,7 @@ def gen_line_of_root_cause_info(entryList, entryIndex, mapped_RLCs, RLCMap, log_
         cur_output_result += "N/A" + DEL
 
     # PRACH related
-    countMap = util.count_prach_aich_status(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1], const.EVENT_ID)
+    countMap = util.count_prach_aich_status(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1], const.PRACH_PARA_ID)
     cur_output_result += str(countMap[const.PRACH_ABORT]) + DEL
     cur_output_result += str(countMap[const.PRACH_DONE]) + DEL
 

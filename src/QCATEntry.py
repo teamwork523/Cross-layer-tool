@@ -82,7 +82,9 @@ class QCATEntry:
         # Currently support:
         # 1. GET request (first three bytes equals to "47 45 54")
         # 2. DATA (i.e data payload or TCP ACK)
-        self.http = {"type": None}
+        self.http = {"type": None, \
+                     "host": None, \
+                     "referer": None}
         # TODO: Link layer state info parse
         #       1. Retransmission rate
         #       2. Row bits
