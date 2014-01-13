@@ -26,6 +26,7 @@ import lossWorker as lw
 import rootCauseWorker as rcw
 import rrcTimerWorker as rtw
 import validateWorker as vw
+import flowAnalysis as fa
 
 DEBUG = False
 DUP_DEBUG = False
@@ -167,6 +168,7 @@ def main():
         sys.exit(0)
 
     if TIME_DEBUG:
+        print >> sys.stderr, "Length of Entry List is " + str(len(QCATEntries))
         print >> sys.stderr, "Read QxDM takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
 
@@ -329,7 +331,8 @@ def main():
     nonIPEntries = []
     IPEntriesMap = {}
 
-    if options.client_ip != None:
+    if options.client_ip != None and \
+       (options.cross_mapping_detail):
         (nonIPEntries, IPEntriesMap) = util.multiIPFilter(QCATEntries, options.client_ip)
         
         # double check the quality of filtering
@@ -763,10 +766,13 @@ def main():
             # Quantize the RRC transition timer
             # TODO: finish the LTE part
             rcw.rrc_state_transition_timers(QCATEntries)
-        elif options.root_cause_analysis_type.lower() == "browser_control":
+        elif options.root_cause_analysis_type.lower() == "http_analysis":
             # specific for browsing control experiment
             # extract HTTP information
-            util.parse_http_fields(QCATEntries)
+            fa.parse_http_fields(QCATEntries)
+            fa.extractTCPFlows(QCATEntries)
+        elif options.root_cause_analysis_type.lower() == "validate_flow_analysis":
+            fa.validateTCPFlowSigantureHashing(QCATEntries)
             
 
     # WCDMA downlink cross-layer mapping validation

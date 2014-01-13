@@ -69,7 +69,8 @@ class QCATEntry:
                     "flags": None, \
                     "payload": None, \
                     "header_len": None,\
-                    "seg_size": None}
+                    "seg_size": None,\
+                    "flow": None}
         # UDP fields
         # include manually injected sequence number in the first four bytes in payload
         self.udp = {"src_port": None, \

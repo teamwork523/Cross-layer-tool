@@ -18,12 +18,15 @@ from datetime import datetime
 DEBUG = False
 CUR_DEBUG = False
 RETX_DEBUG = False
+
 ############################################################################
 ############################# TCP Retx #####################################
 ############################################################################
 # Always assume the first packet start with a SYN_NON_ACK packet
 # extract the data entry based on flow info
 # @Return [[flow1_of_entries], [flow2_of_entries], ...]
+# 
+# NOTE: deprecated function, not consider interleaving flows. Refer flowAnalysis.py
 def extractFlows (entries):
     flows = []
     localFlow = []
