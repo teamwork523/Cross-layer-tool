@@ -25,7 +25,7 @@ then
         #scp -r $prj_folder/data/Verify/* haokun@ep2.eecs.umich.edu:$ep2_folder/data/Verify/
         #scp -r $prj_folder/data/App/WCDMA/browsing/12-22.21-09_browsing_5s_repeat_50.zip  haokun@ep2.eecs.umich.edu:$ep2_folder/data/App/WCDMA/browsing/
         # limit the bandwidth to be 1 MB/s
-        scp -r -l 8192 $prj_folder/data/HTTP/01-10.16-57_auto_browser_5_iters.zip haokun@ep2.eecs.umich.edu:$ep2_folder/data/HTTP/
+        scp -r -l 8192 $prj_folder/data/HTTP/01-13.17-15_auto_browser_test_accuweather_com.zip haokun@ep2.eecs.umich.edu:$ep2_folder/data/HTTP/
     fi
     if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-p' ];then
         scp -r $prj_folder/data/PCAP/*.pcap haokun@ep2.eecs.umich.edu:$ep2_folder/data/PCAP/

@@ -11,6 +11,7 @@ import sys
 import const
 import crossLayerWorker as clw
 import delayWorker as dw
+import PrintWrapper as pw
 import retxWorker as rw
 import Util as util
 import validateWorker as vw
@@ -52,9 +53,10 @@ def extractTCPFlows(entryList):
     for flow in ongoingFlows.values():
         finishedFlows.append(flow)
 
-    for flow in finishedFlows:
-        if flow.properties["http"] != None:
-            print flow.properties["http"]
+    for f in finishedFlows:
+        if f.properties["http"] != None:
+            print f.properties["http"]
+            print pw.printTCPEntry(f.flow[0])
     print "*" * 60
     print "Total # of flows are " + str(len(finishedFlows))
   
@@ -133,12 +135,13 @@ def parse_http_fields(entryList):
                     # TODO: delete after debugging
                     #break
             line = ""
-            if entry.http["host"] or entry.http["referer"]:
-                count += 1
-                line += util.convert_ts_in_human(entry.timestamp) + DEL + \
-                        str(const.RRC_MAP[entry.rrcID]) + DEL + \
-                        str(entry.http) + DEL
-                if HTTP_EXTRA:
+            if HTTP_EXTRA:
+                if entry.http["host"] or entry.http["referer"]:
+                    count += 1
+                    line += util.convert_ts_in_human(entry.timestamp) + DEL + \
+                            str(const.RRC_MAP[entry.rrcID]) + DEL + \
+                            str(entry.http) + DEL
+                
                     # check whether interference exist
                     mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i, log_of_interest_id)
                     if mapped_RLCs:
