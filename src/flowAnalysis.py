@@ -17,6 +17,7 @@ import Util as util
 import validateWorker as vw
 from Flow import Flow
 
+FLOW_CHECK = False
 HTTP_EXTRA = False
 
 ############################################################################
@@ -29,7 +30,8 @@ def extractTCPFlows(entryList):
     # a map between flow's signature and flow
     ongoingFlows = {}
 
-    for entry in entryList:
+    for i in range(len(entryList)):
+        entry = entryList[i]
         if entry.logID == const.PROTOCOL_ID and \
            entry.ip["tlp_id"] == const.TCP_ID:
             flow_signature = Flow.extractFlowSignature(entry)
@@ -39,28 +41,35 @@ def extractTCPFlows(entryList):
                     if not ongoingFlows.has_key(flow_signature):
                         # create a new flow
                         ongoingFlows[flow_signature] = Flow(flow_signature)
+                        ongoingFlows[flow_signature].addPacket(entry, i)
                 elif entry.tcp["FIN_FLAG"]:
                     # finish a TCP flow if there is one
                     if ongoingFlows.has_key(flow_signature):
+                        ongoingFlows[flow_signature].addPacket(entry, i)
                         finishedFlows.append(ongoingFlows[flow_signature])
                         del ongoingFlows[flow_signature]
                 else:
                     # add to existing ongoing flow
                     if ongoingFlows.has_key(flow_signature):
-                        ongoingFlows[flow_signature].addPacket(entry)
+                        ongoingFlows[flow_signature].addPacket(entry, i)
 
     # wrap up anything leftover flow
     for flow in ongoingFlows.values():
         finishedFlows.append(flow)
 
-    for f in finishedFlows:
-        if f.properties["http"] != None:
-            print f.properties["http"]
-            print pw.printTCPEntry(f.flow[0])
-    print "*" * 60
-    print "Total # of flows are " + str(len(finishedFlows))
+    if FLOW_CHECK:
+        for f in finishedFlows:
+            if f.properties["http"] != None:
+                line = str(f.properties["http"]) + "\t" + str(len(f.flow)) + "\t" + \
+                       util.convert_ts_in_human(f.flow[0].timestamp)
+                if f.flow[0].rrcID != None:
+                    line += "\t" + const.RRC_MAP[f.flow[0].rrcID]
+                print line
+                # print pw.printTCPEntry(f.flow[0])
+        print "*" * 60
+        print "Total # of flows are " + str(len(finishedFlows))
   
-    return finishedFlows          
+    return finishedFlows 
 
 # Validate TCP flow signature hash
 def validateTCPFlowSigantureHashing(entryList):
@@ -96,6 +105,36 @@ def validateTCPFlowSigantureHashing(entryList):
 ############################################################################
 ############################## HTTP Specific ###############################
 ############################################################################
+# Pair up the flow based on HTTP hostname
+# input:
+# 1. HTTP flows
+#
+# Output tuple of flows
+# 1. Nearest tuple of HTTP flows
+def pair_up_flows(flows):
+    pairs = []
+    flow_len = len(flows)
+    visited_indices = set()
+
+    for i in range(flow_len):
+        visited_indices.add(i)
+        if flows[i].properties["http"] == None:
+            continue
+        for j in range(i+1, flow_len):
+            # must occur within a time period
+            if abs(flows[i].flow[0].timestamp - flows[j].flow[0].timestamp) > const.MAX_PAIR_TIME_DIFF:
+                break
+            if flows[j].properties["http"] == None:
+                continue
+            if j not in visited_indices and \
+               flows[i].properties["http"]["host"] == flows[j].properties["http"]["host"]:
+                visited_indices.add(j)
+                pairs.append((flows[i], flows[j]))
+                break
+    
+    return pairs
+
+
 # extract HTTP fields (Assume all the IP packets are pre-processed)
 # As HTTP fields don't have a strict order, we have to check them one by one
 # 1. Host
@@ -130,6 +169,9 @@ def parse_http_fields(entryList):
                     entry.http["host"] = splitted_field[1]
                 elif splitted_field[0].lower() == "referer":
                     entry.http["referer"] = splitted_field[1]
+                elif splitted_field[0].lower() == "timer":
+                    entry.http["timer"] = float(splitted_field[1])
+                    
                 # move on to the next entry when we get what we want
                 #if entry.http["host"] and entry.http["referer"]:
                     # TODO: delete after debugging

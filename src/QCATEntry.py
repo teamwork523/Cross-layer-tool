@@ -81,11 +81,15 @@ class QCATEntry:
         # HTTP fields
         # Assume always use TCP to transmit
         # Currently support:
-        # 1. GET request (first three bytes equals to "47 45 54")
-        # 2. DATA (i.e data payload or TCP ACK)
+        # 1. request type
+        # 2. Host name
+        # 3. Referer
+        # 4. Timer (hijacked)
         self.http = {"type": None, \
                      "host": None, \
-                     "referer": None}
+                     "referer": None, \
+                     "timer": None
+                    }
         # TODO: Link layer state info parse
         #       1. Retransmission rate
         #       2. Row bits
@@ -207,23 +211,29 @@ class QCATEntry:
         # Extract IP/TCP info
         self.__parseProtocol()
 
+    # return timestamp and log ID
+    @staticmethod
+    def parse_title_line(title):
+        tList = title.split()
+        # TODO: Support time difference
+        # Parse the timestamp, only support UTC right now
+        year = (int)(tList[0])
+        month = (int)(const.MONTH_MAP[tList[1].lower()])
+        day = (int)(tList[2])
+        [secsList, millisec] = tList[3].split('.')
+        [hour, minutes, sec] = secsList.split(':')
+        dt = datetime(year, month, day, (int)(hour), (int)(minutes), (int)(sec))
+        unixTime = calendar.timegm(dt.utctimetuple())
+        timestamp = unixTime + float(millisec) / 1000.0
+        # print self.timestamp
+        # Parse the log id, convert hex into integer
+        logID = int(tList[5], 16)
+        return (timestamp, logID)
+
     def __procTitle(self):
         # print "Process Titile"
         if self.title != "":
-            tList = self.title.split()
-            # TODO: Support time difference
-            # Parse the timestamp, only support UTC right now
-            year = (int)(tList[0])
-            month = (int)(const.MONTH_MAP[tList[1].lower()])
-            day = (int)(tList[2])
-            [secsList, millisec] = tList[3].split('.')
-            [hour, minutes, sec] = secsList.split(':')
-            dt = datetime(year, month, day, (int)(hour), (int)(minutes), (int)(sec))
-            unixTime = calendar.timegm(dt.utctimetuple())
-            self.timestamp = unixTime + float(millisec) / 1000.0
-            # print self.timestamp
-            # Parse the log id, convert hex into integer
-            self.logID = int(tList[5], 16)
+            (self.title, self.logID) = self.parse_title_line(self.title)
             # print hex(self.logID)
         else:
             self.title = None

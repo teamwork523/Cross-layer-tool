@@ -49,7 +49,8 @@ def init_optParser():
                             " "*extraspace + "[--rrc_timer], [--gap_rtt], [--check_cross_mapping_feasibility] type\n" +\
                             " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
                             " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type\n" +\
-                            " "*extraspace + "[--root_cause_analysis] analysis_type, [--validate_downlink]")
+                            " "*extraspace + "[--root_cause_analysis] analysis_type, [--validate_downlink], [--large_file]\n" +\
+                            " "*extraspace + "[--partition] num_of_partition")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -89,6 +90,8 @@ def init_optParser():
                          help="Output the TCP RTT, estimated RLC RTT, and first-hop latency ratio")
     optParser.add_option("--keep_non_ip", action="store_true", dest="keep_non_ip_entries", default=False, \
                          help="Enable it if you want to non-IP entries in the result")
+    optParser.add_option("--large_file", action="store_true", dest="is_large_file", default=False, \
+                         help="Handle large file that cannot fit into memory all at once")
     optParser.add_option("--loss_analysis", action="store_true", dest="is_loss_analysis", default=False, \
                          help="loss ratio analysis over RLC layer")
     optParser.add_option("--gap_analysis", action="store_true", dest="is_gap_analysis", default=False, \
@@ -97,6 +100,8 @@ def init_optParser():
                          help="Investigate the inter-packet gap time vs the UDP RTT result")
     optParser.add_option("--network_type", dest="network_type", default="wcdma", \
                          help="Specify the cellular network type for the trace, i.e. wcdma, lte")
+    optParser.add_option("--partition", dest="num_of_partition", default=None, \
+                         help="Generate a data profile file based on the number of partitions")
     optParser.add_option("--print_throughput", action="store_true", dest="is_print_throughput", \
                          help="Flag to enable printing throughput information based on TCP trace analysis")
     optParser.add_option("--print_retx", dest="retxType", default=None, \
@@ -156,8 +161,26 @@ def main():
         print >> sys.stderr, "Parse options takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
 
+    # Check whether need profile to handle large files
+    startLine = endLine = None
+    if options.is_large_file:
+        # check whether need to partition
+        if options.num_of_partition != None:
+            util.profileQxDMTrace(options.inQCATLogFile, int(options.num_of_partition))
+        else:
+            # TODO: handle large file based on profile information 
+            try:
+                with open(const.PROFILE_FILENAME):
+                    startLine, endLine = util.loadCurrentPartition()
+                    if TIME_DEBUG:
+                        print str(startLine) + " " + str(endLine)
+            except IOError:
+                print >> sys.stderr, "ERROR: " + const.PROFILE_FILENAME + " does not exist! \
+                                      Please run with --large_file --partition num_of_partition first."
+                sys.exit(1)
+
     # Mapping process
-    QCATEntries = util.readQCATLog(options.inQCATLogFile)
+    QCATEntries = util.readQCATLog(options.inQCATLogFile, startLine, endLine)
     begin = int(float(options.beginPercent)* len(QCATEntries))
     end = int(float(options.endPercent) * len(QCATEntries)) 
     QCATEntries = QCATEntries[begin:end]
@@ -171,6 +194,8 @@ def main():
         print >> sys.stderr, "Length of Entry List is " + str(len(QCATEntries))
         print >> sys.stderr, "Read QxDM takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
+
+    sys.exit(1)
 
     #################################################################
     ########################## Pre-process ##########################
@@ -770,7 +795,17 @@ def main():
             # specific for browsing control experiment
             # extract HTTP information
             fa.parse_http_fields(QCATEntries)
-            fa.extractTCPFlows(QCATEntries)
+            flows = fa.extractTCPFlows(QCATEntries)
+            rcw.tuning_timers_for_browsing(QCATEntries, flows, \
+                                           options.client_ip, \
+                                           options.network_type, \
+                                           options.direction)
+            """
+            rcw.pair_analysis_for_browsing(QCATEntries, flows, \
+                                           options.client_ip, \
+                                           options.network_type, \
+                                           options.direction)
+            """
         elif options.root_cause_analysis_type.lower() == "validate_flow_analysis":
             fa.validateTCPFlowSigantureHashing(QCATEntries)
             

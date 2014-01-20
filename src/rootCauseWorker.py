@@ -12,6 +12,7 @@ import os, sys, time
 import const
 import crossLayerWorker as clw
 import delayWorker as dw
+import flowAnalysis as fa
 import retxWorker as rw
 import Util as util
 import validateWorker as vw
@@ -254,6 +255,136 @@ def rrc_state_transition_timers(entryList):
     
 
 ############################################################################
+######################## Application Implication ###########################
+############################################################################
+# Pair analysis for control browsing trace
+#
+# 1. Pair the possible interrupted flow with the non-interrupted flow
+# 2. Compare the problematic TCP packet and the corresponding normal packet
+def pair_analysis_for_browsing(entryList, flows, client_ip, network_type, direction):
+    hostnameBasedCountMap = {}
+    probPktCount = 0
+    okPktCount = 0
+    flow_pairs = fa.pair_up_flows(flows)
+    
+    # determine the network type
+    log_of_interest_id = util.get_logID_of_interest(network_type, direction)
+
+    # Label each IP packet with its corresponding RRC state
+    (pktRRCMap, dummy) = label_RRC_state_for_IP_packets(entryList)
+
+    # Assign TCP RTT
+    dw.calc_tcp_rtt(entryList)
+
+    # Uniqueness analysis
+    non_unique_rlc_tuples, dummy = vw.uniqueness_analysis(entryList, log_of_interest_id)
+
+    # RLC retransmission analysis
+    [RLCULReTxCountMap, RLCDLReTxCountMap] = rw.procRLCReTx(entryList, detail="simple")
+
+    for pair in flow_pairs:
+        interrupted_flow = pair[0]
+        target_flow = pair[1]
+        hostname = interrupted_flow.properties["http"]["host"]
+        print hostname + ": problem flow length is " + str(len(interrupted_flow.flow)) + \
+                         ", target flow length is " + str(len(target_flow.flow))
+
+        if hostname not in hostnameBasedCountMap:
+            hostnameBasedCountMap[hostname] = 0
+        
+        # get the cross-layer trace from interrupted_flow
+        problem_trace = interrupted_flow.getCrossLayerTrace(entryList)
+        compared_trace = target_flow.getCrossLayerTrace(entryList)
+        
+        # get the hashed payload for the compared_trace
+        compared_trace_hashed_payload_set = target_flow.getHashedPayload()
+        
+        for i in range(len(problem_trace)):
+            entry = problem_trace[i]
+            
+            if entry.logID == const.PROTOCOL_ID and \
+               entry.ip["tlp_id"] == const.TCP_ID:
+                if direction.lower() == "up" and entry.ip["src_ip"] != client_ip or \
+                   direction.lower() == "down" and entry.ip["dst_ip"] != client_ip:
+                    continue
+                mapped_RLCs = mapped_sn = None
+                if direction.lower() == "up" and entry.ip["src_ip"] == client_ip:
+                    mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(problem_trace, i, log_of_interest_id)
+                elif direction.lower() == "down" and entry.ip["dst_ip"] == client_ip:
+                    mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_downlink(problem_trace, i, log_of_interest_id)
+            
+                if mapped_RLCs:
+                    #if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
+                    if entry.rtt["tcp"] and entry in pktRRCMap:
+                        if util.getHashedPayload(entry) in compared_trace_hashed_payload_set:
+                            hostnameBasedCountMap[hostname] += 1
+                        """
+                        # PRACH information extraction
+                        countMap = util.count_prach_aich_status(problem_trace, mapped_RLCs[0][-1], \
+                                                                mapped_RLCs[-1][-1], const.PRACH_PARA_ID)
+                        okPktCount += 1
+                        if countMap[const.PRACH_ABORT] != 0 or countMap[const.PRACH_DONE] != 0:
+                            probPktCount += 1
+                        """
+
+    # print "Total number of potential problematic packet is " + str(probPktCount) + " with total # is " + str(okPktCount)
+    for hostname in hostnameBasedCountMap.keys():
+        print hostname + " got " + str(hostnameBasedCountMap[hostname]) + " matched packets"
+        
+############################################################################
+############################### Debug ######################################
+############################################################################
+# control experiment timer tuning 
+def tuning_timers_for_browsing(entryList, flows, client_ip, network_type, direction):
+    httpValidTimerMap = {}    
+
+    # determine the network type
+    log_of_interest_id = util.get_logID_of_interest(network_type, direction)
+
+    # Label each IP packet with its corresponding RRC state
+    (pktRRCMap, dummy) = label_RRC_state_for_IP_packets(entryList)
+
+    # Assign TCP RTT
+    dw.calc_tcp_rtt(entryList)
+
+    # Uniqueness analysis
+    non_unique_rlc_tuples, dummy = vw.uniqueness_analysis(entryList, log_of_interest_id)
+
+    # flow level analysis
+    for flow in flows:
+        flowTrace = flow.getCrossLayerTrace(entryList)
+        for i in range(len(flowTrace)):
+            entry = flowTrace[i]
+
+            if entry.logID == const.PROTOCOL_ID and \
+               entry.ip["tlp_id"] == const.TCP_ID:
+                if direction.lower() == "up" and entry.ip["src_ip"] != client_ip or \
+                   direction.lower() == "down" and entry.ip["dst_ip"] != client_ip:
+                    continue
+                mapped_RLCs = mapped_sn = None
+                if direction.lower() == "up" and entry.ip["src_ip"] == client_ip:
+                    mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(flowTrace, i, log_of_interest_id)
+                elif direction.lower() == "down" and entry.ip["dst_ip"] == client_ip:
+                    mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_downlink(flowTrace, i, log_of_interest_id)
+
+                if mapped_RLCs:
+                    #if vw.is_valid_cross_layer_mapping(mapped_RLCs, mapped_sn, log_of_interest_id, non_unique_rlc_tuples):
+                    if entry.rtt["tcp"] and entry in pktRRCMap:
+                        # PRACH information extraction
+                        countMap = util.count_prach_aich_status(flowTrace, mapped_RLCs[0][-1], \
+                                                                mapped_RLCs[-1][-1], const.EVENT_ID)
+                        if countMap[const.PRACH_ABORT] != 0 or countMap[const.PRACH_DONE] != 0:
+                            if str(flow.properties["http"]) in httpValidTimerMap:
+                                httpValidTimerMap[str(flow.properties["http"])].append(const.RRC_MAP[pktRRCMap[entry]])
+                            else:
+                                httpValidTimerMap[str(flow.properties["http"])] = [const.RRC_MAP[pktRRCMap[entry]]]
+    
+    for key in httpValidTimerMap.keys():
+        print str(key) + "\t" + str(httpValidTimerMap[key])
+    print "*" * 80
+    print "Total number of problematic packet is " + str(sum([len(value) for value in httpValidTimerMap.values()]))
+
+############################################################################
 ############################# Helper Function ##############################
 ############################################################################
 # Extract the injected number with format xx:yy;
@@ -469,4 +600,3 @@ def label_RRC_state_for_IP_packets(entryList):
    
 
     return pktRRCMap, rrc_trans_timer_map
-

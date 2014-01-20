@@ -27,7 +27,93 @@ HTTP_EXTRA = True
 ###############################################################################################
 ########################################### I/O Related #######################################
 ###############################################################################################
-def readQCATLog(inQCATLogFile): 
+# profile the input QCAT to allow partitioned analysis
+# Input:
+# 1. num_partition: how do you wanna divide
+# Output:
+# line 1: total number of lines
+# lines after: start, end line 
+def profileQxDMTrace(qcatFile, partition=2):
+    DEL = "\t"
+    linesList = []  # startLineIndex, endLineIndex, timestamp
+    inFile = open(qcatFile, "r")
+
+    lineIndex = 0
+
+    while True:
+        line = inFile.readline()
+        if not line: break
+        if line[0] == "%" or line.strip() == "":
+            lineIndex += 1
+            continue
+        if re.match("^[0-9]{4}", line.strip().split()[0]) and ("0x" in line):
+            # parse the timestamp
+            (timestamp, dummy) = qe.QCATEntry.parse_title_line(line.strip())
+            if len(linesList) > 1:
+                linesList[-1][1] = lineIndex - 1
+            linesList.append([lineIndex, None, timestamp])
+        lineIndex += 1
+    # update the last line
+    if len(linesList) > 1:
+        linesList[-1][1] = lineIndex - 1
+
+    inFile.close()
+
+    # write to profile file
+    profile = open(const.PROFILE_FILENAME, "w")
+    
+    profile.write(str(partition) + "\n")
+    totalEntryNumber = len(linesList)
+    
+    for i in range(partition):
+        startIndex = totalEntryNumber * i / partition
+        endIndex = totalEntryNumber * (i+1) / partition - 1
+        startInitTime = linesList[startIndex][-1]
+        endInitTime = linesList[endIndex][-1]
+        
+        while startIndex > 0:
+            if startInitTime - linesList[startIndex][-1] > const.EXTEND_SECONDS:
+                break
+            startIndex -= 1
+
+        while endIndex < totalEntryNumber - 1:
+            if linesList[endIndex][-1] - endInitTime > const.EXTEND_SECONDS:
+                break
+            endIndex += 1
+
+        profile.write(str(linesList[startIndex][0]) + DEL + \
+                      str(linesList[endIndex][1]) + "\n")
+
+    profile.close()
+    sys.exit(1)
+
+# read the latest partition from profile file and update the profile file
+# 
+# Output:
+# 1. start line number
+# 2. end line number
+def loadCurrentPartition():
+    profile = open(const.PROFILE_FILENAME, "r")
+    lines = profile.readlines()
+    profile.close()
+
+    totalLineNumber = int(lines[0])
+    if totalLineNumber <= 0:
+        sys.exit(1)
+    curLine = lines[1].split()
+    start = int(curLine[0])
+    end = int(curLine[1])
+
+    profile = open(const.PROFILE_FILENAME, "w")
+    profile.write(str(totalLineNumber - 1) + "\n")
+    for line in lines[2:]:
+        profile.write(line + "\n")
+    profile.close()
+
+    return (start, end)
+
+# load log file based on the start line number and end line number
+def readQCATLog(inQCATLogFile, start=None, end=None): 
     infile = open(inQCATLogFile, "r")
 
     countNewline = 0
@@ -36,11 +122,19 @@ def readQCATLog(inQCATLogFile):
     # store all entries in a list
     QCATEntries = []
     
+    curLineIndex = 0
+
     isHex = False
     while True:
         line = infile.readline()
         if not line: break
+        if start and curLineIndex < start:
+            curLineIndex += 1
+            continue
+        if end and curLineIndex > end:
+            break
         if line[0] == "%" or line.strip() == "":
+            curLineIndex += 1
             continue
         if re.match("^[0-9]{4}", line.strip().split()[0]):
             isHex = False
@@ -58,7 +152,8 @@ def readQCATLog(inQCATLogFile):
                 hexDump.append(line.strip())
             else:
                 titleAndDetail.append(line.strip())
-    
+        curLineIndex += 1
+
     if titleAndDetail != [] and hexDump != []:
         entry = qe.QCATEntry(titleAndDetail[0], titleAndDetail[1:], hexDump)
         QCATEntries.append(entry)    
@@ -662,6 +757,20 @@ def createEntryMap(entries):
     for i in range(len(entries)):
         entryMap[entries[i]] = i
     return entryMap
+
+# Get the hash value for a payload
+def getHashedPayload(entry):
+    start = const.Payload_Header_Len
+    # must be a TCP or UDP packet
+    if entry.ip["header_len"] != None:
+        start += entry.ip["header_len"]
+        if entry.ip["tlp_id"] == const.TCP_ID:
+            start += entry.tcp["header_len"]
+            return hash("".join(entry.hex_dump["payload"][start:]))
+        elif entry.ip["tlp_id"] == const.UDP_ID:
+            start += const.UDP_Header_Len
+            return hash("".join(entry.hex_dump["payload"][start:]))
+    return None
 
 #############################################################################
 ############################ helper functions ###############################
