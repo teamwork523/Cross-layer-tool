@@ -233,7 +233,7 @@ class QCATEntry:
     def __procTitle(self):
         # print "Process Titile"
         if self.title != "":
-            (self.title, self.logID) = self.parse_title_line(self.title)
+            (self.timestamp, self.logID) = self.parse_title_line(self.title)
             # print hex(self.logID)
         else:
             self.title = None
@@ -612,13 +612,19 @@ class QCATEntry:
                         self.udp["dst_port"] = int("".join(self.hex_dump["payload"][start+2:start+4]), 16)
                         self.udp["seg_size"] = int("".join(self.hex_dump["payload"][start+4:start+6]), 16) - const.UDP_Header_Len
                         if self.udp["seg_size"] >= 4:
-                            self.udp["seq_num"]  = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
+                            try:
+                                self.udp["seq_num"]  = int("".join(self.hex_dump["payload"][start+8:start+12]), 16)
+                            except ValueError:
+                                self.udp["seq_num"] = None
                         if self.udp["seg_size"] >= 12:
                             # use the wait_count and the granularity to calculate the gap period
-                            wait_count = int("".join(self.hex_dump["payload"][start+12:start+16]), 16)
-                            gran = int("".join(self.hex_dump["payload"][start+16:start+20]), 16)
-                            if wait_count >= 0 and wait_count < const.UDP_WAIT_LIMIT and gran > 0 and gran < const.UDP_GRAN_LIMIT:
-                                self.udp["gap"] = float(wait_count * gran) / 1000.0
+                            try:
+                                wait_count = int("".join(self.hex_dump["payload"][start+12:start+16]), 16)
+                                gran = int("".join(self.hex_dump["payload"][start+16:start+20]), 16)
+                                if wait_count >= 0 and wait_count < const.UDP_WAIT_LIMIT and gran > 0 and gran < const.UDP_GRAN_LIMIT:
+                                    self.udp["gap"] = float(wait_count * gran) / 1000.0
+                            except ValueError:
+                                self.udp["gap"] = None
                         #print self.udp["gap"]
                         #self.__debugUDP()
                         # Use IP and transport layer header as signature

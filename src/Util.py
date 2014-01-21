@@ -48,10 +48,10 @@ def profileQxDMTrace(qcatFile, partition=2):
             continue
         if re.match("^[0-9]{4}", line.strip().split()[0]) and ("0x" in line):
             # parse the timestamp
-            (timestamp, dummy) = qe.QCATEntry.parse_title_line(line.strip())
+            (timestamp, logID) = qe.QCATEntry.parse_title_line(line.strip())
             if len(linesList) > 1:
                 linesList[-1][1] = lineIndex - 1
-            linesList.append([lineIndex, None, timestamp])
+            linesList.append([lineIndex, None, logID, timestamp])
         lineIndex += 1
     # update the last line
     if len(linesList) > 1:
@@ -72,12 +72,12 @@ def profileQxDMTrace(qcatFile, partition=2):
         endInitTime = linesList[endIndex][-1]
         
         while startIndex > 0:
-            if startInitTime - linesList[startIndex][-1] > const.EXTEND_SECONDS:
+            if startInitTime - linesList[startIndex][-1] >= const.EXTEND_SECONDS:
                 break
             startIndex -= 1
 
         while endIndex < totalEntryNumber - 1:
-            if linesList[endIndex][-1] - endInitTime > const.EXTEND_SECONDS:
+            if linesList[endIndex][-1] - endInitTime >= const.EXTEND_SECONDS:
                 break
             endIndex += 1
 
@@ -107,7 +107,7 @@ def loadCurrentPartition():
     profile = open(const.PROFILE_FILENAME, "w")
     profile.write(str(totalLineNumber - 1) + "\n")
     for line in lines[2:]:
-        profile.write(line + "\n")
+        profile.write(line)
     profile.close()
 
     return (start, end)
@@ -1024,6 +1024,27 @@ def count_prach_aich_status(entries, startIndex, endIndex, idOfInterest):
                 countMap[entry.prach["aich_status"]] += 1
             else:
                 countMap["Not Found"] += 1
+
+    return countMap
+
+# count WCDMA signaling
+def count_signaling_msg(entries, startIndex, endIndex):
+    countMap = {const.MSG_PHY_CH_RECONFIG: 0, \
+                const.MSG_RADIO_BEARER_RECONFIG: {const.FACH_ID: 0, const.DCH_ID: 0}, \
+                "DL_BCCH_BCH": 0}
+
+    for i in range(startIndex, endIndex + 1):
+        entry = entries[i]
+        if entry.logID == const.SIG_MSG_ID:
+            if entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG:
+                countMap[const.MSG_PHY_CH_RECONFIG] += 1
+            if entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG:
+                if entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                    countMap[const.MSG_RADIO_BEARER_RECONFIG][const.FACH_ID] += 1
+                elif entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
+                    countMap[const.MSG_RADIO_BEARER_RECONFIG][const.DCH_ID] += 1
+            if entry.sig_msg["ch_type"] == "DL_BCCH_BCH":
+                countMap["DL_BCCH_BCH"] += 1
 
     return countMap
 

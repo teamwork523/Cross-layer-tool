@@ -29,8 +29,12 @@ def calc_tcp_rtt(Entries):
     mappedCount = 0.0
     notMappedCount = 0.0
 
-    for i in range(entryLen):
-        curEntry = Entries[i]
+    
+    #for i in range(entryLen):
+    #    curEntry = Entries[i]
+    i = -1
+    for curEntry in Entries:
+        i += 1
         if curEntry.logID == const.PROTOCOL_ID and \
            curEntry.ip["tlp_id"] == const.TCP_ID:
             if curEntry.ip["total_len"] == curEntry.ip["header_len"] + curEntry.tcp["header_len"]:
@@ -41,11 +45,18 @@ def calc_tcp_rtt(Entries):
                         curEntry.tcp["seq_num"] + tcp_len)
             if ack_entry:
                 curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
+                if TCP_RTT_DEBUG:
+                    print "Mapped with payload " + str(ack_entry.timestamp) + "\t" + str(curEntry.timestamp) + "\t" + str(curEntry.rtt["tcp"] * 1000.0)
                 mappedCount += 1
             else:
                 notMappedCount += 1
+                """
                 if TCP_RTT_DEBUG:
+                    print "NOT mapped with payload " + str(tcp_len)
                     pw.printIPEntry(curEntry)
+                """
+    # return Entries
+
     if TCP_RTT_DEBUG:
         print "ACK: %f" % (ackCount)
         print "Mapped TCP: %f" % (mappedCount)

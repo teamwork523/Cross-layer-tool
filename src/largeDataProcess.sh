@@ -2,7 +2,7 @@
 
 input=$1
 
-if [[ $filename == "-h" ]];then
+if [[ $input == "-h" ]];then
     echo "./largeDataProcess.sh input output num_of_partitions options(not include -f)"
     exit 1
 fi
@@ -14,7 +14,7 @@ options=$@
 
 # profile the data
 echo "Start Profiling ..."
-src/traceAnalyzer.py -f $input --large_file --partition $partition
+time src/traceAnalyzer.py -f $input --large_file --partition $partition
 
 # currently
 rm -rf $output 2> /dev/null
@@ -22,7 +22,7 @@ rm -rf $output 2> /dev/null
 i=1
 while (( $i <= $partition ));do
     echo "Start partition #$i ..."
-    src/traceAnalyzer.py -f $input --large_file $option >> $output
+    time src/traceAnalyzer.py -f $input --large_file $options >> $output
     i=$(($i + 1))
 done
 

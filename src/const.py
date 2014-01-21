@@ -77,12 +77,15 @@ CH_TYPE_OF_INTEREST = set([
     "UL_CCCH",
     "UL_DCCH"])
 
+MSG_PHY_CH_RECONFIG = "physicalChannelReconfiguration"
+MSG_RADIO_BEARER_RECONFIG = "radioBearerReconfiguration"
+
 MSG_TYPE_OF_INTEREST = set([
-    "physicalChannelReconfiguration",
+    MSG_PHY_CH_RECONFIG,
     "physicalChannelReconfigurationComplete",
     "cellUpdate",
     "cellUpdateConfirm",
-    "radioBearerReconfiguration",
+    MSG_RADIO_BEARER_RECONFIG,
     "radioBearerReconfigurationComplete"])
 
 MSG_OF_INTEREST = set([
@@ -92,7 +95,7 @@ MSG_OF_INTEREST = set([
 ####################################
 ######### Flow Analysis ############
 ####################################
-FLOW_TIME_WIN = 10  # unit is second
+FLOW_TIME_WIN = 5  # unit is second
 
 ####################################
 ############## HTTP ################
@@ -101,6 +104,19 @@ HTTP_DST_PORT = 80
 HTTP_LINE_DEL = "\r\n"
 HTTP_FIELD_DEL = ": "
 MAX_PAIR_TIME_DIFF = 20 # unit of seconds
+MAX_USER_DELAY_SEC = 10
+
+HOST_OF_INTEREST = set([
+    "www.yahoo.com",
+    "instagram.com",
+    "www.google.com",
+    "www.djaverages.com",
+    "m.youtube.com",
+    "m.kayak.com",
+    "www.amazon.com",
+    "www.cnn.com",
+    "m.espn.go.com",
+    "m.accuweather.com"])
 
 ####################################
 ############### UDP ################
@@ -213,5 +229,5 @@ NON_UNIQUE_MAPPING_WARNING = "WARNING: Non-unique Mapping"
 ############################################################################
 ################################# Profile ##################################
 ############################################################################
-EXTEND_SECONDS = 180
+EXTEND_SECONDS = 10
 PROFILE_FILENAME = "profile.txt"

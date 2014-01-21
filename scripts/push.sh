@@ -18,7 +18,7 @@ then
 elif [ $OPTION = '-e' ]
 then
     #scp -r pcap/UDP/seq/* haokun@ep2.eecs.umich.edu:$ep2_folder/pcap/UDP/seq/
-    scp -r $prj_folder/src/*.py haokun@ep2.eecs.umich.edu:$ep2_folder/src/
+    scp -r $prj_folder/src/*.py $prj_folder/src/*.sh haokun@ep2.eecs.umich.edu:$ep2_folder/src/
     if [[ -n $UPLOAD_DATA ]] && [ $UPLOAD_DATA = '-d' ];then
         #scp -r $prj_folder/data/TCP/*.txt haokun@ep2.eecs.umich.edu:$ep2_folder/data/TCP/
         # Root cause analysis

@@ -172,8 +172,6 @@ def main():
             try:
                 with open(const.PROFILE_FILENAME):
                     startLine, endLine = util.loadCurrentPartition()
-                    if TIME_DEBUG:
-                        print str(startLine) + " " + str(endLine)
             except IOError:
                 print >> sys.stderr, "ERROR: " + const.PROFILE_FILENAME + " does not exist! \
                                       Please run with --large_file --partition num_of_partition first."
@@ -194,8 +192,6 @@ def main():
         print >> sys.stderr, "Length of Entry List is " + str(len(QCATEntries))
         print >> sys.stderr, "Read QxDM takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
-
-    sys.exit(1)
 
     #################################################################
     ########################## Pre-process ##########################
@@ -792,19 +788,42 @@ def main():
             # TODO: finish the LTE part
             rcw.rrc_state_transition_timers(QCATEntries)
         elif options.root_cause_analysis_type.lower() == "http_analysis":
+            print >> sys.stderr, "HTTP analysis start ..."
             # specific for browsing control experiment
             # extract HTTP information
             fa.parse_http_fields(QCATEntries)
+
+            if TIME_DEBUG:
+                print >> sys.stderr, "Parse HTTP fields takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
+
             flows = fa.extractTCPFlows(QCATEntries)
+            
+            if TIME_DEBUG:
+                print >> sys.stderr, "Extract TCP flows takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
+
+            #fa.flowRTTDebug(QCATEntries, flows)
+
+            rcw.pair_analysis_for_browsing(QCATEntries, flows, \
+                                           options.client_ip, \
+                                           options.network_type)            
+
+            """
             rcw.tuning_timers_for_browsing(QCATEntries, flows, \
                                            options.client_ip, \
-                                           options.network_type, \
-                                           options.direction)
-            """
+                                           options.network_type)            
             rcw.pair_analysis_for_browsing(QCATEntries, flows, \
                                            options.client_ip, \
                                            options.network_type, \
                                            options.direction)
+            
+            rcw.rrc_state_transition_analysis(QCATEntries, \
+                                              options.client_ip, \
+                                              options.network_type, \
+                                              options.direction, \
+                                              flow = flows, \
+                                              header = True)
             """
         elif options.root_cause_analysis_type.lower() == "validate_flow_analysis":
             fa.validateTCPFlowSigantureHashing(QCATEntries)
