@@ -24,6 +24,41 @@ def rrc_inference_validation(entryList):
         if entry.logID == const.PROTOCOL_ID:
             print str(entry.timestamp) + "\t" + str(entry.rrcID)
 
+# Measure the demotion timer
+# Namely the IP packet before the demotion event
+def validate_demotion_timer(entryList):
+    DEL = "\t"
+    timer_map = {"DCH_to_FACH":[], \
+                 "FACH_to_PCH_with_phy_reconfig":[],\
+                 "FACH_to_PCH_with_cellUpdate": []}
+
+    for i in range(len(entryList)):
+        entry = entryList[i]
+        if entry.logID == const.SIG_MSG_ID:
+            # DCH to FACH
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfiguration" and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                privIP = util.find_nearest_ip(entryList, i)
+                if privIP != None:
+                    timer_map["DCH_to_FACH"].append(entry.timestamp - privIP.timestamp)
+            # FACH to PCH
+            if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfiguration"):
+                privIP = util.find_nearest_ip(entryList, i)
+                if privIP != None:
+                    timer_map["FACH_to_PCH_with_phy_reconfig"].append(entry.timestamp - privIP.timestamp)
+            if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdate"):
+                privIP = util.find_nearest_ip(entryList, i)
+                if privIP != None:
+                    timer_map["FACH_to_PCH_with_cellUpdate"].append(entry.timestamp - privIP.timestamp)
+
+    # print timer result
+    for key in timer_map.keys():
+        print key + DEL + str(len(timer_map[key])) + DEL + str(util.quartileResult(timer_map[key]))
+
+
 ############################################################################
 ##################### Cross-layer feasibility ##############################
 ############################################################################
@@ -204,6 +239,28 @@ def count_cross_layer_mapping_WCDMA_downlink(entryList, client_ip):
           (mapped_transport_layer_protocol, \
            total_transport_layer_protocol, \
            mapped_transport_layer_protocol / total_transport_layer_protocol)
+
+############################################################################
+######################## Application Log Accuracy ##########################
+############################################################################
+# get the application timer from the a file
+# Output:
+# 1. Map from Host -> Timer -> timestamp
+def getApplicationLogTimerMap(inFile):
+    f = open(inFile, 'r')
+    timerMap = {}
+    while True:
+        line = f.readline()
+        if not line: break
+        splittedLine = line.split()
+        ts = (float)(splittedLine[0])
+        hostname = splittedLine[1]
+        timer = (float)(splittedLine[2])
+        if hostname not in timerMap:
+            timerMap[hostname] = {}
+        timerMap[hostname][timer] = ts
+
+    return timerMap
 
 ############################################################################
 ################################# Helper ###################################

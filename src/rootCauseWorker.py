@@ -19,6 +19,7 @@ import validateWorker as vw
 
 RRC_STATE_TRANSITION_DEBUG = False
 NONCERTAIN_INFO_DEBUG = False
+INACCURATE_TRANSITION_DEBUG = False
 
 ############################################################################
 ############################### RRC States #################################
@@ -285,11 +286,11 @@ def rrc_state_transition_timers(entryList):
 ############################################################################
 ######################## Application Implication ###########################
 ############################################################################
-# Pair analysis for control browsing trace
+# Performance analysis for control browsing trace
 #
 # 1. Pair the possible interrupted flow with the non-interrupted flow
 # 2. Compare the problematic TCP packet and the corresponding normal packet
-def pair_analysis_for_browsing(entryList, flows, client_ip, network_type, target_timer=1000.0, problem_timer=7000.0):
+def performance_analysis_for_browsing(entryList, flows, client_ip, network_type, target_timer=1000.0, problem_timer=7000.0):
     DEL = "\t"
     # build the target and problem trace
     timerMap = {}
@@ -308,6 +309,10 @@ def pair_analysis_for_browsing(entryList, flows, client_ip, network_type, target
 
             interferenceMap = {}    # packet_index : RLC_index
             flowIndex = 1
+
+            # Check whether the current flow contains problematic traces
+            inaccurateMap = findInaccurateRRCPackets(flowTrace)
+
             for i in range(len(flowTrace)):
                 request = flowTrace[i]
 
@@ -336,19 +341,65 @@ def pair_analysis_for_browsing(entryList, flows, client_ip, network_type, target
             if traceStartIndex != None and traceEndIndex != None:
                 if traceEndIndex > len(flowTrace):
                     traceEndIndex = len(flowTrace) - 1
-                result, interferredIndex = checkRRCStateTransOccur(flowTrace, traceStartIndex, traceEndIndex)
-                key = util.binary_search_smallest_greater_value(interferredIndex, sorted(interferenceMap.keys()))
+                interfered_states, interfered_indices = checkRRCStateTransOccur(flowTrace, traceStartIndex, traceEndIndex)
                 lastData = fa.findLastPayload(f.flow)
-
+                
+                # Header: hostname, interference type, user delay, http embeddied timer, 
+                #         SYN to the last IP packet, Interference time
                 # not None means bad
                 if lastData.timestamp - f.flow[0].timestamp > const.MAX_USER_DELAY_SEC:
                     continue
-                if result != None:
-                    timerMap[f.properties["http"]["host"]]["bad"].append(lastData.timestamp - f.flow[0].timestamp)
+                line = f.properties["http"]["host"] + DEL
+                if len(inaccurateMap) > 0:
+                    # detect abnormal state occurs in between state transitions
+                    line += "Inaccurate" + DEL
+                elif const.FACH_ID in interfered_states and const.DCH_ID in interfered_states:
+                    #timerMap[f.properties["http"]["host"]]["bad"].append(lastData.timestamp - f.flow[0].timestamp)
+                    line += const.RRC_MAP[const.FACH_ID] + "+" + const.RRC_MAP[const.DCH_ID] + DEL
+                elif const.FACH_ID in interfered_states:
+                    line += const.RRC_MAP[const.FACH_ID] + DEL
+                elif const.DCH_ID in interfered_states:
+                    line += const.RRC_MAP[const.DCH_ID] + DEL
                 else:
-                    timerMap[f.properties["http"]["host"]]["good"].append(lastData.timestamp - f.flow[0].timestamp)
+                    #timerMap[f.properties["http"]["host"]]["good"].append(lastData.timestamp - f.flow[0].timestamp)
+                    line += "Normal" + DEL 
+                
+                line += str(lastData.timestamp - f.flow[0].timestamp) + DEL
+                # http embeddied timer
+                if f.properties["http"]["timer"] != None:
+                    line += ("%.3f" % (f.properties["http"]["timer"])) +DEL
+                else:
+                    continue
+                # SYN to last IP
+                lastIPpacketBeforeFlow = f.getLastPacketBeforeFlow(entryList)
+                if lastIPpacketBeforeFlow != None:
+                    line += str(f.flow[0].timestamp - lastIPpacketBeforeFlow.timestamp) + DEL
+                else:
+                    line += "None" + DEL
+                # Average over all Interference from FACH_to_DCH promotion
+                interfer_time = []
+                for state_index in range(len(interfered_states)):
+                    # PCH_to_FACH interfer time
+                    if interfered_states[state_index] == const.FACH_ID:
+                        priv_IP = util.find_nearest_ip(flowTrace, interfered_indices[state_index])
+                        later_IP = util.find_nearest_ip(flowTrace, interfered_indices[state_index], inverse = True)
+                        if priv_IP != None and later_IP != None:
+                            interfer_time.append(later_IP.timestamp - priv_IP.timestamp)
+                    elif interfered_states[state_index] == const.DCH_ID:
+                        priv_IP = util.find_nearest_ip(flowTrace, interfered_indices[state_index])
+                        finish_index = findNextRadioBearerConfiguration(flowTrace, interfered_indices[state_index])
+                        if finish_index != None:
+                            later_IP = util.find_nearest_ip(flowTrace, finish_index, inverse = True)
+                            if priv_IP != None and later_IP != None:
+                                interfer_time.append(later_IP.timestamp - priv_IP.timestamp)
+                if len(interfer_time) > 0:
+                    line += str(sum(interfer_time))
+                else:
+                    line += "0.0"
+                print line
 
     # print result
+    """
     i = 0.5
     for url in sorted(const.HOST_OF_INTEREST):
         line = url + DEL + str(i) + DEL
@@ -361,16 +412,179 @@ def pair_analysis_for_browsing(entryList, flows, client_ip, network_type, target
                 str(badUserTimes[-1] - goodUserTimes[-1])
         print line
         i += 1
+    """
 
 ############################################################################
-############################### Debug ######################################
+############################### Case Study #################################
 ############################################################################
-# control experiment timer tuning 
-def tuning_timers_for_browsing(entryList, flows, client_ip, network_type):
+# Print the detail information for the a general trace
+def trace_detail_rrc_info(entryList, client_ip, network_type):
     DEL = "\t"
+    IP_type = "IP"
+    IP_value = 3
+    RLC_begin_type = "RLC_begin"
+    RLC_begin_value = 3
+    RLC_end_type = "RLC_end"
+    RLC_end_value = 2
+    Demotion_interfer_begin_type = "Demotion_interference_begin"
+    Demotion_interfer_end_type = "Demotion_interference_end"
+    Demotion_interfer_value = 3
+    Promotion_interfer_begin_type = "Promotion_interference_begin"
+    Promotion_interfer_end_type = "Promotion_interference_end"
+    Promotion_interfer_value = 3
 
     # Label each IP packet with its corresponding RRC state
-    # (pktRRCMap, dummy) = label_RRC_state_for_IP_packets(entryList)
+    (pktRRCMap, dummy) = label_RRC_state_for_IP_packets(entryList)
+    DCH_to_FACH_demotion = False
+    FACH_to_DCH_promotion = False
+    for i in range(len(entryList)):
+        entry = request = entryList[i]
+
+        if request.logID == const.PROTOCOL_ID:
+            mapped_RLCs = mapped_sn = None
+            if request.ip["src_ip"] == client_ip:
+                # determine the network type
+                log_of_interest_id = util.get_logID_of_interest(network_type, "up")
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_uplink(entryList, i, log_of_interest_id)
+            elif request.ip["dst_ip"] == client_ip:
+                log_of_interest_id = util.get_logID_of_interest(network_type, "down")
+                mapped_RLCs, mapped_sn = clw.cross_layer_mapping_WCDMA_downlink(entryList, i, log_of_interest_id)
+            else:
+                continue
+
+            if mapped_RLCs:
+                # add type ID
+                line += IP_type + DEL
+                # add IP packet relative time
+                line += str(request.timestamp) + DEL
+                # append the RRC state
+                if request in pktRRCMap and pktRRCMap[request] in const.RRC_MAP:
+                    line += str(pktRRCMap[request]) + DEL +\
+                            str(const.RRC_MAP[pktRRCMap[request]]) + DEL
+                else:
+                    if request.rrcID in const.RRC_MAP:
+                        line += str(request.rrcID) + DEL + \
+                                str(const.RRC_MAP[request.rrcID]) + DEL
+                    else:
+                        line += "N/A" + DEL + "N/A" + DEL
+                # add the TCP type
+                if request.http["type"] == "GET":
+                    line += request.http["type"] + DEL
+                else:
+                    line += util.get_tcp_flag_info(request, "+") + DEL
+                # append packet size
+                pkt_size = request.ip["total_len"] - request.ip["header_len"]
+                if request.ip["tlp_id"] == const.TCP_ID:
+                    pkt_size -= request.tcp["header_len"]
+                elif request.ip["tlp_id"] == const.UDP_ID:
+                    pkt_size -= const.UDP_Header_Len
+                line += str(pkt_size) + DEL
+                line += util.convert_ts_in_human(request.timestamp) + DEL
+                print line
+
+                # Mapped Lower layer packet time
+                beginRRC = None
+                lastRRC = None
+                if mapped_RLCs[0][0].rrcID in const.RRC_MAP:
+                    beginRRC = const.RRC_MAP[mapped_RLCs[0][0].rrcID]
+                if mapped_RLCs[-1][0].rrcID in const.RRC_MAP:
+                    lastRRC = const.RRC_MAP[mapped_RLCs[-1][0].rrcID] 
+                print RLC_begin_type + DEL + \
+                      str(mapped_RLCs[0][0].timestamp) + \
+                      DEL + str(beginRRC) + \
+                      DEL + util.convert_ts_in_human(mapped_RLCs[0][0].timestamp)
+                print RLC_end_type + DEL + \
+                      str(mapped_RLCs[-1][0].timestamp) + \
+                      DEL + str(lastRRC) + \
+                      DEL + util.convert_ts_in_human(mapped_RLCs[-1][0].timestamp)
+                
+        elif request.logID == const.SIG_MSG_ID:
+            entry = request
+            line = ""
+            # FACH -> PCH start
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfiguration":
+                line += "FACH_to_PCH_start" + DEL + \
+                        str(request.timestamp) + DEL + \
+                        str(Demotion_interfer_value)
+            # FACH -> PCH end
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfigurationComplete":
+                line += "FACH_to_PCH_end" + DEL + \
+                        str(request.timestamp) + DEL + \
+                        str(Demotion_interfer_value)
+            # DCH -> FACH start
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                DCH_to_FACH_demotion = True
+                line += "DCH_to_FACH_start" + DEL + \
+                        str(request.timestamp) + DEL + \
+                        str(Demotion_interfer_value)
+            # DCH -> FACH end / FACH -> DCH end
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfigurationComplete":
+                line += str(request.timestamp) + DEL + \
+                       str(Demotion_interfer_value) + DEL
+                if DCH_to_FACH_demotion:
+                    line = "DCH_to_FACH_end" + DEL + line
+                    DCH_to_FACH_demotion = False
+                if FACH_to_DCH_promotion:
+                    line = "FACH_to_DCH_end" + DEL + line
+                    FACH_to_DCH_promotion = False
+            # FACH -> DCH start
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfiguration" and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
+                FACH_to_DCH_promotion = True
+                line += "FACH_to_DCH_start" + DEL + \
+                        str(request.timestamp) + DEL + \
+                        str(Promotion_interfer_value)
+            # PCH -> FACH start
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdate":
+                line += "PCH_to_FACH_start" + DEL + \
+                        str(request.timestamp) + DEL + \
+                        str(Promotion_interfer_value)
+            # PCH -> FACH end
+            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdateConfirm" and \
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                line += "PCH_to_FACH_end" + DEL + \
+                        str(request.timestamp) + DEL + \
+                        str(Promotion_interfer_value)
+            if line != "":		
+                line += util.convert_ts_in_human(request.timestamp)
+                print line
+			
+
+# Print the relative time of IP packet and corresponding RLC PDUs for each flow
+# Also include the interfered timestamp
+def flow_timeseries_info(entryList, flows, client_ip, network_type, mediaLog=None):
+    DEL = "\t"
+    IP_type = "IP"
+    IP_value = 3
+    RLC_begin_type = "RLC_begin"
+    RLC_begin_value = 3
+    RLC_end_type = "RLC_end"
+    RLC_end_value = 2
+    Demotion_interfer_begin_type = "Demotion_interference_begin"
+    Demotion_interfer_end_type = "Demotion_interference_end"
+    Demotion_interfer_value = 3
+    Promotion_interfer_begin_type = "Promotion_interference_begin"
+    Promotion_interfer_end_type = "Promotion_interference_end"
+    Promotion_interfer_value = 3
+
+    # Video related
+    stallMap = None
+    bufferMap = None
+    if mediaLog != None:
+        stallMap = mediaLog.getStallPeriodMap()
+        bufferMap = mediaLog.getBufferMap()
+        print bufferMap
+    
+    # Label each IP packet with its corresponding RRC state
+    (pktRRCMap, dummy) = label_RRC_state_for_IP_packets(entryList)
 
     # Assign TCP RTT
     # dw.calc_tcp_rtt(entryList)
@@ -380,23 +594,29 @@ def tuning_timers_for_browsing(entryList, flows, client_ip, network_type):
 
     # flow level analysis
     for flow in flows:
-        # ratio list
-        transmission_delay_ratio = []
-        transmission_delay = []
-        ota_delay_ratio = []
-        ota_delay = []
-
-        if flow.properties["http"] != None and flow.properties["http"]["host"] in const.HOST_OF_INTEREST:
+        # TODO: adjust this for certain type of analysis
+        # if flow.properties["http"] != None and flow.properties["http"]["host"] in const.HOST_OF_INTEREST:
+        if flow.properties["http"] != None:
             flowTrace = flow.getCrossLayerTrace(entryList)
-            traceStartIndex = None
-            traceEndIndex = None
-            
-            interferenceMap = {}    # packet_index : RLC_index
-            flowIndex = 1
+            flowBegin = True
+            baseTime = flow.flow[0].timestamp
+            DCH_to_FACH_demotion = False
+            FACH_to_DCH_promotion = False
+
+            # get the inaccurate IP packet map
+            inaccurateMap = findInaccurateRRCPackets(flowTrace)
+
+            print "*" * 60
+            print flow.properties["http"]
+            print "Start time: " + util.convert_ts_in_human(flow.flow[0].timestamp)
+            print "End time: " + util.convert_ts_in_human(flow.flow[-1].timestamp)
+            print "*" * 60
+
             for i in range(len(flowTrace)):
                 request = flowTrace[i]
-
+                line = ""
                 if request.logID == const.PROTOCOL_ID:
+                    flowBegin = True
                     mapped_RLCs = mapped_sn = None
                     if request.ip["src_ip"] == client_ip:
                         # determine the network type
@@ -409,29 +629,178 @@ def tuning_timers_for_browsing(entryList, flows, client_ip, network_type):
                         continue
 
                     if mapped_RLCs:
-                        interferenceMap[mapped_RLCs[0][-1]] = flowIndex
-                        if traceStartIndex == None or \
-                           mapped_RLCs[0][-1] < traceStartIndex:
-                            traceStartIndex = mapped_RLCs[0][-1]
-                        if traceEndIndex == None or \
-                           mapped_RLCs[-1][-1] > traceEndIndex:
-                            traceEndIndex = mapped_RLCs[-1][-1]
-                    flowIndex += 1
+                        # add type ID
+                        line += IP_type + DEL
+                        # add IP packet relative time
+                        line += str(request.timestamp - baseTime) + DEL
+                        # append the RRC state
+                        if request in pktRRCMap and pktRRCMap[request] in const.RRC_MAP:
+                            line += str(pktRRCMap[request]) + DEL +\
+                                    str(const.RRC_MAP[pktRRCMap[request]]) + DEL
+                        else:
+                            if request.rrcID in const.RRC_MAP:
+                                line += str(request.rrcID) + DEL + \
+                                        str(const.RRC_MAP[request.rrcID]) + DEL
+                            else:
+                                line += "N/A" + DEL + "N/A" + DEL
+                        # add the TCP type
+                        if request.http["type"] == "GET":
+                            line += request.http["type"] + DEL
+                        else:
+                            line += util.get_tcp_flag_info(request, "+") + DEL
+                        # append packet size
+                        pkt_size = request.ip["total_len"] - request.ip["header_len"] \
+                                   - request.tcp["header_len"]
+                        line += str(pkt_size) + DEL
+                        # check whether the current IP packet is inaccurate or not
+                        if request in inaccurateMap:
+                            line += "WRONG:" + str(inaccurateMap[request]) + DEL
+                        else:
+                            line += "CORRECT" + DEL
+                        
+                        # insert Vedio related information if possible
+                        if len(stallMap) > 0:
+                            if checkWhetherAIPpacketInStall(request, stallMap):
+                                line += "STALLED" + DEL
+                            else:
+                                line += "NORMAL" + DEL
+                        if len(bufferMap) > 0:
+                            buffering = checkMostRecentBufferingPoint(request, bufferMap)
+                            if buffering != None:
+                                line += str(buffering) + DEL
+                            else:
+                                line += "N/A" + DEL
+                        # only print downloading payload greater than 0 in this case
+                        if mediaLog != None:
+                            if pkt_size > 0:
+                                print line
+                                # Mapped Lower layer packet time
+                                print RLC_begin_type + DEL + \
+                                      str(mapped_RLCs[0][0].timestamp - baseTime) + \
+                                      DEL + str(RLC_begin_value)
+                                print RLC_end_type + DEL + \
+                                      str(mapped_RLCs[-1][0].timestamp - baseTime) + \
+                                      DEL + str(RLC_end_value)
+                        else:
+                            print line
+                            # Mapped Lower layer packet time
+                            print RLC_begin_type + DEL + \
+                                  str(mapped_RLCs[0][0].timestamp - baseTime) + \
+                                  DEL + str(RLC_begin_value)
+                            print RLC_end_type + DEL + \
+                                  str(mapped_RLCs[-1][0].timestamp - baseTime) + \
+                                  DEL + str(RLC_end_value)
+                        
+                elif flowBegin and request.logID == const.SIG_MSG_ID:
+                    entry = request
+                    # FACH -> PCH start
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfiguration":
+                        print "FACH_to_PCH_start" + DEL + \
+                              str(request.timestamp - baseTime) + DEL + \
+                              str(Demotion_interfer_value)
+                    # FACH -> PCH end
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfigurationComplete":
+                        print "FACH_to_PCH_end" + DEL + \
+                              str(request.timestamp - baseTime) + DEL + \
+                              str(Demotion_interfer_value)
+                    # DCH -> FACH start
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
+                       entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                        DCH_to_FACH_demotion = True
+                        print "DCH_to_FACH_start" + DEL + \
+                              str(request.timestamp - baseTime) + DEL + \
+                              str(Demotion_interfer_value)
+                    # DCH -> FACH end / FACH -> DCH end
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfigurationComplete":
+                        line = str(request.timestamp - baseTime) + DEL + \
+                               str(Demotion_interfer_value) + DEL
+                        if DCH_to_FACH_demotion:
+                            line = "DCH_to_FACH_end" + DEL + line
+                            DCH_to_FACH_demotion = False
+                        if FACH_to_DCH_promotion:
+                            line = "FACH_to_DCH_end" + DEL + line
+                            FACH_to_DCH_promotion = False
+                        print line
+                    # FACH -> DCH start
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfiguration" and \
+                       entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
+                        FACH_to_DCH_promotion = True
+                        print "FACH_to_DCH_start" + DEL + \
+                              str(request.timestamp - baseTime) + DEL + \
+                              str(Promotion_interfer_value)
+                    # PCH -> FACH start
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdate":
+                        print "PCH_to_FACH_start" + DEL + \
+                              str(request.timestamp - baseTime) + DEL + \
+                              str(Promotion_interfer_value)
+                    # PCH -> FACH end
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdateConfirm" and \
+                       entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                        print "PCH_to_FACH_end" + DEL + \
+                              str(request.timestamp - baseTime) + DEL + \
+                              str(Promotion_interfer_value)
 
-            if traceStartIndex != None and traceEndIndex != None:
-                if traceEndIndex > len(flowTrace):
-                    traceEndIndex = len(flowTrace) - 1
-                result, interferredIndex = checkRRCStateTransOccur(flowTrace, traceStartIndex, traceEndIndex)
-                key = util.binary_search_smallest_greater_value(interferredIndex, sorted(interferenceMap.keys()))
-                lastData = fa.findLastPayload(flow.flow)
-                print str(flow.properties["http"]) + DEL + str(result) + DEL + \
-                      str(interferenceMap[key] - 1) + DEL + \
-                      str(lastData.timestamp - flow.flow[0].timestamp)
-                
+            lastData = fa.findLastPayload(flow.flow)
+            print "User Experienced Delay is " + str(lastData.timestamp - flow.flow[0].timestamp)
+                        
+# Video analysis
+def video_analysis(entryList, mediaLog):
+    bufferMap = mediaLog.getBufferMap()
+    stallMap = mediaLog.getStallPeriodMap()
+    (pktMap, timerMap) = label_RRC_state_for_IP_packets(entryList)
+    sortedStallBeign = sorted(stallMap.keys())
+
+    """
+    inaccurateIPMap = findInaccurateRRCPackets(entryList)
+
+    if len(inaccurateIPMap) > 0:
+        print "Yep!!! Find inaccurate RRC IP packets"
+        
+        for ip in inaccurateIPMap.keys():
+            beginTS = util.binary_search_largest_smaller_value(ip.timestamp, sortedStallBeign)
+            if beginTS in stallMap and ip.timestamp <= stallMap[beginTS]:
+                print "REAL PROBLES: " + str(inaccurateIPMap[ip])
+            else:
+                print "Better luck next time: " + str(inaccurateIPMap[ip])
+    else:
+        print "No such cases!!!"
+    """
+    
+    for entry in entryList:
+        if entry.logID == const.PROTOCOL_ID:
+            beginTS = util.binary_search_largest_smaller_value(entry.timestamp, sortedStallBeign)
+            if beginTS in stallMap and entry.timestamp <= stallMap[beginTS]:
+                if entry in pktMap:
+                    print const.RRC_MAP[pktMap[entry]]
 
 ############################################################################
 ############################# Helper Function ##############################
 ############################################################################
+# Video related
+# check whether a certain IP packet in a stall or not
+def checkWhetherAIPpacketInStall(entry, stallMap):
+    stallBeginTimeSortedList = sorted(stallMap.keys())
+    beginTS = util.binary_search_largest_smaller_value(entry.timestamp, stallBeginTimeSortedList)
+    if beginTS in stallMap and entry.timestamp <= stallMap[beginTS]:
+        return True
+    return False
+
+# Video related
+# check the most recent buffering period
+def checkMostRecentBufferingPoint(entry, bufferMap):
+    bufferingSortedTimeList = sorted(bufferMap.keys())
+    bufferTS = util.binary_search_largest_smaller_value(entry.timestamp, bufferingSortedTimeList)
+    if bufferTS in bufferMap:
+        return bufferMap[bufferTS]
+    return None
+
 # Extract the injected number with format xx:yy;
 #
 # Output:
@@ -505,10 +874,19 @@ def gen_line_of_root_cause_info(entryList, entryIndex, mapped_RLCs, RLCMap, log_
 
     # WCDMA signaling message
     sigCountMap = util.count_signaling_msg(entryList, mapped_RLCs[0][-1], mapped_RLCs[-1][-1])
-    cur_output_result += str(sigCountMap[const.MSG_RADIO_BEARER_RECONFIG][const.DCH_ID]) + DEL
-    cur_output_result += str(sigCountMap[const.MSG_RADIO_BEARER_RECONFIG][const.FACH_ID]) + DEL
-    cur_output_result += str(sigCountMap[const.MSG_PHY_CH_RECONFIG]) + DEL
-    cur_output_result += str(sigCountMap["DL_BCCH_BCH"]) + DEL
+    line = str(len(sigCountMap[const.MSG_RADIO_BEARER_RECONFIG][const.DCH_ID]))
+    # plus a next radio bearer
+    if len(sigCountMap[const.MSG_RADIO_BEARER_RECONFIG][const.DCH_ID]) != 0:
+        line += "("
+        for configurationIndex in sigCountMap[const.MSG_RADIO_BEARER_RECONFIG][const.DCH_ID]:
+            configruationCompleteIndex = findNextRadioBearerConfiguration(entryList, configurationIndex)
+            if configruationCompleteIndex != None:
+                line += str(entryList[configruationCompleteIndex].timestamp -entryList[configurationIndex].timestamp) + ","
+        line = line[:-1] +")"
+    cur_output_result += line + DEL
+    cur_output_result += str(len(sigCountMap[const.MSG_RADIO_BEARER_RECONFIG][const.FACH_ID])) + DEL
+    cur_output_result += str(len(sigCountMap[const.MSG_PHY_CH_RECONFIG])) + DEL
+    cur_output_result += str(len(sigCountMap["DL_BCCH_BCH"])) + DEL
 
     # mannual insepection
     cur_output_result += util.convert_ts_in_human(entry.timestamp) + DEL + \
@@ -604,7 +982,7 @@ def label_RRC_state_for_IP_packets(entryList):
             if rrc_transit_state_pkt_buffer != None and \
                entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
                entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdateConfirm" and \
-               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.PCH_ID:
+               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
                 if RRC_STATE_TRANSITION_DEBUG and len(rrc_transit_state_pkt_buffer) > 0:
                     print "RRC state transition: PCH_TO_FACH with count %d" % (len(rrc_transit_state_pkt_buffer))
                 util.add_multiple_key_same_value_to_map(pktRRCMap, rrc_transit_state_pkt_buffer, const.PCH_TO_FACH_ID)
@@ -621,7 +999,7 @@ def label_RRC_state_for_IP_packets(entryList):
                 rrc_transit_state = const.FACH_TO_DCH_ID
                 rrc_trans_begin_time = entry.timestamp
                 continue
-            # reset FACH -> DCH & DCH -> FACH
+            # reset FACH -> DCH & reset DCH -> FACH
             if rrc_transit_state != None and rrc_transit_state_pkt_buffer != None and \
                entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
                entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfigurationComplete":
@@ -654,14 +1032,128 @@ def label_RRC_state_for_IP_packets(entryList):
     return pktRRCMap, rrc_trans_timer_map
 
 # Check whether state Transition occurs within a certain period
+# (Currently checking whether promotion occurs)
 # Output:
-# 1. RRC indicator
-# 2. Position of interferred
+# 1. list of RRC indicator
+# 2. list of Position of interferred
 def checkRRCStateTransOccur(trace, startIndex, endIndex):
-    for i in range(startIndex, endIndex + 1):
+    interfered_states = []
+    interfered_indices = []
+    for i in range(startIndex, endIndex):
         entry = trace[i]
         if entry.logID == const.SIG_MSG_ID:
-            if entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG:
-                return (entry.sig_msg["msg"]["rrc_indicator"], i)
+            # FACH_to_DCH promotion
+            if entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
+               entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
+                interfered_states.append(entry.sig_msg["msg"]["rrc_indicator"])
+                interfered_indices.append(i)
+            # PCH_to_FACH promotion
+            elif entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                 entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdate":
+                interfered_states.append(const.FACH_ID)
+                interfered_indices.append(i)
 
-    return None, None
+    return interfered_states, interfered_indices
+
+# Check whether there exist inaccurate RRC state of IP packet based on 
+# RRC state transition messages excluding RRC state transition period
+#
+# Output:
+# 1. A map from inaccurate IP packet to desired RRC state
+#    Key: IP packet entry
+#    Value: (desired RRC state, time to the previous closing state)
+def findInaccurateRRCPackets(trace):
+    privCtrlMSG = None
+    expectedRRCID = None
+    inTransition = False
+    inaccurateMap = {}
+    DEL = "\n"    
+    
+    if INACCURATE_TRANSITION_DEBUG:
+        print "%" * 80
+
+    for entry in trace:
+        if entry.logID == const.SIG_MSG_ID:
+            if INACCURATE_TRANSITION_DEBUG:
+                print "^.^"*10
+                line = str(entry.sig_msg) + DEL
+                if privCtrlMSG != None:
+                    line += str(privCtrlMSG.sig_msg) + DEL
+                else:
+                    line += "privCtrl is None;" + DEL
+                line += "Expected RRC is " + str(expectedRRCID) + DEL
+                line += "isInTransition is " + str(inTransition) + DEL
+                print line
+
+            # end of transition
+            # FACH -> PCH
+            if (entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG_COMPLETE) or \
+                (entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                 entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP_CONFIRM and \
+                 entry.sig_msg["msg"]["rrc_indicator"] == const.PCH_ID):
+                inTransition = False
+                expectedRRCID = const.PCH_ID
+                privCtrlMSG = entry
+                continue
+            # PCH -> FACH
+            if (entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                (entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP_CONFIRM and \
+                 entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID)):
+                inTransition = False
+                expectedRRCID = const.FACH_ID
+                privCtrlMSG = entry
+                continue
+            # DCH -> FACH or FACH -> DCH (Notice that expected RRC state has
+            # been assigned eariler)
+            if (entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG_COMPLETE):
+                inTransition = False
+                privCtrlMSG = entry
+                continue
+            # begin of the state transition
+            if (entry.sig_msg["ch_type"] == "DL_DCCH" and \
+               (entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG or \
+                entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG) or \
+               (entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP)):
+                inTransition = True
+                expectedRRCID = entry.sig_msg["msg"]["rrc_indicator"]
+                continue
+        # judge whether current IP packet has been assigned the correct RRC state message
+        if entry.logID == const.PROTOCOL_ID:
+            if INACCURATE_TRANSITION_DEBUG:
+                print "==+"*10
+                line = str(entry.sig_msg) + DEL
+                if privCtrlMSG != None:
+                    line += str(privCtrlMSG.sig_msg) + DEL
+                else:
+                    line += "privCtrl is None;" + DEL
+                line += "Expected RRC is " + str(expectedRRCID) + DEL
+                line += "isInTransition is " + str(inTransition) + DEL
+                print line
+
+            if inTransition == False and \
+               privCtrlMSG != None and \
+               expectedRRCID != None:
+                # disregard the case of not connecting
+                if expectedRRCID != entry.rrcID and entry.rrcID in const.RRC_MAP.keys():
+                    inaccurateMap[entry] = {}
+                    inaccurateMap[entry]["rrc"] = expectedRRCID
+                    inaccurateMap[entry]["time_diff"] = entry.timestamp - privCtrlMSG.timestamp
+
+    return inaccurateMap
+
+# Find the next Radio Bearer Reconfiguration complete entry
+def findNextRadioBearerConfiguration(entryList, curIndex):
+    MAX_SIG_TIME = 5
+    start_time = entryList[curIndex].timestamp
+    for i in range(curIndex, len(entryList)):
+        entry = entryList[i]
+        if entry.logID == const.SIG_MSG_ID and \
+           entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+           entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfigurationComplete":
+            return i
+        if entry.timestamp - start_time > MAX_SIG_TIME:
+            return None
+    return None

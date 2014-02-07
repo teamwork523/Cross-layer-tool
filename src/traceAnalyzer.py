@@ -27,6 +27,7 @@ import rootCauseWorker as rcw
 import rrcTimerWorker as rtw
 import validateWorker as vw
 import flowAnalysis as fa
+import logcatParser as lp
 
 DEBUG = False
 DUP_DEBUG = False
@@ -50,7 +51,8 @@ def init_optParser():
                             " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
                             " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type\n" +\
                             " "*extraspace + "[--root_cause_analysis] analysis_type, [--validate_downlink], [--large_file]\n" +\
-                            " "*extraspace + "[--partition] num_of_partition")
+                            " "*extraspace + "[--partition] num_of_partition, [--validate_demotion_timer], [--logcat] logcat_file\n" +\
+                            " "*extraspace + "[--check_rrc_transition_occur], [--validate_application_timestamp] app_ts_file")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -74,6 +76,8 @@ def init_optParser():
     optParser.add_option("--check_cross_mapping_feasibility", dest="validate_cross_layer_feasibility", default=None, \
     					 help="Validate the cross-layer mapping feasibility, i.e. byte - compare total bytes in both layers, \
                                unique - check unique PDU chain in the RLC layer")
+    optParser.add_option("--check_rrc_transition_occur", action="store_true", dest="isRRCTransitionOccur", default=False, \
+    					  help="Check whether RRC state transition occurs")
     optParser.add_option("--cross_mapping_detail", action="store_true", dest="cross_mapping_detail", default=False, \
     					  help="Print out each TCP packets and mapped RLC PDUs")
     #optParser.add_option("--cross_map", action="store_true", dest="isCrossMap", default=False, \
@@ -92,6 +96,8 @@ def init_optParser():
                          help="Enable it if you want to non-IP entries in the result")
     optParser.add_option("--large_file", action="store_true", dest="is_large_file", default=False, \
                          help="Handle large file that cannot fit into memory all at once")
+    optParser.add_option("--logcat", dest="logcat_file", default=None, \
+                         help="logcat filepath for QoE analysis")
     optParser.add_option("--loss_analysis", action="store_true", dest="is_loss_analysis", default=False, \
                          help="loss ratio analysis over RLC layer")
     optParser.add_option("--gap_analysis", action="store_true", dest="is_gap_analysis", default=False, \
@@ -126,8 +132,13 @@ def init_optParser():
                          help="Validate WCDMA downlink cross-layer mapping")
     optParser.add_option("--validate_rrc_state_inference", action="store_true", dest="isValidateInference", default=False, \
                          help="Validate the RRC inference algorithm by output desired output")
+    optParser.add_option("--validate_demotion_timer", action="store_true", dest="isValidateDeomtionTimer", default=False, \
+                         help="Validate the RRC demotion timer value")
+    optParser.add_option("--validate_application_timestamp", dest="appTimestampFile", default=None, \
+                         help="Validate the time skew of the application File")
     optParser.add_option("--udp_hash_target", dest="hash_target", default="seq", \
-    					 help="Hash UDP based on hashed payload, sequence number or more. Current support hash or seq. Useful if you want to use UDP server trace to sync with client side QxDM trace.")
+    					 help="Hash UDP based on hashed payload, sequence number or more. Current support hash or seq. \
+                               Useful if you want to use UDP server trace to sync with client side QxDM trace.")
 
     # Debugging options
     # optParser.add_option("-s", "--sig", dest="sigFile", default=None, \
@@ -151,6 +162,9 @@ def main():
         optParser.error("-l, --log: Empty QCAT log filepath")
     if options.isMapping == True and options.inPCAPFile == "":
         optParser.error("-p, --pcap: Empty PCAP filepath")
+    if options.root_cause_analysis_type == "video_analysis" and \
+       options.logcat_file == None:
+        optParser.error("--logcat: logcat filepath required")
 
     if options.ptof_timer:
         const.TIMER["PCH_TO_FACH_ID"] = float(options.ptof_timer)
@@ -736,6 +750,10 @@ def main():
     if options.isValidateInference:
         vw.rrc_inference_validation(QCATEntries) 
 
+    # Validate 3G demotion timer
+    if options.isValidateDeomtionTimer:
+        vw.validate_demotion_timer(QCATEntries)
+
     # Check cross-layer mapping feasibility
     if options.validate_cross_layer_feasibility and options.client_ip:
         # Count total number of bytes in the lower layer
@@ -747,6 +765,13 @@ def main():
                 print >> sys.stderr, "ERROR: Cross-layer feasibility: Must specify the direction"
                 sys.exit(1)
             vw.check_mapping_feasibility_uniqueness(QCATEntries, options.client_ip, options.direction)
+
+    # Check whether RRC state transition occurs in the trace
+    if options.isRRCTransitionOccur:
+        (dummy, timerMap) = rcw.label_RRC_state_for_IP_packets(QCATEntries)
+        print "TimerMap length is " + str(len(timerMap))
+        for key in timerMap:
+            print const.RRC_MAP[key] + "\t" + str(len(timerMap[key]))
 
     # ROOT CAUSE analysis
     if options.root_cause_analysis_type:
@@ -805,33 +830,91 @@ def main():
 
             #fa.flowRTTDebug(QCATEntries, flows)
 
-            rcw.pair_analysis_for_browsing(QCATEntries, flows, \
-                                           options.client_ip, \
-                                           options.network_type)            
-
-            """
-            rcw.tuning_timers_for_browsing(QCATEntries, flows, \
-                                           options.client_ip, \
-                                           options.network_type)            
-            rcw.pair_analysis_for_browsing(QCATEntries, flows, \
-                                           options.client_ip, \
-                                           options.network_type, \
-                                           options.direction)
+            
+            rcw.performance_analysis_for_browsing(QCATEntries, flows, \
+                                                  options.client_ip, \
+                                                  options.network_type) 
+            """                                  
+            rcw.performance_analysis_for_browsing(QCATEntries, flows, \
+                                                  options.client_ip, \
+                                                  options.network_type, \
+                                                  options.direction)
             
             rcw.rrc_state_transition_analysis(QCATEntries, \
                                               options.client_ip, \
                                               options.network_type, \
                                               options.direction, \
                                               flow = flows, \
-                                              header = True)
+                                              header = True)            
             """
+        elif options.root_cause_analysis_type.lower() == "http_debug":
+            print >> sys.stderr, "HTTP analysis debug start ..."
+            # specific for browsing control experiment
+            # extract HTTP information
+            fa.parse_http_fields(QCATEntries)
+
+            if TIME_DEBUG:
+                print >> sys.stderr, "Parse HTTP fields takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
+
+            flows = fa.extractTCPFlows(QCATEntries)
+            
+            if TIME_DEBUG:
+                print >> sys.stderr, "Extract TCP flows takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
+
+            rcw.flow_timeseries_info(QCATEntries, flows, \
+                                     options.client_ip, \
+                                     options.network_type)
         elif options.root_cause_analysis_type.lower() == "validate_flow_analysis":
             fa.validateTCPFlowSigantureHashing(QCATEntries)
+        elif options.root_cause_analysis_type.lower() == "rrc_detail_analysis":
+            rcw.trace_detail_rrc_info(QCATEntries, \
+                                      options.client_ip, \
+                                      options.network_type)
+        elif options.root_cause_analysis_type.lower() == "video_analysis":
+            print >> sys.stderr, "Start video analysis ..."
+            # YouTube case study
+            keywords = [const.MEDIA_PLAYER_TAG]
+            mediaPlayerTrace = lp.logcatParser(options.logcat_file, keywords)
+            # rcw.video_analysis(QCATEntries, mediaPlayerTrace)  
+
+            fa.parse_http_fields(QCATEntries)
+
+            if TIME_DEBUG:
+                print >> sys.stderr, "Parse HTTP fields takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
+
+            flows = fa.extractTCPFlows(QCATEntries)
             
+            if TIME_DEBUG:
+                print >> sys.stderr, "Extract TCP flows takes ", time.time() - check_point_time, "sec"
+                check_point_time = time.time()
+
+            rcw.flow_timeseries_info(QCATEntries, flows, \
+                                     options.client_ip, \
+                                     options.network_type, \
+                                     mediaLog = mediaPlayerTrace)              
 
     # WCDMA downlink cross-layer mapping validation
     if options.validate_downlink and options.client_ip:
         vw.count_cross_layer_mapping_WCDMA_downlink(QCATEntries, options.client_ip)
+
+    # validate the application timer log timestamp
+    if options.appTimestampFile != None:
+        DEL = "\t"
+        fa.parse_http_fields(QCATEntries)
+        flows = fa.extractTCPFlows(QCATEntries)
+        timerMap = vw.getApplicationLogTimerMap(options.appTimestampFile)
+        for f in flows:
+            if f.properties["http"] != None:
+                hostname = f.properties["http"]["host"]
+                timer = f.properties["http"]["timer"]
+                if hostname in timerMap and \
+                   timer in timerMap[hostname]:
+                    print str(hostname) + DEL + \
+                          str(timer) + DEL + \
+                          str(abs(f.flow[0].timestamp - timerMap[hostname][timer]))
 
     ################### For Tmobile ############################
     # verify the TCP layer information with RRC layer by printing

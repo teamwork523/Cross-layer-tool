@@ -900,6 +900,8 @@ def merge_two_dict(orig_dict, append_dict):
     return orig_dict
 
 def convert_ts_in_human(ts, year=False, tz='utc'):
+    if ts == None:
+        return None
     dt = None
     if tz.lower() == 'utc':
         dt = datetime.utcfromtimestamp(ts)
@@ -1028,25 +1030,42 @@ def count_prach_aich_status(entries, startIndex, endIndex, idOfInterest):
     return countMap
 
 # count WCDMA signaling
+# Output:
+# 1. The mapped state and corresponding occurance
 def count_signaling_msg(entries, startIndex, endIndex):
-    countMap = {const.MSG_PHY_CH_RECONFIG: 0, \
-                const.MSG_RADIO_BEARER_RECONFIG: {const.FACH_ID: 0, const.DCH_ID: 0}, \
-                "DL_BCCH_BCH": 0}
+    countMap = {const.MSG_PHY_CH_RECONFIG: [], \
+                const.MSG_RADIO_BEARER_RECONFIG: {const.FACH_ID: [], const.DCH_ID: []}, \
+                "DL_BCCH_BCH": []}
 
     for i in range(startIndex, endIndex + 1):
         entry = entries[i]
         if entry.logID == const.SIG_MSG_ID:
             if entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG:
-                countMap[const.MSG_PHY_CH_RECONFIG] += 1
+                countMap[const.MSG_PHY_CH_RECONFIG].append(i)
             if entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG:
                 if entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
-                    countMap[const.MSG_RADIO_BEARER_RECONFIG][const.FACH_ID] += 1
+                    countMap[const.MSG_RADIO_BEARER_RECONFIG][const.FACH_ID].append(i)
                 elif entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
-                    countMap[const.MSG_RADIO_BEARER_RECONFIG][const.DCH_ID] += 1
+                    countMap[const.MSG_RADIO_BEARER_RECONFIG][const.DCH_ID].append(i)
             if entry.sig_msg["ch_type"] == "DL_BCCH_BCH":
-                countMap["DL_BCCH_BCH"] += 1
+                countMap["DL_BCCH_BCH"].append(i)
 
     return countMap
+
+# find the nearest IP packet before the given index
+# if inverse, then find the first IP after the index
+def find_nearest_ip(entryList, index, inverse=False):
+    indices = None
+    if inverse:
+        indices = range(index, len(entryList))
+    else:
+        indices = range(index)
+        indices.reverse()
+    for i in indices:
+        if entryList[i].logID == const.PROTOCOL_ID:
+            return entryList[i]
+
+    return None
 
 #############################################################################
 ############################ Bianry Search ##################################

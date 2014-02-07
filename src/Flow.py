@@ -100,6 +100,20 @@ class Flow(object):
             hashedPayload.append(util.getHashedPayload(entry))
         return hashedPayload
 
+    # get the last the IP packet before the flow
+    def getLastPacketBeforeFlow(self, complete_trace):
+        indexList = range(self.properties["index_range"]["min"])
+        indexList.reverse()
+        
+        entry = None        
+        
+        for index in indexList:
+            entry = complete_trace[index]
+            if entry.logID == const.PROTOCOL_ID:
+                return entry
+
+        return entry
+
     # create signature from a entry
     # if entry is a valid TCP entry, then return signature
     # otherwise, return None

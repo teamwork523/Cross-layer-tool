@@ -4,7 +4,7 @@ input=$1
 legend=$2
 gnuplot -p <<EOF
 # Data columns:X Min 1stQuartile Median 3rdQuartile Max
-set terminal postscript eps color "Arial" 21
+set terminal postscript eps color "Helvetica" 21
 set output "$input.eps"
 set bars 3.0
 set style fill empty

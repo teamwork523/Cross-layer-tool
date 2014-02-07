@@ -78,15 +78,19 @@ CH_TYPE_OF_INTEREST = set([
     "UL_DCCH"])
 
 MSG_PHY_CH_RECONFIG = "physicalChannelReconfiguration"
+MSG_PHY_CH_RECONFIG_COMPLETE = "physicalChannelReconfigurationComplete"
 MSG_RADIO_BEARER_RECONFIG = "radioBearerReconfiguration"
+MSG_RADIO_BEARER_RECONFIG_COMPLETE = "radioBearerReconfigurationComplete"
+MSG_CELL_UP = "cellUpdate"
+MSG_CELL_UP_CONFIRM = "cellUpdateConfirm"
 
 MSG_TYPE_OF_INTEREST = set([
     MSG_PHY_CH_RECONFIG,
-    "physicalChannelReconfigurationComplete",
-    "cellUpdate",
-    "cellUpdateConfirm",
+    MSG_PHY_CH_RECONFIG_COMPLETE,
+    MSG_CELL_UP,
+    MSG_CELL_UP_CONFIRM,
     MSG_RADIO_BEARER_RECONFIG,
-    "radioBearerReconfigurationComplete"])
+    MSG_RADIO_BEARER_RECONFIG_COMPLETE])
 
 MSG_OF_INTEREST = set([
     "rrc-StateIndicator", # from DL_DCCH
@@ -95,7 +99,7 @@ MSG_OF_INTEREST = set([
 ####################################
 ######### Flow Analysis ############
 ####################################
-FLOW_TIME_WIN = 5  # unit is second
+FLOW_TIME_WIN = 10  # unit is second
 
 ####################################
 ############## HTTP ################
@@ -231,3 +235,15 @@ NON_UNIQUE_MAPPING_WARNING = "WARNING: Non-unique Mapping"
 ############################################################################
 EXTEND_SECONDS = 10
 PROFILE_FILENAME = "profile.txt"
+
+############################################################################
+################################## Media ###################################
+############################################################################
+MEDIA_PLAYER_TAG = "MediaPlayer"
+MEDIA_PLAYER_WARNING_TAG = "info/warning"
+MEDIA_PLAYER_STALL_START = 701
+MEDIA_PLAYER_STALL_END = 702
+MEDIA_PLAYER_STALL_BANDWIDTH_LOW = 703
+MEDIA_PLAYER_BUFFERING = "buffering"
+
+TIME_SYC_TAG = "sync_time"

@@ -515,7 +515,10 @@ class QCATEntry:
         tempHex = {}
         tempHex["length"] = int((self.hex_dump[0].split())[1])
         tempHex["header"] = self.hex_dump[1].split()[1:]
-        tempHex["payload"] = self.hex_dump[2].split()[1:]
+        try:
+            tempHex["payload"] = self.hex_dump[2].split()[1:]
+        except IndexError:
+            print self.title
         for i in self.hex_dump[3:]:
             tempHex["payload"] += i.split()
         self.hex_dump = tempHex
