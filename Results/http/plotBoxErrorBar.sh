@@ -24,17 +24,15 @@ set xtic rotate by -25
 set key $key_pos
 set key font ", 16"
 #set xlabel "URLs"
-set ylabel "User Experienced Latency (s)"
+set ylabel "User experienced latency (s)"
 set xtic offset 0.5 font "Helvetica, $xtic_font_size"
 set boxwidth 0.15
 #set style fill transparent solid 0.4
 set style fill transparent pattern 4 border 
 
-plot "tmp.txt" using (\$2-.1):3:4:5:(0.15):xtic(1) with boxerrorbars lc 1 lw 2 title "Normal Requests", \
-     "" using (\$2+0.05):6:7:8:(0.15) with boxerrorbars lc 3 lw 2 title "FACH_to_DCH Interferred Requests", \
-     "" using (\$2+0.2):9:10:11:(0.15) with boxerrorbars lc 2 lw 2 title "PCH_to_DCH Interferred Requests", \
-     "" using (\$2+0.35):12:13:14:(0.15) with boxerrorbars lc 4 lw 2 title "Inaccurate RRC state Requests"
-
+plot "tmp.txt" using (\$2-.1):3:4:5:(0.15):xtic(1) with boxerrorbars lc 1 lw 2 title "Normal requests", \
+     "" using (\$2+0.05):6:7:8:(0.15) with boxerrorbars lc 3 lw 2 title "FACH_to_DCH interferred requests", \
+     "" using (\$2+0.2):9:10:11:(0.15) with boxerrorbars lc 2 lw 2 title "PCH_to_DCH interferred requests"
 
 EOF
 convert -density 300 "$output.eps" "$output.png"

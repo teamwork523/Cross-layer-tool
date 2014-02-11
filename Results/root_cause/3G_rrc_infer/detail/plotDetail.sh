@@ -14,13 +14,15 @@ set termoption dashed   # enable dashed line
 set multiplot layout 2,1   # plot comparison
 # Upper layer
 set xrange [-0.25:7.5]
+set size 1, 0.4
 set yrange [0:6]
 set key nobox 
 set key width -2
 set key samplen 4
 set key font ",14"
 #set key in vert
-set key left bottom                         # move the legend outside
+set key center bottom                         # move the legend outside
+set key out vert maxrows 3
 #set xlabel "Time (s)"
 #set ylabel "IP Packets"
 #set grid
@@ -39,7 +41,8 @@ set key width -2
 set key samplen 4
 set key font ", 14"
 set key spacing 0.8
-set key left bottom                         # move the legend outside
+set key center bottom                         # move the legend outside
+set key out vert maxrows 3
 set xlabel "Time (s)"
 #set ylabel "RRC state transition"
 set style arrow 1 head lt 2 lc rgb "blue" lw 2 

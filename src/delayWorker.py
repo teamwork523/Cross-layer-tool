@@ -4,7 +4,7 @@
 @Author Haokun Luo
 @Date   03/17/2013
 
-Functions related to delay, TCP RTT calculation
+Functions related to delay, TCP RTT calculation, throughput estimation
 """
 
 import os, sys, re
@@ -37,12 +37,17 @@ def calc_tcp_rtt(Entries):
         i += 1
         if curEntry.logID == const.PROTOCOL_ID and \
            curEntry.ip["tlp_id"] == const.TCP_ID:
-            if curEntry.ip["total_len"] == curEntry.ip["header_len"] + curEntry.tcp["header_len"]:
+            # We make exception for SYN packet
+            if curEntry.ip["total_len"] == curEntry.ip["header_len"] + curEntry.tcp["header_len"] and \
+               not curEntry.tcp["SYN_FLAG"]:
                 ackCount += 1
                 continue
             tcp_len = curEntry.ip["total_len"] - curEntry.ip["header_len"] - curEntry.tcp["header_len"]
-            ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["dst_ip"], curEntry.ip["src_ip"],\
-                        curEntry.tcp["seq_num"] + tcp_len)
+            if curEntry.tcp["SYN_FLAG"] and not curEntry.tcp["ACK_FLAG"]:
+                ack_entry = find_tcp_syn_ack_entry(Entries[i+1:])
+            else:
+                ack_entry = find_tcp_ack_entry(Entries[i+1:], curEntry.ip["dst_ip"], curEntry.ip["src_ip"],\
+                            curEntry.tcp["seq_num"] + tcp_len)
             if ack_entry:
                 curEntry.rtt["tcp"] = ack_entry.timestamp - curEntry.timestamp
                 if TCP_RTT_DEBUG:
@@ -185,6 +190,13 @@ def first_hop_latency_evaluation(entryList, pduID):
 
     return (tcp_rtt_list, first_hop_rtt_list, transmission_delay_ratio_rtt_list, ota_delay_ratio_rtt_list)
                 
+#################################################################
+##################### Throughput releated #######################
+#################################################################
+# perform a throughput calculation based on the given trace
+def cal_throughput(entryList, start=0):
+    pass
+
 
 #################################################################
 ################# helper function ###############################
@@ -232,6 +244,16 @@ def find_tcp_ack_entry(entryList, src_ip, dst_ip, ack_num):
                entry.tcp["FIN_FLAG"] and entry.tcp["ACK_FLAG"]:
                 return None
 
+    return None
+
+# find the next SYN ACK
+def find_tcp_syn_ack_entry(entryList):
+    for entry in entryList:
+        if entry.logID == const.PROTOCOL_ID and \
+           entry.ip["tlp_id"] == const.TCP_ID and \
+           entry.tcp["SYN_FLAG"] != None and \
+           entry.tcp["ACK_FLAG"] != None:
+            return entry
     return None
 
 # Calculate the first-hop latency given a list of mapped RLC PDU list

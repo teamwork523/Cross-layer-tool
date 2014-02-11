@@ -19,7 +19,8 @@ set key width -2
 set key samplen 4
 set key font ",14"
 #set key in vert
-set key top center                         # move the legend outside
+#set key top center                         # move the legend outside
+set key out vert maxrows 3
 set xlabel "Time (s)"
 #set ylabel "IP Packets"
 #set grid
@@ -36,7 +37,8 @@ set yrange [0:6]
 set key width -2
 set key samplen 4
 set key font ",12"
-set key right bottom                         # move the legend outside
+#set key right bottom                         # move the legend outside
+set key out vert maxrows 3
 set xlabel "Time (s)"
 #set ylabel "RRC state transition"
 set style arrow 1 head lt 2 lc rgb "blue" lw 2 

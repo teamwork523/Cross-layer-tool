@@ -26,37 +26,137 @@ def rrc_inference_validation(entryList):
 
 # Measure the demotion timer
 # Namely the IP packet before the demotion event
-def validate_demotion_timer(entryList):
+def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDMA):
     DEL = "\t"
-    timer_map = {"DCH_to_FACH":[], \
-                 "FACH_to_PCH_with_phy_reconfig":[],\
-                 "FACH_to_PCH_with_cellUpdate": []}
+    TIMER_UPPER_BOUND = 20
+    DEMOTION_LOWER_BOUND = 0.5
+    timer_map = {}
+    PCH_to_FACH_start = None
+    FACH_to_DCH_start = None
+    Connect_start = None
+    last_priv_IP = None
+    last_priv_PDU = None
+    if network_type == const.WCDMA:
+        if carrier == const.TMOBILE:
+            timer_map = {"DCH_to_FACH":[], \
+                         "FACH_to_PCH_with_phy_reconfig":[],\
+                         "FACH_to_PCH_with_cellUpdate": [],\
+                         "FACH_to_DCH":[],\
+                         "PCH_to_FACH":[]}
+        elif carrier == const.ATT:
+            timer_map = {"connect_setup":[], \
+                         "DCH_to_Disconnect":[]}
+    elif network_type == const.LTE:
+        if carrier == const.TMOBILE:
+            timer_map = {"Idle_Camped_to_Connected":[], \
+                         "Connected_to_Idle_Camped":[]}
 
     for i in range(len(entryList)):
         entry = entryList[i]
         if entry.logID == const.SIG_MSG_ID:
-            # DCH to FACH
-            if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
-               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "radioBearerReconfiguration" and \
-               entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
-                privIP = util.find_nearest_ip(entryList, i)
-                if privIP != None:
-                    timer_map["DCH_to_FACH"].append(entry.timestamp - privIP.timestamp)
-            # FACH to PCH
-            if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
-               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "physicalChannelReconfiguration"):
-                privIP = util.find_nearest_ip(entryList, i)
-                if privIP != None:
-                    timer_map["FACH_to_PCH_with_phy_reconfig"].append(entry.timestamp - privIP.timestamp)
-            if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
-               entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == "cellUpdate"):
-                privIP = util.find_nearest_ip(entryList, i)
-                if privIP != None:
-                    timer_map["FACH_to_PCH_with_cellUpdate"].append(entry.timestamp - privIP.timestamp)
-
+            # 3G
+            if network_type == const.WCDMA:
+                # T-Mobile 3G
+                if carrier == const.TMOBILE:
+                    # DCH to FACH
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
+                       entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                        # privIP = util.find_nearest_ip(entryList, i)
+                        privPDU = util.find_nearest_rlc_pdu(entryList, i)
+                        if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
+                           entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
+                            timer_map["DCH_to_FACH"].append([entry, entry.timestamp - privPDU.timestamp])
+                    # FACH to PCH
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG):
+                        #privIP = util.find_nearest_ip(entryList, i)
+                        privPDU = util.find_nearest_rlc_pdu(entryList, i)
+                        if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
+                           entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
+                            timer_map["FACH_to_PCH_with_phy_reconfig"].append([entry, entry.timestamp - privPDU.timestamp])
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP):
+                        if PCH_to_FACH_start == None:
+                            PCH_to_FACH_start = entry
+                        #privIP = util.find_nearest_ip(entryList, i)
+                        privPDU = util.find_nearest_rlc_pdu(entryList, i)
+                        if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
+                           entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
+                            timer_map["FACH_to_PCH_with_cellUpdate"].append([entry, entry.timestamp - privPDU.timestamp])
+                    # PCH to FACH
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP_CONFIRM):
+                        if PCH_to_FACH_start != None  and entry.timestamp - PCH_to_FACH_start.timestamp < TIMER_UPPER_BOUND:
+                            timer_map["PCH_to_FACH"].append([entry, entry.timestamp - PCH_to_FACH_start.timestamp])
+                            PCH_to_FACH_start = None
+                    # FACH to DCH
+                    if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
+                       entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
+                        if FACH_to_DCH_start == None:
+                            FACH_to_DCH_start = entry
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG_COMPLETE):
+                        if FACH_to_DCH_start != None  and entry.timestamp - FACH_to_DCH_start.timestamp < TIMER_UPPER_BOUND:
+                            timer_map["FACH_to_DCH"].append([entry, entry.timestamp - FACH_to_DCH_start.timestamp])
+                            FACH_to_DCH_start = None
+                # AT&T 3G
+                elif carrier == const.ATT:
+                    # disconnected to DCH
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_REQUEST):
+                        if Connect_start == None:
+                            Connect_start = entry
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_SETUP_COMPLETE):
+                        if Connect_start != None and entry.timestamp - Connect_start.timestamp < TIMER_UPPER_BOUND:
+                            timer_map["connect_setup"].append([entry, entry.timestamp - Connect_start.timestamp])
+                            Connect_start = None
+                    # DCH to disconnected
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE_COMPLETE):
+                        # privIP = util.find_nearest_ip(entryList, i)
+                        privPDU = util.find_nearest_rlc_pdu(entryList, i)
+                        if last_priv_PDU != None and privPDU != None and privPDU == last_priv_PDU:
+                            continue
+                        if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
+                           entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
+                            last_priv_PDU = privPDU
+                            #if entry.timestamp - privIP.timestamp < 20:
+                            timer_map["DCH_to_Disconnect"].append([entry, entry.timestamp - privPDU.timestamp])
+        # LTE
+        elif entry.logID == const.LTE_RRC_OTA_ID:
+            if network_type == const.LTE:
+                # T-Mobile LTE
+                if carrier == const.TMOBILE:
+                    # idle camped to connected
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_REQUEST):
+                        if Connect_start == None:
+                            Connect_start = entry
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNCT_RECONFIG_COMPLETE):
+                        if Connect_start != None and entry.timestamp - Connect_start.timestamp < TIMER_UPPER_BOUND:
+                            timer_map["Idle_Camped_to_Connected"].append([entry, entry.timestamp - Connect_start.timestamp])
+                            Connect_start = None
+                    # connected to idle camped
+                    if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                       entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE):
+                        privIP = util.find_nearest_ip(entryList, i)
+                        #privPDU = util.find_nearest_rlc_pdu(entryList, i)
+                        if last_priv_IP != None and privIP != None and privIP == last_priv_IP:
+                            continue
+                        if privIP != None and entry.timestamp - privIP.timestamp < TIMER_UPPER_BOUND and \
+                           entry.timestamp - privIP.timestamp > DEMOTION_LOWER_BOUND:
+                            last_priv_IP = privIP
+                            #if entry.timestamp - privIP.timestamp < 20:
+                            timer_map["Connected_to_Idle_Camped"].append([entry, entry.timestamp - privIP.timestamp])
     # print timer result
     for key in timer_map.keys():
-        print key + DEL + str(len(timer_map[key])) + DEL + str(util.quartileResult(timer_map[key]))
+        #print key + DEL + str(len(timer_map[key])) + DEL + str(util.quartileResult(timer_map[key]))
+        for item in timer_map[key]:
+            print key + DEL + str(item[-1]) + DEL + util.convert_ts_in_human(item[0].timestamp)
 
 
 ############################################################################

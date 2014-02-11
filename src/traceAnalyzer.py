@@ -52,11 +52,14 @@ def init_optParser():
                             " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type\n" +\
                             " "*extraspace + "[--root_cause_analysis] analysis_type, [--validate_downlink], [--large_file]\n" +\
                             " "*extraspace + "[--partition] num_of_partition, [--validate_demotion_timer], [--logcat] logcat_file\n" +\
-                            " "*extraspace + "[--check_rrc_transition_occur], [--validate_application_timestamp] app_ts_file")
+                            " "*extraspace + "[--check_rrc_transition_occur], [--validate_application_timestamp] app_ts_file\n" +\
+                            " "*extraspace + "[-c, --carrier] carrier, [--qoe_file] qoe_file")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
                          help="Beginning point of the sampling")
+    optParser.add_option("-c", "--carrier", dest="carrier", default=const.TMOBILE, \
+                         help="Specify which carrier of interest. Default is T-Mobile")
     optParser.add_option("-d", dest="direction", default=None, \
                          help="Up or down, none specify will ignore throughput")
     optParser.add_option("-e", dest="endPercent", default=1, \
@@ -104,7 +107,7 @@ def init_optParser():
                          help="study the relationship between the gap period (from RRC inference measurement) to RLC layer retransmission analysis")
     optParser.add_option("--gap_rtt", action="store_true", dest="is_gap_rtt", default=False, \
                          help="Investigate the inter-packet gap time vs the UDP RTT result")
-    optParser.add_option("--network_type", dest="network_type", default="wcdma", \
+    optParser.add_option("--network_type", dest="network_type", default=const.WCDMA, \
                          help="Specify the cellular network type for the trace, i.e. wcdma, lte")
     optParser.add_option("--partition", dest="num_of_partition", default=None, \
                          help="Generate a data profile file based on the number of partitions")
@@ -112,6 +115,8 @@ def init_optParser():
                          help="Flag to enable printing throughput information based on TCP trace analysis")
     optParser.add_option("--print_retx", dest="retxType", default=None, \
                          help="Useful tag to print retx ratio (loss ratio) against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
+    optParser.add_option("--qoe_file", dest="qoe_filename", default=None, \
+                         help="User level traces")
     optParser.add_option("--retx_analysis", action="store_true", dest="enable_tcp_retx_test", default=False, \
                          help="Enable TCP retransmission analysis")
     optParser.add_option("--retx_cross_analysis", action="store_true", dest="isRLCRetxAnalysis", default=False, \
@@ -720,7 +725,7 @@ def main():
             tcp_rtt_list, first_hop_rtt_list, transmission_delay_ratio_rtt_list, \
             ota_delay_ratio_rtt_list = dw.first_hop_latency_evaluation(QCATEntries, const.DL_PDU_ID)
 
-        # output the TCP the RTT list 
+        # output the TCP the RTT list
         list_len = len(first_hop_rtt_list)
         DEL = "\t"
         print "TCP_rtt" + DEL + "First_hop_rtt" + DEL + "Tx_delay_ratio" + DEL + "First_hop_rtt_ratio"
@@ -752,7 +757,8 @@ def main():
 
     # Validate 3G demotion timer
     if options.isValidateDeomtionTimer:
-        vw.validate_demotion_timer(QCATEntries)
+        vw.validate_demotion_timer(QCATEntries, carrier=options.carrier,\
+                                   network_type=options.network_type)
 
     # Check cross-layer mapping feasibility
     if options.validate_cross_layer_feasibility and options.client_ip:
@@ -828,25 +834,11 @@ def main():
                 print >> sys.stderr, "Extract TCP flows takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
 
-            #fa.flowRTTDebug(QCATEntries, flows)
-
             
-            rcw.performance_analysis_for_browsing(QCATEntries, flows, \
-                                                  options.client_ip, \
-                                                  options.network_type) 
-            """                                  
             rcw.performance_analysis_for_browsing(QCATEntries, flows, \
                                                   options.client_ip, \
                                                   options.network_type, \
-                                                  options.direction)
-            
-            rcw.rrc_state_transition_analysis(QCATEntries, \
-                                              options.client_ip, \
-                                              options.network_type, \
-                                              options.direction, \
-                                              flow = flows, \
-                                              header = True)            
-            """
+                                                  carrier=options.carrier)
         elif options.root_cause_analysis_type.lower() == "http_debug":
             print >> sys.stderr, "HTTP analysis debug start ..."
             # specific for browsing control experiment
@@ -862,10 +854,11 @@ def main():
             if TIME_DEBUG:
                 print >> sys.stderr, "Extract TCP flows takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
-
+            #fa.flowRTTDebug(QCATEntries, flows)
             rcw.flow_timeseries_info(QCATEntries, flows, \
                                      options.client_ip, \
                                      options.network_type)
+            
         elif options.root_cause_analysis_type.lower() == "validate_flow_analysis":
             fa.validateTCPFlowSigantureHashing(QCATEntries)
         elif options.root_cause_analysis_type.lower() == "rrc_detail_analysis":
@@ -886,7 +879,7 @@ def main():
                 check_point_time = time.time()
 
             flows = fa.extractTCPFlows(QCATEntries)
-            
+            #print "# of flows is " + str(len(flows))
             if TIME_DEBUG:
                 print >> sys.stderr, "Extract TCP flows takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
@@ -894,8 +887,9 @@ def main():
             rcw.flow_timeseries_info(QCATEntries, flows, \
                                      options.client_ip, \
                                      options.network_type, \
-                                     mediaLog = mediaPlayerTrace)              
-
+                                     mediaLog = mediaPlayerTrace, \
+                                     carrier = options.carrier)              
+            
     # WCDMA downlink cross-layer mapping validation
     if options.validate_downlink and options.client_ip:
         vw.count_cross_layer_mapping_WCDMA_downlink(QCATEntries, options.client_ip)

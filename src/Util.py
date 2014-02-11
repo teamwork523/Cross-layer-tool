@@ -785,6 +785,21 @@ def listMeanValue(li):
         return 0.0
     return meanValue([meanValue(item) for item in li])
 
+def getMedian(li):
+    li = sorted(li)
+    # assume li sorted
+    length = len(li)
+
+    if length == 0:
+        return None
+    elif length == 1:
+        return li[0]
+
+    if length % 2 == 0:
+        return float(li[int(length / 2)] + li[int(length / 2) - 1]) / 2.0
+    else:
+        return float(li[int(length / 2)])
+
 # Get the statistical distribution info
 # @return 
 #   [5%, 25%, 50%, 75%, 95%]
@@ -999,9 +1014,16 @@ def gen_RRC_state_count_map():
     return countMap
 
 # generate a map between rrc state transition to an empty list
-def gen_RRC_trans_state_list_map():
+def gen_RRC_trans_state_list_map(carrier=const.TMOBILE, network_type=const.WCDMA):
     transMap = {}
-    for rrc in const.RRC_TRANSITION_ID_GROUP:
+    rrcTransMap = None
+    if network_type == const.WCDMA:
+        if carrier == const.TMOBILE:
+            rrcTransMap = const.TMOBILE_3G_RRC_TRANSITION_ID_GROUP
+        elif carrier == const.ATT:
+            rrcTransMap = const.ATT_3G_RRC_TRANSITION_ID_GROUP
+
+    for rrc in rrcTransMap:
         transMap[rrc] = []
     return transMap
 
@@ -1054,7 +1076,7 @@ def count_signaling_msg(entries, startIndex, endIndex):
 
 # find the nearest IP packet before the given index
 # if inverse, then find the first IP after the index
-def find_nearest_ip(entryList, index, inverse=False):
+def find_nearest_ip(entryList, index, inverse=False, src_ip=None, dst_ip=None):
     indices = None
     if inverse:
         indices = range(index, len(entryList))
@@ -1063,9 +1085,72 @@ def find_nearest_ip(entryList, index, inverse=False):
         indices.reverse()
     for i in indices:
         if entryList[i].logID == const.PROTOCOL_ID:
+            if src_ip != None and entryList[i].ip["src_ip"] != src_ip:
+                continue
+            if dst_ip != None and entryList[i].ip["dst_ip"] != dst_ip:
+                continue
             return entryList[i]
 
     return None
+
+# find the nearest RLC PDU before the given index, consider both uplink and downlink
+# if inverse, then find the first IP after the index
+def find_nearest_rlc_pdu(entryList, index, inverse=False):
+    indices = None
+    if inverse:
+        indices = range(index, len(entryList))
+    else:
+        indices = range(index)
+        indices.reverse()
+    for i in indices:
+        if entryList[i].logID == const.UL_PDU_ID or \
+           entryList[i].logID == const.DL_PDU_ID:
+            return entryList[i]
+
+    return None
+
+# Find the list of RTT based on conditions
+# Assume the RTTs have been assigned, and only consider TCP RTT
+# Output
+# 1. List of RTTs
+def getListOfRTT(entryList, src_ip=None, dst_ip=None):
+    rttList = []
+    for entry in entryList:
+        if entry.logID == const.PROTOCOL_ID and \
+           entry.rtt["tcp"] != None:
+            if src_ip != None and entry.ip["src_ip"] != src_ip:
+                continue
+            if dst_ip != None and entry.ip["dst_ip"] != dst_ip:
+                continue
+            rttList.append(entry.rtt["tcp"])
+            
+    return rttList
+
+# Find the IP packets that is within the window time
+# Also RTT available
+# Output
+# 1. List of RTTs that satisfy the category
+def getListOfRTTBasedonIndices(entryList, indices, src_ip=None, dst_ip=None):
+    rttList = []
+    WINSEC = 3
+
+    for indexOfInterest in indices:
+        indexZone = range(indexOfInterest)
+        indexZone.reverse()
+        endTime = entryList[indexOfInterest].timestamp
+        for i in indexZone:
+            entry = entryList[i]
+            if abs(entry.timestamp - endTime) > WINSEC:
+                break
+            if entry.logID == const.PROTOCOL_ID and \
+               entry.rtt["tcp"] != None:
+                if src_ip != None and entry.ip["src_ip"] != src_ip:
+                    continue
+                if dst_ip != None and entry.ip["dst_ip"] != dst_ip:
+                    continue
+                rttList.append(entry.rtt["tcp"])
+
+    return rttList
 
 #############################################################################
 ############################ Bianry Search ##################################

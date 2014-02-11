@@ -54,6 +54,7 @@ LTE_DL_RLC_PUD_ID = int("0xB082", 16)
 LTE_UL_CONFIG_RLC_ID = int("0xB091", 16)
 LTE_DL_CONFIG_RLC_ID = int("0xB081", 16)
 LTE_CELL_MEASUREMENT_ID = int("0xB180", 16)
+LTE_RRC_OTA_ID = int("0xB0C0", 16)
 
 # EVENTs
 EVENT_ID = int("0x1FFB", 16)
@@ -77,6 +78,8 @@ CH_TYPE_OF_INTEREST = set([
     "UL_CCCH",
     "UL_DCCH"])
 
+# T-Mobile
+TMOBILE = "tmobile"
 MSG_PHY_CH_RECONFIG = "physicalChannelReconfiguration"
 MSG_PHY_CH_RECONFIG_COMPLETE = "physicalChannelReconfigurationComplete"
 MSG_RADIO_BEARER_RECONFIG = "radioBearerReconfiguration"
@@ -84,17 +87,42 @@ MSG_RADIO_BEARER_RECONFIG_COMPLETE = "radioBearerReconfigurationComplete"
 MSG_CELL_UP = "cellUpdate"
 MSG_CELL_UP_CONFIRM = "cellUpdateConfirm"
 
+# AT&T & LTE
+ATT = "att"
+MSG_CONNECT_REQUEST = "rrcConnectionRequest"
+MSG_CONNECT_SETUP = "rrcConnectionSetup"
+MSG_CONNECT_SETUP_COMPLETE = "rrcConnectionSetupComplete"
+MSG_CONNECT_RELEASE = "rrcConnectionRelease"
+MSG_CONNECT_RELEASE_COMPLETE = "rrcConnectionReleaseComplete"
+MSG_CONNCT_RECONFIG = "rrcConnectionReconfiguration"
+MSG_CONNCT_RECONFIG_COMPLETE = "rrcConnectionReconfigurationComplete"
+MSG_SECURITY_COMMAND = "securityModeCommand"
+MSG_SECURITY_COMPLETE = "securityModeComplete"
+
 MSG_TYPE_OF_INTEREST = set([
     MSG_PHY_CH_RECONFIG,
     MSG_PHY_CH_RECONFIG_COMPLETE,
     MSG_CELL_UP,
     MSG_CELL_UP_CONFIRM,
     MSG_RADIO_BEARER_RECONFIG,
-    MSG_RADIO_BEARER_RECONFIG_COMPLETE])
+    MSG_RADIO_BEARER_RECONFIG_COMPLETE,
+    MSG_CONNECT_REQUEST,
+    MSG_CONNECT_SETUP,
+    MSG_CONNECT_SETUP_COMPLETE,
+    MSG_CONNECT_RELEASE,
+    MSG_CONNECT_RELEASE_COMPLETE,
+    MSG_CONNCT_RECONFIG,
+    MSG_CONNCT_RECONFIG_COMPLETE,
+    MSG_SECURITY_COMMAND,
+    MSG_SECURITY_COMPLETE])
 
 MSG_OF_INTEREST = set([
     "rrc-StateIndicator", # from DL_DCCH
     "cellUpdateCause"]) # from UL_DCCH
+
+# Network types
+WCDMA = "wcdma"
+LTE = "lte"
 
 ####################################
 ######### Flow Analysis ############
@@ -138,23 +166,34 @@ DATA_LOGIC_CHANNEL_ID = 19
 ############ RRC State #############
 ####################################
 # map between RRC id and RRC state
+DISCONNECTED_ID = 0
+CONNECTING_ID = 1
 FACH_ID = 2
 DCH_ID = 3
 PCH_ID = 4
-# Promotion transition
+# 3G TMobile RRC transition
 FACH_TO_DCH_ID = 5
 PCH_TO_FACH_ID = 6
-# Demotion transition
 DCH_TO_FACH_ID = 7
 FACH_TO_PCH_ID = 8
-# RRC state transition group
-RRC_TRANSITION_ID_GROUP = \
+
+TMOBILE_3G_RRC_TRANSITION_ID_GROUP = \
     set([FACH_TO_DCH_ID, \
          PCH_TO_FACH_ID, \
          DCH_TO_FACH_ID, \
          FACH_TO_PCH_ID])
 
-RRC_MAP = {FACH_ID: "FACH", \
+# 3G ATT promotion transition
+DISCONNECTED_TO_DCH_ID = 9
+DCH_TO_DISCONNECTED_ID = 10
+
+ATT_3G_RRC_TRANSITION_ID_GROUP = \
+    set([DISCONNECTED_TO_DCH_ID, \
+         DCH_TO_DISCONNECTED_ID])
+
+RRC_MAP = {DISCONNECTED_ID: "DISCONNECTED", \
+           CONNECTING_ID: "CONNECTING", \
+           FACH_ID: "FACH", \
            DCH_ID: "DCH", \
            PCH_ID: "PCH", \
            FACH_TO_DCH_ID: "FACH_TO_DCH", \

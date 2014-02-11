@@ -508,6 +508,15 @@ class QCATEntry:
                     elif "RF Tx Power" in line:
                         splittedLine = line.split()
                         self.prach["rf_tx_power"] = int(splittedLine[-2])
+            # LTE RRC OTA message
+            elif self.logID == const.LTE_RRC_OTA_ID:
+                for line in self.detail:
+                    if "PDU Number = " in line:
+                        splittedLine = line.split()
+                        self.sig_msg["ch_type"] = splittedLine[3]
+                    elif "message c1" in line:
+                        splittedLine = line.split(" :")
+                        self.sig_msg["msg"]["type"] = splittedLine[1][1:]
             # TODO: process other type of log entry
 
     def __procHexDump(self):

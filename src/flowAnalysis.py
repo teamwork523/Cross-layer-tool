@@ -240,9 +240,11 @@ def flowRTTDebug(entryList, flows):
             print str(f.properties["http"])
             print "*" * 80
 
-            dw.calc_tcp_rtt(f.flow)
+            #dw.calc_tcp_rtt(f.flow)
+            flowTrace = f.getCrossLayerTrace(entryList)
+            dw.calc_tcp_rtt(flowTrace)
 
-            (synPacket, synackPacket) = findSYNandSYNACKpacket(f.flow)
+            (synPacket, synackPacket) = findSYNandSYNACKpacket(flowTrace)
             if not synPacket:
                 print "ERROR: no SYN packet found!"
                 break

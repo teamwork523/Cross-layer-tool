@@ -1,7 +1,7 @@
 %!PS-Adobe-2.0 EPSF-2.0
 %%Title: inflated_ip_latency.eps
 %%Creator: gnuplot 4.4 patchlevel 3
-%%CreationDate: Fri Jan 31 21:30:06 2014
+%%CreationDate: Tue Feb 11 02:25:27 2014
 %%DocumentFonts: (atend)
 %%BoundingBox: 50 50 230 176
 %%EndComments
@@ -50,7 +50,7 @@ SDict begin [
   /Author (teamwork523)
 %  /Producer (gnuplot)
 %  /Keywords ()
-  /CreationDate (Fri Jan 31 21:30:06 2014)
+  /CreationDate (Tue Feb 11 02:25:27 2014)
   /DOCINFO pdfmark
 end
 } ifelse
@@ -450,26 +450,34 @@ LTb
 2732 0 R
 -63 0 V
 516 384 M
+( 0) Rshow
+1.000 UL
+LTb
+588 583 M
+63 0 V
+2732 0 R
+-63 0 V
+516 583 M
 ( 0.1) Rshow
 1.000 UL
 LTb
-588 605 M
+588 782 M
 63 0 V
 2732 0 R
 -63 0 V
-516 605 M
+516 782 M
 ( 0.2) Rshow
 1.000 UL
 LTb
-588 827 M
+588 982 M
 63 0 V
 2732 0 R
 -63 0 V
-516 827 M
+516 982 M
 ( 0.3) Rshow
 1.000 UL
 LTb
-588 1048 M
+588 1181 M
 63 0 V
 2732 0 R
 -63 0 V
@@ -477,7 +485,7 @@ LTb
 ( 0.4) Rshow
 1.000 UL
 LTb
-588 1269 M
+588 1380 M
 63 0 V
 2732 0 R
 -63 0 V
@@ -485,7 +493,7 @@ LTb
 ( 0.5) Rshow
 1.000 UL
 LTb
-588 1491 M
+588 1579 M
 63 0 V
 2732 0 R
 -63 0 V
@@ -493,7 +501,7 @@ LTb
 ( 0.6) Rshow
 1.000 UL
 LTb
-588 1712 M
+588 1778 M
 63 0 V
 2732 0 R
 -63 0 V
@@ -501,7 +509,7 @@ LTb
 ( 0.7) Rshow
 1.000 UL
 LTb
-588 1933 M
+588 1978 M
 63 0 V
 2732 0 R
 -63 0 V
@@ -509,7 +517,7 @@ LTb
 ( 0.8) Rshow
 1.000 UL
 LTb
-588 2155 M
+588 2177 M
 63 0 V
 2732 0 R
 -63 0 V
@@ -525,39 +533,23 @@ LTb
 ( 1) Rshow
 1.000 UL
 LTb
-916 384 M
+588 384 M
 0 63 V
 0 1929 R
 0 -63 V
-916 264 M
-( 0.1) Cshow
+588 264 M
+( 0) Cshow
 1.000 UL
 LTb
-1235 384 M
+868 384 M
 0 63 V
 0 1929 R
 0 -63 V
-0 -2049 R
-( 0.2) Cshow
-1.000 UL
-LTb
-1657 384 M
-0 63 V
-0 1929 R
-0 -63 V
-0 -2049 R
-( 0.5) Cshow
-1.000 UL
-LTb
-1976 384 M
-0 63 V
-0 1929 R
-0 -63 V
-0 -2049 R
+868 264 M
 ( 1) Cshow
 1.000 UL
 LTb
-2295 384 M
+1147 384 M
 0 63 V
 0 1929 R
 0 -63 V
@@ -565,7 +557,23 @@ LTb
 ( 2) Cshow
 1.000 UL
 LTb
-2717 384 M
+1427 384 M
+0 63 V
+0 1929 R
+0 -63 V
+0 -2049 R
+( 3) Cshow
+1.000 UL
+LTb
+1706 384 M
+0 63 V
+0 1929 R
+0 -63 V
+0 -2049 R
+( 4) Cshow
+1.000 UL
+LTb
+1986 384 M
 0 63 V
 0 1929 R
 0 -63 V
@@ -573,7 +581,39 @@ LTb
 ( 5) Cshow
 1.000 UL
 LTb
-3036 384 M
+2265 384 M
+0 63 V
+0 1929 R
+0 -63 V
+0 -2049 R
+( 6) Cshow
+1.000 UL
+LTb
+2545 384 M
+0 63 V
+0 1929 R
+0 -63 V
+0 -2049 R
+( 7) Cshow
+1.000 UL
+LTb
+2824 384 M
+0 63 V
+0 1929 R
+0 -63 V
+0 -2049 R
+( 8) Cshow
+1.000 UL
+LTb
+3104 384 M
+0 63 V
+0 1929 R
+0 -63 V
+0 -2049 R
+( 9) Cshow
+1.000 UL
+LTb
+3383 384 M
 0 63 V
 0 1929 R
 0 -63 V
@@ -597,7 +637,7 @@ grestore
 LTb
 LCb setrgbcolor
 1985 84 M
-(Inflated Inter-packet Latency in log-scale \(s\)) Cshow
+(TCP Uplink RTTs \(s\)) Cshow
 LTb
 1.000 UP
 1.000 UL
@@ -605,566 +645,853 @@ LTb
 % Begin plot #1
 1.000 UP
 1.000 UL
-LT0
-LCb setrgbcolor
-/Helvetica findfont 80 scalefont setfont
-2816 738 M
-(AT&T FACH_to_DCH) Rshow
+LT7
+1.00 0.65 0.00 C LCb setrgbcolor
 /Helvetica findfont 120 scalefont setfont
-LT0
-2888 738 M
+2816 933 M
+(AT&T normal) Rshow
+/Helvetica findfont 120 scalefont setfont
+LT7
+1.00 0.65 0.00 C 2888 933 M
 351 0 V
-588 627 M
-53 23 V
-40 22 V
-37 22 V
-41 22 V
-31 22 V
-24 22 V
-84 22 V
-18 23 V
-44 22 V
-13 22 V
-23 22 V
-8 22 V
-19 22 V
-18 22 V
-13 22 V
-17 23 V
-16 22 V
-13 22 V
-15 22 V
-9 22 V
-6 22 V
-11 22 V
-6 23 V
-3 22 V
-8 22 V
-0 22 V
-8 22 V
-8 22 V
-2 22 V
-6 22 V
-2 23 V
-0 22 V
-3 22 V
-5 22 V
-5 22 V
-5 22 V
-5 22 V
-5 23 V
-5 22 V
-9 22 V
-7 22 V
-7 22 V
-4 22 V
-3 22 V
-9 22 V
-6 23 V
-7 22 V
-8 22 V
-25 22 V
-23 22 V
-15 22 V
-25 22 V
-19 23 V
-22 22 V
-5 22 V
-6 22 V
-10 22 V
-36 22 V
-86 22 V
-30 22 V
-80 23 V
-414 22 V
-145 22 V
-78 22 V
-16 22 V
-85 22 V
-35 22 V
-67 23 V
-32 22 V
-15 22 V
-14 22 V
-13 22 V
-13 22 V
-17 22 V
-24 22 V
-225 23 V
-169 22 V
-137 22 V
-225 22 V
+609 404 M
+1 20 V
+2 20 V
+0 20 V
+1 20 V
+0 20 V
+0 19 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 19 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 19 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 19 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 19 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 19 V
+0 20 V
+1 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+2 20 V
+2 19 V
+2 20 V
+2 20 V
+2 20 V
+3 20 V
+3 20 V
+0 20 V
+2 20 V
+1 20 V
+1 20 V
+1 20 V
+2 20 V
+1 19 V
+2 20 V
+2 20 V
+5 20 V
+4 20 V
+6 20 V
+2588 20 V
 stroke
 LCw setrgbcolor
 1.000 UP
-973 849 CircleF
+609 404 CircleF
 1.000 UP
 1.000 UL
-LT0
-973 849 Crs
+LT7
+1.00 0.65 0.00 C 609 404 Star
 LCw setrgbcolor
 1.000 UP
-1158 1181 CircleF
+615 703 CircleF
 1.000 UP
 1.000 UL
-LT0
-1158 1181 Crs
+LT7
+1.00 0.65 0.00 C 615 703 Star
 LCw setrgbcolor
 1.000 UP
-1226 1513 CircleF
+620 1002 CircleF
 1.000 UP
 1.000 UL
-LT0
-1226 1513 Crs
+LT7
+1.00 0.65 0.00 C 620 1002 Star
 LCw setrgbcolor
 1.000 UP
-1411 1845 CircleF
+625 1300 CircleF
 1.000 UP
 1.000 UL
-LT0
-1411 1845 Crs
+LT7
+1.00 0.65 0.00 C 625 1300 Star
 LCw setrgbcolor
 1.000 UP
-2546 2177 CircleF
+632 1599 CircleF
 1.000 UP
 1.000 UL
-LT0
-2546 2177 Crs
+LT7
+1.00 0.65 0.00 C 632 1599 Star
 LCw setrgbcolor
 1.000 UP
-3063 738 CircleF
+641 1898 CircleF
 1.000 UP
 1.000 UL
-LT0
-3063 738 Crs
+LT7
+1.00 0.65 0.00 C 641 1898 Star
+LCw setrgbcolor
+1.000 UP
+663 2197 CircleF
+1.000 UP
+1.000 UL
+LT7
+1.00 0.65 0.00 C 663 2197 Star
+LCw setrgbcolor
+1.000 UP
+3063 933 CircleF
+1.000 UP
+1.000 UL
+LT7
+1.00 0.65 0.00 C 3063 933 Star
 % End plot #1
 % Begin plot #2
 1.000 UP
 1.000 UL
-LT6
+LT0
 LCb setrgbcolor
-/Helvetica findfont 80 scalefont setfont
-2816 655 M
-(T-Mobile FACH_to_DCH) Rshow
 /Helvetica findfont 120 scalefont setfont
-LT6
-2888 655 M
+2816 825 M
+(AT&T Disconnected_to_DCH) Rshow
+/Helvetica findfont 120 scalefont setfont
+LT0
+2888 825 M
 351 0 V
-588 650 M
-1179 0 V
-11 22 V
-5 22 V
-5 22 V
-2 22 V
-3 22 V
-1 22 V
-1 23 V
-2 22 V
-1 22 V
-1 22 V
-1 22 V
-2 22 V
-3 22 V
-1 22 V
-3 23 V
-1 22 V
-1 22 V
-2 22 V
-2 22 V
-0 22 V
-2 22 V
-1 23 V
-1 22 V
-1 22 V
-3 22 V
-2 22 V
-3 22 V
-2 22 V
-1 22 V
-3 23 V
-5 22 V
-11 22 V
-8 22 V
-10 22 V
-4 22 V
-4 22 V
-4 23 V
-1 22 V
-2 22 V
-4 22 V
-1 22 V
-1 22 V
-1 22 V
-2 22 V
-2 23 V
-4 22 V
-3 22 V
-1 22 V
-1 22 V
-0 22 V
-1 22 V
-2 23 V
-2 22 V
-1 22 V
-2 22 V
-3 22 V
-2 22 V
-2 22 V
-4 22 V
-8 23 V
-3 22 V
-2 22 V
-8 22 V
-5 22 V
-2 22 V
-1 22 V
-3 23 V
-2 22 V
-3 22 V
-3 22 V
-7 22 V
-5 22 V
-10 22 V
-3 22 V
-9 23 V
-11 22 V
-12 22 V
-164 22 V
+1099 404 M
+9 20 V
+7 20 V
+1 20 V
+1 20 V
+2 20 V
+1 19 V
+3 20 V
+1 20 V
+2 20 V
+1 20 V
+2 20 V
+1 20 V
+1 20 V
+2 20 V
+1 20 V
+2 20 V
+0 20 V
+3 19 V
+1 20 V
+2 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+2 20 V
+1 20 V
+3 20 V
+2 20 V
+2 20 V
+1 20 V
+4 19 V
+4 20 V
+7 20 V
+2 20 V
+11 20 V
+3 20 V
+8 20 V
+5 20 V
+8 20 V
+4 20 V
+2 20 V
+4 20 V
+6 19 V
+7 20 V
+10 20 V
+4 20 V
+7 20 V
+6 20 V
+4 20 V
+4 20 V
+2 20 V
+2 20 V
+3 20 V
+3 20 V
+3 20 V
+4 19 V
+4 20 V
+2 20 V
+6 20 V
+4 20 V
+6 20 V
+6 20 V
+7 20 V
+4 20 V
+6 20 V
+15 20 V
+4 20 V
+7 19 V
+5 20 V
+7 20 V
+4 20 V
+2 20 V
+4 20 V
+2 20 V
+2 20 V
+2 20 V
+5 20 V
+2 20 V
+6 20 V
+1 20 V
+9 19 V
+9 20 V
+10 20 V
+16 20 V
+10 20 V
+8 20 V
+2 20 V
+15 20 V
+36 20 V
+8 20 V
+11 20 V
+62 20 V
+45 19 V
+146 20 V
+53 20 V
+61 20 V
+15 20 V
+23 20 V
+56 20 V
 stroke
 LCw setrgbcolor
 1.000 UP
-1798 849 CircleF
+1099 404 CircleF
 1.000 UP
 1.000 UL
-LT6
-1798 849 Box
+LT0
+1099 404 Crs
 LCw setrgbcolor
 1.000 UP
-1820 1181 CircleF
+1134 703 CircleF
 1.000 UP
 1.000 UL
-LT6
-1820 1181 Box
+LT0
+1134 703 Crs
 LCw setrgbcolor
 1.000 UP
-1883 1513 CircleF
+1156 1002 CircleF
 1.000 UP
 1.000 UL
-LT6
-1883 1513 Box
+LT0
+1156 1002 Crs
 LCw setrgbcolor
 1.000 UP
-1909 1845 CircleF
+1241 1300 CircleF
 1.000 UP
 1.000 UL
-LT6
-1909 1845 Box
+LT0
+1241 1300 Crs
 LCw setrgbcolor
 1.000 UP
-1959 2177 CircleF
+1299 1599 CircleF
 1.000 UP
 1.000 UL
-LT6
-1959 2177 Box
+LT0
+1299 1599 Crs
 LCw setrgbcolor
 1.000 UP
-3063 655 CircleF
+1380 1898 CircleF
 1.000 UP
 1.000 UL
-LT6
-3063 655 Box
+LT0
+1380 1898 Crs
+LCw setrgbcolor
+1.000 UP
+1519 2197 CircleF
+1.000 UP
+1.000 UL
+LT0
+1519 2197 Crs
+LCw setrgbcolor
+1.000 UP
+3063 825 CircleF
+1.000 UP
+1.000 UL
+LT0
+3063 825 Crs
 % End plot #2
 % Begin plot #3
 1.000 UP
 1.000 UL
-LT4
-LCb setrgbcolor
-/Helvetica findfont 80 scalefont setfont
-2816 572 M
-(T-Mobile PCH_to_DCH) Rshow
+LT8
+0.00 1.00 0.00 C LCb setrgbcolor
 /Helvetica findfont 120 scalefont setfont
-LT4
-2888 572 M
+2816 717 M
+(T-Mobile normal) Rshow
+/Helvetica findfont 120 scalefont setfont
+LT8
+0.00 1.00 0.00 C 2888 717 M
 351 0 V
-588 450 M
-1044 0 V
-117 23 V
-47 22 V
-29 22 V
-51 22 V
-6 22 V
-4 22 V
-3 22 V
-2 22 V
-2 23 V
-2 22 V
-5 22 V
-2 22 V
-5 22 V
-3 22 V
-2 22 V
-3 23 V
-4 22 V
-4 22 V
-9 22 V
-8 22 V
-7 22 V
-4 22 V
-5 22 V
-6 23 V
-5 22 V
-12 22 V
-10 22 V
-137 22 V
-18 22 V
-7 22 V
-5 23 V
-5 22 V
-2 22 V
-2 22 V
-3 22 V
-2 22 V
-2 22 V
-2 22 V
-3 23 V
-3 22 V
-1 22 V
-2 22 V
-2 22 V
-3 22 V
-1 22 V
-2 23 V
-2 22 V
-2 22 V
-2 22 V
-2 22 V
-2 22 V
-2 22 V
-1 22 V
-1 23 V
-2 22 V
-1 22 V
-0 22 V
-2 22 V
-1 22 V
-1 22 V
-1 23 V
-2 22 V
-1 22 V
-1 22 V
-3 22 V
-1 22 V
-2 22 V
-1 22 V
-2 23 V
-2 22 V
-2 22 V
-2 22 V
-3 22 V
-2 22 V
-2 22 V
-5 23 V
-4 22 V
-5 22 V
-4 22 V
-16 22 V
-104 22 V
-80 22 V
-81 22 V
-118 23 V
-287 22 V
-21 22 V
-179 22 V
+602 404 M
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+0 19 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 19 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 19 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 19 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+0 19 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+1 19 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 19 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+0 19 V
+1 20 V
+1 20 V
+1 20 V
+2 20 V
+3 20 V
+412 20 V
 stroke
 LCw setrgbcolor
 1.000 UP
-1825 517 CircleF
+602 404 CircleF
 1.000 UP
 1.000 UL
-LT4
-1825 517 Circle
+LT8
+0.00 1.00 0.00 C 602 404 BoxF
 LCw setrgbcolor
 1.000 UP
-1923 849 CircleF
+604 703 CircleF
 1.000 UP
 1.000 UL
-LT4
-1923 849 Circle
+LT8
+0.00 1.00 0.00 C 604 703 BoxF
 LCw setrgbcolor
 1.000 UP
-2163 1181 CircleF
+605 1002 CircleF
 1.000 UP
 1.000 UL
-LT4
-2163 1181 Circle
+LT8
+0.00 1.00 0.00 C 605 1002 BoxF
 LCw setrgbcolor
 1.000 UP
-2195 1513 CircleF
+606 1300 CircleF
 1.000 UP
 1.000 UL
-LT4
-2195 1513 Circle
+LT8
+0.00 1.00 0.00 C 606 1300 BoxF
 LCw setrgbcolor
 1.000 UP
-2216 1845 CircleF
+607 1599 CircleF
 1.000 UP
 1.000 UL
-LT4
-2216 1845 Circle
+LT8
+0.00 1.00 0.00 C 607 1599 BoxF
 LCw setrgbcolor
 1.000 UP
-2253 2177 CircleF
+610 1898 CircleF
 1.000 UP
 1.000 UL
-LT4
-2253 2177 Circle
+LT8
+0.00 1.00 0.00 C 610 1898 BoxF
 LCw setrgbcolor
 1.000 UP
-3063 572 CircleF
+616 2197 CircleF
 1.000 UP
 1.000 UL
-LT4
-3063 572 Circle
+LT8
+0.00 1.00 0.00 C 616 2197 BoxF
+LCw setrgbcolor
+1.000 UP
+3063 717 CircleF
+1.000 UP
+1.000 UL
+LT8
+0.00 1.00 0.00 C 3063 717 BoxF
 % End plot #3
 % Begin plot #4
 1.000 UP
 1.000 UL
-LT1
-1.00 0.75 0.75 C LCb setrgbcolor
-/Helvetica findfont 80 scalefont setfont
-2816 489 M
-(T-Mobile Inaccurate RRC state) Rshow
+LT7
+0.00 0.00 0.00 C LCb setrgbcolor
 /Helvetica findfont 120 scalefont setfont
-LT1
-1.00 0.75 0.75 C 2888 489 M
+2816 609 M
+(T-Mobile FACH_to_DCH) Rshow
+/Helvetica findfont 120 scalefont setfont
+LT7
+0.00 0.00 0.00 C 2888 609 M
 351 0 V
-588 583 M
-1261 0 V
-36 22 V
-4 22 V
-20 23 V
-9 22 V
-225 22 V
-16 22 V
-18 22 V
-17 22 V
-3 22 V
-9 23 V
-6 22 V
-7 22 V
-4 22 V
-2 22 V
-5 22 V
-9 22 V
-2 22 V
-9 23 V
-2 22 V
-1 22 V
-3 22 V
-7 22 V
-2 22 V
-3 22 V
-4 23 V
-1 22 V
-3 22 V
-7 22 V
-4 22 V
-3 22 V
-2 22 V
-1 22 V
-4 23 V
-9 22 V
-2 22 V
-3 22 V
-2 22 V
-2 22 V
-2 22 V
-3 23 V
-3 22 V
-3 22 V
-3 22 V
-4 22 V
-3 22 V
-5 22 V
-4 22 V
-2 23 V
-4 22 V
-2 22 V
-3 22 V
-2 22 V
-4 22 V
-5 22 V
-5 23 V
-3 22 V
-2 22 V
-3 22 V
-9 22 V
-2 22 V
-5 22 V
-5 22 V
-2 23 V
-2 22 V
-4 22 V
-8 22 V
-5 22 V
-6 22 V
-22 22 V
-14 23 V
-17 22 V
-14 22 V
-32 22 V
-7 22 V
-12 22 V
-17 22 V
-31 22 V
-56 23 V
-36 22 V
-270 22 V
-67 22 V
+730 404 M
+3 20 V
+3 20 V
+1 20 V
+1 20 V
+0 20 V
+0 19 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+0 20 V
+2 20 V
+0 20 V
+2 20 V
+0 20 V
+1 20 V
+2 19 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+0 19 V
+1 20 V
+0 20 V
+0 20 V
+1 20 V
+1 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+0 19 V
+1 20 V
+0 20 V
+2 20 V
+1 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+3 20 V
+1 20 V
+1 20 V
+2 20 V
+1 19 V
+1 20 V
+3 20 V
+1 20 V
+4 20 V
+4 20 V
+1 20 V
+4 20 V
+1 20 V
+5 20 V
+9 20 V
+2 20 V
+2 19 V
+5 20 V
+5 20 V
+1 20 V
+2 20 V
+3 20 V
+4 20 V
+6 20 V
+2 20 V
+3 20 V
+5 20 V
+6 20 V
+4 20 V
+4 19 V
+3 20 V
+3 20 V
+8 20 V
+4 20 V
+11 20 V
+6 20 V
+2 20 V
+5 20 V
+8 20 V
+11 20 V
+7 20 V
+2 19 V
+6 20 V
+4 20 V
+5 20 V
+16 20 V
+21 20 V
+39 20 V
 stroke
 LCw setrgbcolor
 1.000 UP
-2219 849 CircleF
+730 404 CircleF
 1.000 UP
 1.000 UL
-LT1
-1.00 0.75 0.75 C 2219 849 TriU
+LT7
+0.00 0.00 0.00 C 730 404 TriU
 LCw setrgbcolor
 1.000 UP
-2276 1181 CircleF
+745 703 CircleF
 1.000 UP
 1.000 UL
-LT1
-1.00 0.75 0.75 C 2276 1181 TriU
+LT7
+0.00 0.00 0.00 C 745 703 TriU
 LCw setrgbcolor
 1.000 UP
-2326 1513 CircleF
+757 1002 CircleF
 1.000 UP
 1.000 UL
-LT1
-1.00 0.75 0.75 C 2326 1513 TriU
+LT7
+0.00 0.00 0.00 C 757 1002 TriU
 LCw setrgbcolor
 1.000 UP
-2377 1845 CircleF
+765 1300 CircleF
 1.000 UP
 1.000 UL
-LT1
-1.00 0.75 0.75 C 2377 1845 TriU
+LT7
+0.00 0.00 0.00 C 765 1300 TriU
 LCw setrgbcolor
 1.000 UP
-2495 2177 CircleF
+788 1599 CircleF
 1.000 UP
 1.000 UL
-LT1
-1.00 0.75 0.75 C 2495 2177 TriU
+LT7
+0.00 0.00 0.00 C 788 1599 TriU
 LCw setrgbcolor
 1.000 UP
-3063 489 CircleF
+842 1898 CircleF
 1.000 UP
 1.000 UL
-LT1
-1.00 0.75 0.75 C 3063 489 TriU
+LT7
+0.00 0.00 0.00 C 842 1898 TriU
+LCw setrgbcolor
+1.000 UP
+916 2197 CircleF
+1.000 UP
+1.000 UL
+LT7
+0.00 0.00 0.00 C 916 2197 TriU
+LCw setrgbcolor
+1.000 UP
+3063 609 CircleF
+1.000 UP
+1.000 UL
+LT7
+0.00 0.00 0.00 C 3063 609 TriU
 % End plot #4
+% Begin plot #5
+1.000 UP
+1.000 UL
+LT4
+LCb setrgbcolor
+/Helvetica findfont 120 scalefont setfont
+2816 501 M
+(T-Mobile PCH_to_DCH) Rshow
+/Helvetica findfont 120 scalefont setfont
+LT4
+2888 501 M
+351 0 V
+743 404 M
+3 20 V
+3 20 V
+1 20 V
+1 20 V
+1 20 V
+1 19 V
+1 20 V
+1 20 V
+1 20 V
+1 20 V
+1 20 V
+1 20 V
+1 20 V
+2 20 V
+2 20 V
+1 20 V
+2 20 V
+1 19 V
+1 20 V
+2 20 V
+2 20 V
+1 20 V
+3 20 V
+2 20 V
+4 20 V
+6 20 V
+6 20 V
+4 20 V
+3 20 V
+1 20 V
+2 19 V
+1 20 V
+2 20 V
+2 20 V
+2 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 19 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+1 20 V
+0 19 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+0 20 V
+1 20 V
+1 20 V
+1 19 V
+1 20 V
+0 20 V
+1 20 V
+0 20 V
+2 20 V
+1 20 V
+2 20 V
+2 20 V
+2 20 V
+2 20 V
+5 20 V
+8 20 V
+9 19 V
+22 20 V
+13 20 V
+17 20 V
+12 20 V
+12 20 V
+11 20 V
+15 20 V
+13 20 V
+12 20 V
+17 20 V
+18 20 V
+18 19 V
+16 20 V
+47 20 V
+95 20 V
+35 20 V
+17 20 V
+505 20 V
+stroke
+LCw setrgbcolor
+1.000 UP
+743 404 CircleF
+1.000 UP
+1.000 UL
+LT4
+743 404 CircleF
+LCw setrgbcolor
+1.000 UP
+764 703 CircleF
+1.000 UP
+1.000 UL
+LT4
+764 703 CircleF
+LCw setrgbcolor
+1.000 UP
+803 1002 CircleF
+1.000 UP
+1.000 UL
+LT4
+803 1002 CircleF
+LCw setrgbcolor
+1.000 UP
+819 1300 CircleF
+1.000 UP
+1.000 UL
+LT4
+819 1300 CircleF
+LCw setrgbcolor
+1.000 UP
+828 1599 CircleF
+1.000 UP
+1.000 UL
+LT4
+828 1599 CircleF
+LCw setrgbcolor
+1.000 UP
+841 1898 CircleF
+1.000 UP
+1.000 UL
+LT4
+841 1898 CircleF
+LCw setrgbcolor
+1.000 UP
+996 2197 CircleF
+1.000 UP
+1.000 UL
+LT4
+996 2197 CircleF
+LCw setrgbcolor
+1.000 UP
+3063 501 CircleF
+1.000 UP
+1.000 UL
+LT4
+3063 501 CircleF
+% End plot #5
 1.000 UL
 LTb
 588 2376 N

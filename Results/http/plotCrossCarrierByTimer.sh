@@ -19,8 +19,8 @@ set xrange[0:$raw_num]
 #set xtic rotate by -25
 set key $key_pos
 set key font ", 16"
-set ylabel "User Experienced Latency (s)"
-set xlabel "Inter-request Time (s)"
+set ylabel "User experienced latency (s)"
+set xlabel "Inter-request time (s)"
 set xtic offset 0.5 font "Helvetica, $xtic_font_size"
 set boxwidth 0.15
 #set style fill transparent solid 0.4
