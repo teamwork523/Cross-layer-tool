@@ -1,0 +1,38 @@
+#! /bin/bash
+name='140128_060714883_tcp_up_probe_bbb_lte'
+startt='1390907268475.407'
+rtt='_rawrttbyteup.txt'
+disc='_disc'
+dd='_datadelay'
+rate='_upoutthrpt.txt'
+thrpt='_upthrpt.txt'
+gnuplot -persist <<EOF
+set terminal postscript eps color linewidth 1 font "Helvetica,13"
+set size 0.6, 0.45
+set key font ", 11"
+set key bottom
+set style line 1 lt 1 lc rgb "red" lw 3
+set style line 2 lt 1 lc rgb "pink" lw 2
+set style line 3 lt 1 lc rgb "orange" lw 2
+set style line 4 lt 1 lc rgb "yellow" lw 2
+set style line 5 lt 7 lc rgb "green" lw 3
+set style line 6 lt 1 lc rgb "sea-green" lw 2
+set style line 7 lt 1 lc rgb "cyan" lw 2
+set style line 8 lt 3 lc rgb "blue" lw 2
+set style line 9 lt 1 lc rgb "orange" lw 3
+set style line 10 lt 1 lc rgb "brown" lw 2
+set xlabel 'Time (s)'
+set ylabel 'Y1: Delay (ms)'
+set y2label 'Y2: Sending rate (Mbps)'
+set xrange[0:50]
+set yrange[0:4500]
+set y2range[-2:2.5]
+set ytics nomirror
+set ytics 0, 500,2000
+set y2tics 0,0.5,2.5
+set output 'rtt_data.eps'
+plot "$name$dd" using (\$4-$startt)/1000.0:2 title "Data packet delay (Y1)" w l ls 1 axes x1y1, \
+"$name$disc" using (\$4-$startt)/1000.0:2 title "RTT inflation (Y1)" w l ls 5 axes x1y1,\
+"$name$thrpt" using (\$1-1390907177187.049)/1000.0:(\$2/1000.0) title "Receiving rate (Y2)" w l lc rgb "blue" lt 5 lw 3 axes x1y2,\
+"$name$rate" using (\$1-$startt)/1000.0:(\$2/1000.0) title "Sending rate (Y2)" w lp ls 9 pt 9 ps 1 axes x1y2 
+EOF
