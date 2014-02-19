@@ -8,6 +8,9 @@ MONTH_MAP = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, \
              "may": 5, "jun": 6, "jul": 7, "aug": 8, \
              "sep": 9, "oct": 10, "nov": 11, "dec": 12}
 
+# global delimitor
+DEL = "\t"
+
 ############################################################################
 ################################# PCAP Related #############################
 ############################################################################
@@ -87,8 +90,9 @@ MSG_RADIO_BEARER_RECONFIG_COMPLETE = "radioBearerReconfigurationComplete"
 MSG_CELL_UP = "cellUpdate"
 MSG_CELL_UP_CONFIRM = "cellUpdateConfirm"
 
-# AT&T & LTE
+# AT&T 3G + ALL LTE
 ATT = "att"
+VERIZON = "verizon"
 MSG_CONNECT_REQUEST = "rrcConnectionRequest"
 MSG_CONNECT_SETUP = "rrcConnectionSetup"
 MSG_CONNECT_SETUP_COMPLETE = "rrcConnectionSetupComplete"
@@ -191,6 +195,14 @@ ATT_3G_RRC_TRANSITION_ID_GROUP = \
     set([DISCONNECTED_TO_DCH_ID, \
          DCH_TO_DISCONNECTED_ID])
 
+# LTE Tmobile transition state
+IDLE_CAMPED_to_CONNECTED_ID = 11
+CONNECTED_TO_IDLE_CAMPED_ID = 12
+
+LTE_RRC_TRANSITION_ID_GROUP = \
+    set([IDLE_CAMPED_to_CONNECTED_ID, \
+         CONNECTED_TO_IDLE_CAMPED_ID])
+
 RRC_MAP = {DISCONNECTED_ID: "DISCONNECTED", \
            CONNECTING_ID: "CONNECTING", \
            FACH_ID: "FACH", \
@@ -199,7 +211,11 @@ RRC_MAP = {DISCONNECTED_ID: "DISCONNECTED", \
            FACH_TO_DCH_ID: "FACH_TO_DCH", \
            PCH_TO_FACH_ID: "PCH_TO_FACH", \
            DCH_TO_FACH_ID: "DCH_TO_FACH", \
-           FACH_TO_PCH_ID: "FACH_TO_PCH"}
+           FACH_TO_PCH_ID: "FACH_TO_PCH", \
+           DISCONNECTED_TO_DCH_ID: "DISCONNECTED_TO_DCH", \
+           DCH_TO_DISCONNECTED_ID: "DCH_TO_DISCONNECTED", \
+           IDLE_CAMPED_to_CONNECTED_ID: "IDLE_CAMPED_to_CONNECTED", \
+           CONNECTED_TO_IDLE_CAMPED_ID: "CONNECTED_TO_IDLE_CAMPED"}
 
 # Generic RRC states in UMTS w/o Arteficial RRC State
 RRC_ORIG_MAP = {FACH_ID: "CELL_FACH", \
@@ -276,8 +292,9 @@ EXTEND_SECONDS = 10
 PROFILE_FILENAME = "profile.txt"
 
 ############################################################################
-################################## Media ###################################
+################################## QoE #####################################
 ############################################################################
+# Video
 MEDIA_PLAYER_TAG = "MediaPlayer"
 MEDIA_PLAYER_WARNING_TAG = "info/warning"
 MEDIA_PLAYER_STALL_START = 701
@@ -286,3 +303,6 @@ MEDIA_PLAYER_STALL_BANDWIDTH_LOW = 703
 MEDIA_PLAYER_BUFFERING = "buffering"
 
 TIME_SYC_TAG = "sync_time"
+
+# Facebook
+QOE_TIME_OFFSET = 0.3

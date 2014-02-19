@@ -11,22 +11,58 @@ import os, sys, time
 import const
 import crossLayerWorker as clw
 import PrintWrapper as pw
+import rrcTimerWorker as rtw
 import Util as util
 
 ############################################################################
-############################# RRC Inference ################################
+############################# RRC State Machine ############################
 ############################################################################
+# @ Deprecated
 # Validate RRC inference algorithm
 # Output:
 # timestamp \t RRC state
 def rrc_inference_validation(entryList):
     for entry in entryList:
         if entry.logID == const.PROTOCOL_ID:
-            print str(entry.timestamp) + "\t" + str(entry.rrcID)
+            print str(entry.timestamp) + const.DEL + str(entry.rrcID)
+
+# Check whether IP or RLC PDU could transmitted during transition process
+def check_data_trans_during_rrc_trans(entryList, carrier=const.TMOBILE, network_type=const.WCDMA):
+    rrc_timer_map = rtw.getCompleteRRCStateTransitionMap(entryList, \
+                                                         network_type, \
+                                                         carrier)
+    stateOfInterest = util.get_rrc_trans_group(network_type, carrier)
+    UPPER_BOUND = 20
+    target_log_ID_set = set([const.UL_PDU_ID, \
+                            const.DL_PDU_ID])
+    #target_log_ID_set = set([const.PRACH_PARA_ID])
+    for state in stateOfInterest:
+        for startTS in sorted(rrc_timer_map[state].keys()):
+            if rrc_timer_map[state][startTS][0] - startTS < UPPER_BOUND:
+                next_sig_id = util.find_next_log(entryList, rrc_timer_map[state][startTS][1][-1], const.SIG_MSG_ID)
+                #next_sig_id = rrc_timer_map[state][startTS][1][-1]
+                if next_sig_id != None and \
+                   util.check_whether_log_of_interest_occur(entryList, next_sig_id, \
+                                                            rrc_timer_map[state][startTS][2][-1], target_log_ID_set):
+                    print const.RRC_MAP[state] + const.DEL + util.convert_ts_in_human(startTS)
+
+# print premotion/demotion process delay
+def print_rrc_process_dalay(entryList, carrier=const.TMOBILE, network_type=const.WCDMA):
+    rrc_timer_map = rtw.getCompleteRRCStateTransitionMap(entryList, \
+                                                         network_type, \
+                                                         carrier)    
+    stateOfInterest = util.get_rrc_trans_group(network_type, carrier)
+    UPPER_BOUND = 20
+
+    for state in stateOfInterest:
+        for startTS in rrc_timer_map[state]:
+            if rrc_timer_map[state][startTS][0] - startTS < UPPER_BOUND:
+                print const.RRC_MAP[state] + const.DEL + str(abs(rrc_timer_map[state][startTS][0] - startTS)) \
+                      + const.DEL + util.convert_ts_in_human(startTS)
 
 # Measure the demotion timer
 # Namely the IP packet before the demotion event
-def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDMA):
+def validate_rrc_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDMA):
     DEL = "\t"
     TIMER_UPPER_BOUND = 20
     DEMOTION_LOWER_BOUND = 0.5
@@ -40,7 +76,7 @@ def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const
         if carrier == const.TMOBILE:
             timer_map = {"DCH_to_FACH":[], \
                          "FACH_to_PCH_with_phy_reconfig":[],\
-                         "FACH_to_PCH_with_cellUpdate": [],\
+                         "FACH_to_PCH_with_cellUpdate":[],\
                          "FACH_to_DCH":[],\
                          "PCH_to_FACH":[]}
         elif carrier == const.ATT:
@@ -62,7 +98,7 @@ def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const
                     if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
                        entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
-                        # privIP = util.find_nearest_ip(entryList, i)
+                        # (privIP, dummy) = util.find_nearest_ip(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
                            entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
@@ -70,7 +106,7 @@ def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const
                     # FACH to PCH
                     if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG):
-                        #privIP = util.find_nearest_ip(entryList, i)
+                        #(privIP, dummy) = util.find_nearest_ip(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
                            entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
@@ -79,7 +115,7 @@ def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP):
                         if PCH_to_FACH_start == None:
                             PCH_to_FACH_start = entry
-                        #privIP = util.find_nearest_ip(entryList, i)
+                        #(privIP, dummy) = util.find_nearest_ip(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
                            entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
@@ -116,7 +152,7 @@ def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const
                     # DCH to disconnected
                     if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE_COMPLETE):
-                        # privIP = util.find_nearest_ip(entryList, i)
+                        # (privIP, dummy) = util.find_nearest_ip(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if last_priv_PDU != None and privPDU != None and privPDU == last_priv_PDU:
                             continue
@@ -128,8 +164,10 @@ def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const
         # LTE
         elif entry.logID == const.LTE_RRC_OTA_ID:
             if network_type == const.LTE:
-                # T-Mobile LTE
-                if carrier == const.TMOBILE:
+                # T-Mobile, AT&T, Verizon LTE
+                if carrier == const.TMOBILE or \
+                   carrier == const.ATT or \
+                   carrier == const.VERIZON:
                     # idle camped to connected
                     if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_CCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_REQUEST):
@@ -143,12 +181,12 @@ def validate_demotion_timer(entryList, carrier=const.TMOBILE, network_type=const
                     # connected to idle camped
                     if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE):
-                        privIP = util.find_nearest_ip(entryList, i)
+                        (privIP, dummy) = util.find_nearest_ip(entryList, i, lower_bound = DEMOTION_LOWER_BOUND, \
+                                                                    upper_bound = TIMER_UPPER_BOUND)
                         #privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if last_priv_IP != None and privIP != None and privIP == last_priv_IP:
                             continue
-                        if privIP != None and entry.timestamp - privIP.timestamp < TIMER_UPPER_BOUND and \
-                           entry.timestamp - privIP.timestamp > DEMOTION_LOWER_BOUND:
+                        if privIP != None:
                             last_priv_IP = privIP
                             #if entry.timestamp - privIP.timestamp < 20:
                             timer_map["Connected_to_Idle_Camped"].append([entry, entry.timestamp - privIP.timestamp])

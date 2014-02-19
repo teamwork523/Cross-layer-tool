@@ -28,6 +28,7 @@ import rrcTimerWorker as rtw
 import validateWorker as vw
 import flowAnalysis as fa
 import logcatParser as lp
+import QoEAnalysis as qa
 
 DEBUG = False
 DUP_DEBUG = False
@@ -51,9 +52,9 @@ def init_optParser():
                             " "*extraspace + "[--validate_rrc_state_inference], [--first_hop_latency_analysis]\n" +\
                             " "*extraspace + "[--retx_cross_analysis], [--network_type] network_type\n" +\
                             " "*extraspace + "[--root_cause_analysis] analysis_type, [--validate_downlink], [--large_file]\n" +\
-                            " "*extraspace + "[--partition] num_of_partition, [--validate_demotion_timer], [--logcat] logcat_file\n" +\
+                            " "*extraspace + "[--partition] num_of_partition, [--validate_rrc_timer], [--logcat] logcat_file\n" +\
                             " "*extraspace + "[--check_rrc_transition_occur], [--validate_application_timestamp] app_ts_file\n" +\
-                            " "*extraspace + "[-c, --carrier] carrier, [--qoe_file] qoe_file")
+                            " "*extraspace + "[-c, --carrier] carrier, [--qoe_file] qoe_file, [--qoe_analysis] qoe_type")
     optParser.add_option("-a", "--addr", dest="pkts_examined", default=None, \
                          help="Heuristic gauss src/dst ip address. num_packets means the result is based on first how many packets.")
     optParser.add_option("-b", dest="beginPercent", default=0, \
@@ -115,8 +116,10 @@ def init_optParser():
                          help="Flag to enable printing throughput information based on TCP trace analysis")
     optParser.add_option("--print_retx", dest="retxType", default=None, \
                          help="Useful tag to print retx ratio (loss ratio) against each RRC state. Support tcp_rto, tcp_fast, rlc_ul, rlc_dl")
-    optParser.add_option("--qoe_file", dest="qoe_filename", default=None, \
+    optParser.add_option("--qoe_file", dest="qoe_file", default=None, \
                          help="User level traces")
+    optParser.add_option("--qoe_analysis", dest="qoe_type", default=None, \
+                         help="Specify which application for qoe analysis")
     optParser.add_option("--retx_analysis", action="store_true", dest="enable_tcp_retx_test", default=False, \
                          help="Enable TCP retransmission analysis")
     optParser.add_option("--retx_cross_analysis", action="store_true", dest="isRLCRetxAnalysis", default=False, \
@@ -137,8 +140,8 @@ def init_optParser():
                          help="Validate WCDMA downlink cross-layer mapping")
     optParser.add_option("--validate_rrc_state_inference", action="store_true", dest="isValidateInference", default=False, \
                          help="Validate the RRC inference algorithm by output desired output")
-    optParser.add_option("--validate_demotion_timer", action="store_true", dest="isValidateDeomtionTimer", default=False, \
-                         help="Validate the RRC demotion timer value")
+    optParser.add_option("--validate_rrc_timer", action="store_true", dest="isValidateRRCTimer", default=False, \
+                         help="Validate the RRC timer values")
     optParser.add_option("--validate_application_timestamp", dest="appTimestampFile", default=None, \
                          help="Validate the time skew of the application File")
     optParser.add_option("--udp_hash_target", dest="hash_target", default="seq", \
@@ -170,11 +173,16 @@ def main():
     if options.root_cause_analysis_type == "video_analysis" and \
        options.logcat_file == None:
         optParser.error("--logcat: logcat filepath required")
+    if options.qoe_type != None and options.qoe_file == None:
+        optParser.error("--qoe_file: must specify user level trace")
 
     if options.ptof_timer:
         const.TIMER["PCH_TO_FACH_ID"] = float(options.ptof_timer)
     if options.ftod_timer:
         const.TIMER["FACH_TO_DCH_ID"] = float(options.ftod_timer)
+
+    # Output current network type and carrier
+    print >> sys.stderr, "Carrier: " + options.carrier + ", network type: " + options.network_type
 
     if TIME_DEBUG:
         print >> sys.stderr, "Parse options takes ", time.time() - check_point_time, "sec"
@@ -394,12 +402,6 @@ def main():
     if TIME_DEBUG:
         print >> sys.stderr, "Filter packets takes ", time.time() - check_point_time, "sec"
         check_point_time = time.time()
-
-    #################################################################
-    ############### RRC State Inference Verification ################
-    #################################################################
-    if options.isValidateRRCTimer:
-        rtw.get_RRC_timer_map(QCATEntries)
 
     #################################################################
     #################### Retransmission Analysis ####################
@@ -751,13 +753,11 @@ def main():
         for v in clMap.values():
             print v
 
-    # Validate the RRC inference algorithm
-    if options.isValidateInference:
-        vw.rrc_inference_validation(QCATEntries) 
-
-    # Validate 3G demotion timer
-    if options.isValidateDeomtionTimer:
-        vw.validate_demotion_timer(QCATEntries, carrier=options.carrier,\
+    # Validate the RRC inference timer
+    if options.isValidateRRCTimer:
+        #vw.validate_rrc_timer(QCATEntries, carrier=options.carrier,\
+        #                      network_type=options.network_type)
+        vw.print_rrc_process_dalay(QCATEntries, carrier=options.carrier,\
                                    network_type=options.network_type)
 
     # Check cross-layer mapping feasibility
@@ -815,9 +815,12 @@ def main():
                                                     packet_count_map[key] / packet_count_map["total"])
             """
         elif options.root_cause_analysis_type.lower() == "rrc_trans_timer":
-            # Quantize the RRC transition timer
+            # Deprecated: Quantize the RRC transition timer
             # TODO: finish the LTE part
             rcw.rrc_state_transition_timers(QCATEntries)
+        elif options.root_cause_analysis_type.lower() == "data_control_interrupt":
+            print >> sys.stderr, "Check whether data communication occur within control start ..."
+            vw.check_data_trans_during_rrc_trans(QCATEntries, options.carrier, options.network_type)
         elif options.root_cause_analysis_type.lower() == "http_analysis":
             print >> sys.stderr, "HTTP analysis start ..."
             # specific for browsing control experiment
@@ -861,7 +864,7 @@ def main():
             
         elif options.root_cause_analysis_type.lower() == "validate_flow_analysis":
             fa.validateTCPFlowSigantureHashing(QCATEntries)
-        elif options.root_cause_analysis_type.lower() == "rrc_detail_analysis":
+        elif options.root_cause_analysis_type.lower() == "detail":
             rcw.trace_detail_rrc_info(QCATEntries, \
                                       options.client_ip, \
                                       options.network_type)
@@ -870,8 +873,15 @@ def main():
             # YouTube case study
             keywords = [const.MEDIA_PLAYER_TAG]
             mediaPlayerTrace = lp.logcatParser(options.logcat_file, keywords)
-            # rcw.video_analysis(QCATEntries, mediaPlayerTrace)  
-
+            stallMap = mediaPlayerTrace.getStallPeriodMap()
+            normalIP, stalledIP = util.filterOutStalledIPtraces(QCATEntries, stallMap)
+            print "Normal # of IP is " + str(len(normalIP)) + "; Stalled # of IP is " + str(len(stalledIP))
+            print "Normal Uplink Throughput: " + str(util.quartileResult(dw.cal_throughput(normalIP, src_ip=options.client_ip)))
+            print "Normal Downlink Throughput: " + str(util.quartileResult(dw.cal_throughput(normalIP, dst_ip=options.client_ip)))
+            print "Stalled Uplink Throughput: " + str(util.quartileResult(dw.cal_throughput(stalledIP, src_ip=options.client_ip)))
+            print "Stalled Downlink Throughput: " + str(util.quartileResult(dw.cal_throughput(stalledIP, dst_ip=options.client_ip)))
+            """
+            # rcw.video_analysis(QCATEntries, mediaPlayerTrace) 
             fa.parse_http_fields(QCATEntries)
 
             if TIME_DEBUG:
@@ -883,13 +893,24 @@ def main():
             if TIME_DEBUG:
                 print >> sys.stderr, "Extract TCP flows takes ", time.time() - check_point_time, "sec"
                 check_point_time = time.time()
-
+            
             rcw.flow_timeseries_info(QCATEntries, flows, \
                                      options.client_ip, \
                                      options.network_type, \
                                      mediaLog = mediaPlayerTrace, \
-                                     carrier = options.carrier)              
-            
+                                     carrier = options.carrier)             
+            """
+
+    # QoE Analysis
+    if options.qoe_type:
+        if options.qoe_type.lower() == "facebook":
+            # Facebook
+            qa.facebook_analysis(QCATEntries, options.qoe_file, options.client_ip, \
+                                 options.carrier, options.network_type)
+        elif options.qoe_type.lower() == "detail":
+            # print detail data information for QoE trace
+            rcw.trace_detail_rrc_info(QCATEntries, options.client_ip, options.network_type)
+
     # WCDMA downlink cross-layer mapping validation
     if options.validate_downlink and options.client_ip:
         vw.count_cross_layer_mapping_WCDMA_downlink(QCATEntries, options.client_ip)

@@ -247,7 +247,7 @@ class QCATEntry:
                 rrclist = self.detail[0].split()
                 # extract int from parentheses
                 self.rrcID = (int)(re.findall("\d+",rrclist[-1])[0])
-                # print "Id:%s, RRC_state:%s" % (self.rrcID, const.RRC_MAP[self.rrcID])
+                #print "Id:%s, RRC_state:%s" % (self.rrcID, const.RRC_MAP[self.rrcID])
             # Parse Uplink state entry
             elif self.logID == const.EUL_STATS_ID:
                 self.eul["sample_len"] = float(self.detail[0].split()[-1])

@@ -194,9 +194,30 @@ def first_hop_latency_evaluation(entryList, pduID):
 ##################### Throughput releated #######################
 #################################################################
 # perform a throughput calculation based on the given trace
-def cal_throughput(entryList, start=0):
-    pass
+def cal_throughput(entryList, interval=1.0, src_ip=None, dst_ip=None):
+    if len(entryList) < 2:
+        return []
+    #startIP, dummy = util.find_nearest_ip(entryList, 0, True, src_ip, dst_ip)
+    #endIP, dummy = util.find_nearest_ip(entryList, len(entryList) - 1, False, src_ip, dst_ip)
+    startIP = entryList[0]
+    endIP = entryList[-1]
+    slotList = [0.0] * (int)((endIP.timestamp - startIP.timestamp) / interval)
+    if slotList == []:
+        return []
 
+    for entry in entryList:
+        #if entry.logID != const.PROTOCOL_ID or \
+        #   entry.timestamp < startIP.timestamp or \
+        #   entry.timestamp > endIP.timestamp:
+        if entry.logID != const.PROTOCOL_ID or \
+           (src_ip != None and entry.ip["src_ip"] != src_ip) or \
+           (dst_ip != None and entry.ip["dst_ip"] != dst_ip):
+            continue
+        slotIndex = min((int)((entry.timestamp - startIP.timestamp) / interval), len(slotList) - 1)
+        # convert B/s to kb/s
+        slotList[slotIndex] += entry.ip["total_len"] / (interval * 125.0)
+            
+    return slotList
 
 #################################################################
 ################# helper function ###############################

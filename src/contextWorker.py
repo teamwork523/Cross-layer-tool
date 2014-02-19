@@ -163,6 +163,7 @@ def buildRetxCountvsRSCP_timebased(entries, burstDuration, logID):
     return tsMap
 
 ########## Throughput ##########
+# Deprecated please use delayWorker's cal_throughput
 def calThrouhgput(entries, direction):
     # TODO: use the sequence number to compute the throughput
     for i in entries:
@@ -185,7 +186,7 @@ def calThrouhgput(entries, direction):
                     byte = i.tcp["ack_num"] - i.flow["ack_num"]
                 elif i.ip["src_ip"] == i.flow["dst_ip"] and i.ip["dst_ip"] == i.flow["src_ip"]:
                     byte = i.tcp["seq_num"] - i.flow["ack_num"]                    
-            i.throughput = computeThroughput(byte, cur_ts - i.flow["timestamp"])
+            i.throughput = util.computeThroughput(byte, cur_ts - i.flow["timestamp"])
             """
             print "#" * 40
             print convert_ts_in_human(cur_ts)

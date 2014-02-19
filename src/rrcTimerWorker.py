@@ -18,7 +18,140 @@ import PCAPParser as pp
 import Util as util
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
+
+#################################################################
+###################### RRC Timer value ##########################
+#################################################################
+# get a complete map of RRC state transition map
+# "demotion/promotion type" -> {start_time:[end_time, [start_entry, start_entry_index], [end_entry, end_entry_index]}
+def getCompleteRRCStateTransitionMap(entryList, \
+                                     network_type=const.WCDMA, \
+                                     carrier=const.TMOBILE):
+    UPPER_BOUND = 20
+    LOWER_BOUND = 2
+    # Initiate the timer
+    rrc_trans_timer_map = util.gen_RRC_trans_state_list_map(carrier, \
+                                                            network_type, \
+                                                            item = "map")
+    # assume not in any transition at first
+    rrc_trans_begin_map = util.gen_RRC_trans_state_list_map(carrier, \
+                                                            network_type, \
+                                                            item = "None")
+    for i in range(len(entryList)):
+        entry = entryList[i]
+        if network_type == const.WCDMA and entry.logID == const.SIG_MSG_ID:
+            # T-Mobile 3G
+            if carrier == const.TMOBILE:
+                # FACH -> PCH start (case 1)
+                if entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                   entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG:
+                    rrc_trans_begin_map[const.FACH_TO_PCH_ID] = [entry, i]
+                # FACH -> PCH end (case 1)
+                elif entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG_COMPLETE:
+                    if rrc_trans_begin_map[const.FACH_TO_PCH_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.FACH_TO_PCH_ID]
+                        rrc_trans_timer_map[const.FACH_TO_PCH_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.FACH_TO_PCH_ID] = None
+                # FACH -> PCH start (case 2) & PCH -> FACH
+                elif entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP:
+                    rrc_trans_begin_map[const.FACH_TO_PCH_ID] = [entry, i]
+                    rrc_trans_begin_map[const.PCH_TO_FACH_ID] = [entry, i]
+                # FACH -> PCH end (case 2)
+                elif entry.sig_msg["ch_type"] == "DL_CCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP_CONFIRM and \
+                     entry.sig_msg["msg"]["rrc_indicator"] == const.PCH_ID:
+                    if rrc_trans_begin_map[const.FACH_TO_PCH_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.FACH_TO_PCH_ID]
+                        rrc_trans_timer_map[const.FACH_TO_PCH_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.FACH_TO_PCH_ID] = None
+                # PCH -> FACH end
+                elif entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP_CONFIRM and \
+                     entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                    if rrc_trans_begin_map[const.PCH_TO_FACH_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.PCH_TO_FACH_ID]
+                        rrc_trans_timer_map[const.PCH_TO_FACH_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.PCH_TO_FACH_ID] = None
+                # FACH -> DCH start
+                elif entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
+                     entry.sig_msg["msg"]["rrc_indicator"] == const.DCH_ID:
+                    rrc_trans_begin_map[const.FACH_TO_DCH_ID] = [entry, i]
+                # DCH -> FACH start
+                elif entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
+                     entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
+                    rrc_trans_begin_map[const.DCH_TO_FACH_ID] = [entry, i]
+                # FACH -> DCH end & DCH -> FACH end
+                elif entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG_COMPLETE:
+                    if rrc_trans_begin_map[const.FACH_TO_DCH_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.FACH_TO_DCH_ID]
+                        rrc_trans_timer_map[const.FACH_TO_DCH_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.FACH_TO_DCH_ID] = None
+                    if rrc_trans_begin_map[const.DCH_TO_FACH_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.DCH_TO_FACH_ID]
+                        rrc_trans_timer_map[const.DCH_TO_FACH_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.DCH_TO_FACH_ID] = None
+            # AT&T 3G
+            elif carrier == const.ATT:
+                # Disconnected -> DCH start
+                if entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                   entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_REQUEST:
+                    rrc_trans_begin_map[const.DISCONNECTED_TO_DCH_ID] = [entry, i]
+                # Disconnected -> DCH end
+                elif entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_SETUP_COMPLETE:
+                    if rrc_trans_begin_map[const.DISCONNECTED_TO_DCH_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.DISCONNECTED_TO_DCH_ID]
+                        rrc_trans_timer_map[const.DISCONNECTED_TO_DCH_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.DISCONNECTED_TO_DCH_ID] = None
+                # DCH -> Disconnected start
+                elif entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE:
+                    rrc_trans_begin_map[const.DCH_TO_DISCONNECTED_ID] = [entry, i]
+                # DCH -> Disconnected end
+                elif entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE_COMPLETE:
+                    if rrc_trans_begin_map[const.DCH_TO_DISCONNECTED_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.DCH_TO_DISCONNECTED_ID]
+                        rrc_trans_timer_map[const.DCH_TO_DISCONNECTED_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.DCH_TO_DISCONNECTED_ID] = None
+        elif network_type == const.LTE:
+            # T-Mobile, AT&T, Verizon LTE
+            if carrier == const.TMOBILE or \
+               carrier == const.ATT or \
+               carrier == const.VERIZON:
+                # idle camped to connected start
+                if entry.sig_msg["ch_type"] == "UL_CCCH" and \
+                   entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_REQUEST:
+                    rrc_trans_begin_map[const.IDLE_CAMPED_to_CONNECTED_ID] = [entry, i]
+                # idle camped to conneted end
+                elif entry.sig_msg["ch_type"] == "UL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CONNCT_RECONFIG_COMPLETE:
+                    if rrc_trans_begin_map[const.IDLE_CAMPED_to_CONNECTED_ID] != None:
+                        [beginEntry, beginIndex] = rrc_trans_begin_map[const.IDLE_CAMPED_to_CONNECTED_ID]
+                        rrc_trans_timer_map[const.IDLE_CAMPED_to_CONNECTED_ID][beginEntry.timestamp] = \
+                                           [entry.timestamp, [beginEntry, beginIndex], [entry, i]]
+                        rrc_trans_begin_map[const.IDLE_CAMPED_to_CONNECTED_ID] = None
+                # connected to idle camped
+                elif entry.sig_msg["ch_type"] == "DL_DCCH" and \
+                     entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE:
+                    (privIP, privIPindex) = util.find_nearest_ip(entryList, i, lower_bound = LOWER_BOUND)
+                    if privIP != None:
+                        rrc_trans_timer_map[const.CONNECTED_TO_IDLE_CAMPED_ID][entry.timestamp] = \
+                                           [privIP.timestamp, [privIP, privIPindex], [entry, i]]
+    return rrc_trans_timer_map
 
 #################################################################
 ############### Validate RRC Inference Timer ####################

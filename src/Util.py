@@ -18,6 +18,7 @@ import crossLayerWorker as clw
 import delayWorker as dw
 import retxWorker as rw
 import validateWorker as vw
+import rootCauseWorker as rcw
 
 DEBUG = False
 TIME_DEBUG = False
@@ -1014,7 +1015,8 @@ def gen_RRC_state_count_map():
     return countMap
 
 # generate a map between rrc state transition to an empty list
-def gen_RRC_trans_state_list_map(carrier=const.TMOBILE, network_type=const.WCDMA):
+def gen_RRC_trans_state_list_map(carrier=const.TMOBILE, network_type=const.WCDMA, \
+                                 item="list"):
     transMap = {}
     rrcTransMap = None
     if network_type == const.WCDMA:
@@ -1022,11 +1024,55 @@ def gen_RRC_trans_state_list_map(carrier=const.TMOBILE, network_type=const.WCDMA
             rrcTransMap = const.TMOBILE_3G_RRC_TRANSITION_ID_GROUP
         elif carrier == const.ATT:
             rrcTransMap = const.ATT_3G_RRC_TRANSITION_ID_GROUP
+    elif network_type == const.LTE:
+        rrcTransMap = const.LTE_RRC_TRANSITION_ID_GROUP
 
     for rrc in rrcTransMap:
-        transMap[rrc] = []
+        if item == "list":
+            transMap[rrc] = []
+        elif item == "map":
+            transMap[rrc] = {}
+        elif item == "bool":
+            transMap[rrc] = False
+        elif item == "None":
+            transMap[rrc] = None
     return transMap
 
+# get overlapped transition period based on given timestamp
+# Defn of overlap means:
+#    start < endOfTransition and end > startOfTransition
+#
+# Input:
+# 1. mode: earlier, later, both
+# Output:
+#    The overlapped period
+def find_overlapped_transition_period(startTS, endTS, rrcTransTimerMap, \
+                                      rrcTransID, mode="both"):
+    period = 0.0
+    # No such transition occurs
+    if rrcTransID not in rrcTransTimerMap:
+        print >> sys.stderr, "ERROR: " + rrcTransTimerMap + " not in the map!!!"
+        return period
+    sortedRRCTransStartTimer = sorted(rrcTransTimerMap[rrcTransID].keys())
+    
+    if mode == "earlier" or mode == "both":
+        # check whether overlapped period occur earlier
+        earlyStart = binary_search_largest_smaller_value(startTS, sortedRRCTransStartTimer)
+        if earlyStart in rrcTransTimerMap[rrcTransID] and \
+           startTS <= rrcTransTimerMap[rrcTransID][earlyStart][0] and \
+           endTS >= earlyStart:
+            return min(rrcTransTimerMap[rrcTransID][earlyStart][0], endTS) - startTS
+
+    if mode == "later" or mode == "both":
+        # check whether overlapped period occur later
+        lastStart = binary_search_smallest_greater_value(startTS, sortedRRCTransStartTimer)
+        if lastStart in rrcTransTimerMap[rrcTransID] and \
+           endTS >= lastStart and \
+           startTS <= rrcTransTimerMap[rrcTransID][lastStart][0]:
+            return min(rrcTransTimerMap[rrcTransID][lastStart][0], endTS) - lastStart
+
+    return period
+    
 # help to append keys with same value to a map
 def add_multiple_key_same_value_to_map(Map, keys, value):
     for key in keys:
@@ -1074,11 +1120,25 @@ def count_signaling_msg(entries, startIndex, endIndex):
 
     return countMap
 
-# find the nearest IP packet before the given index
+# get the transition group based on the network type and carrier
+def get_rrc_trans_group(network_type, carrier):
+    stateOfInterest = []
+    if network_type == const.WCDMA:
+        if carrier == const.TMOBILE:
+            stateOfInterest = const.TMOBILE_3G_RRC_TRANSITION_ID_GROUP
+        elif carrier == const.ATT:
+            stateOfInterest = const.ATT_3G_RRC_TRANSITION_ID_GROUP
+    elif network_type == const.LTE:
+        stateOfInterest = const.LTE_RRC_TRANSITION_ID_GROUP
+    return stateOfInterest
+
+# find the nearest IP packet before/after the given index
 # if inverse, then find the first IP after the index
-def find_nearest_ip(entryList, index, inverse=False, src_ip=None, dst_ip=None):
+def find_nearest_ip(entryList, index, after=False, src_ip=None, dst_ip=None, \
+                    lower_bound=None, upper_bound=None):
     indices = None
-    if inverse:
+    baseTime = entryList[index].timestamp
+    if after:
         indices = range(index, len(entryList))
     else:
         indices = range(index)
@@ -1089,8 +1149,30 @@ def find_nearest_ip(entryList, index, inverse=False, src_ip=None, dst_ip=None):
                 continue
             if dst_ip != None and entryList[i].ip["dst_ip"] != dst_ip:
                 continue
-            return entryList[i]
+            if lower_bound != None and abs(entryList[i].timestamp - baseTime) < lower_bound:
+                continue
+            if upper_bound != None and abs(entryList[i].timestamp - baseTime) > upper_bound:
+                break
+            return (entryList[i], i)
 
+    return (None, None)
+
+# check whether list of log id occurs within the start/end index
+def check_whether_log_of_interest_occur(entryList, startIndex, endIndex, listOfLogIDs):
+    startTS = entryList[startIndex].timestamp
+    endTS = entryList[endIndex].timestamp
+    for i in range(startIndex+1, endIndex):
+        entry = entryList[i]
+        if entry.logID in listOfLogIDs and \
+           (entry.timestamp > startTS and entry.timestamp < endTS):
+            return True
+    return False
+
+# find the next log with given log ID in the trace
+def find_next_log(entryList, startIndex, logID):
+    for i in range(startIndex + 1, len(entryList) - 1):
+        if entryList[i].logID == logID:
+            return i
     return None
 
 # find the nearest RLC PDU before the given index, consider both uplink and downlink
@@ -1151,6 +1233,21 @@ def getListOfRTTBasedonIndices(entryList, indices, src_ip=None, dst_ip=None):
                 rttList.append(entry.rtt["tcp"])
 
     return rttList
+
+# Filter out normal IP's and Installed IP trace
+# Output
+# 1. IP trace without stalled
+# 2. IP trace with stalled
+def filterOutStalledIPtraces(entryList, stallMap):
+    stalledIPTrace = []
+    normalIPTrace = []
+    for entry in entryList:
+        if entry.logID == const.PROTOCOL_ID:
+            if rcw.checkWhetherAIPpacketInStall(entry, stallMap):
+                stalledIPTrace.append(entry)
+            else:
+                normalIPTrace.append(entry)
+    return (normalIPTrace, stalledIPTrace)
 
 #############################################################################
 ############################ Bianry Search ##################################
@@ -1241,6 +1338,50 @@ def binary_search_largest_smaller_value(target, sortedList):
         return binary_search_largest_smaller_value(target, sortedList[len(sortedList)/2:])
     else:
         return binary_search_largest_smaller_value(target, sortedList[:len(sortedList)/2+1])
+
+# use binary search to find nearest entry that timestamp is smaller than the target
+# Output:
+# Index of the entry in the entryList
+def binary_search_largest_smaller_timestamp_entry_id(targetTS, startIndex, endIndex, entryList):
+    if not entryList:
+        return None
+    if startIndex < 0 or targetTS < entryList[0].timestamp:
+        return 0
+    if endIndex >= len(entryList) or targetTS > entryList[-1].timestamp:
+        print >> std.stderr, "WARNING: binary search end index out of range (largest smaller)"
+        return len(entryList) - 1
+    if endIndex - startIndex <= 1:
+        return startIndex
+    midIndex = (int)((startIndex + endIndex) / 2)
+    midTS = entryList[midIndex].timestamp
+    if targetTS == midTS:
+        return midIndex
+    elif targetTS >= midTS:
+        return binary_search_largest_smaller_timestamp_entry_id(targetTS, midIndex, endIndex, entryList)
+    else:
+        return binary_search_largest_smaller_timestamp_entry_id(targetTS, startIndex, midIndex, entryList)
+    
+# use binary search to find nearest entry that timestamp is greater than the target
+# Output:
+# Index of the entry in the entryList
+def binary_search_smallest_greater_timestamp_entry_id(targetTS, startIndex, endIndex, entryList):
+    if not entryList:
+        return None
+    if startIndex < 0 or targetTS < entryList[0].timestamp:
+        return 0
+    if endIndex >= len(entryList) or targetTS > entryList[-1].timestamp:
+        print >> std.stderr, "WARNING: binary search end index out of range (smallest greater)"
+        return len(entryList) - 1
+    if endIndex - startIndex <= 1:
+        return endIndex
+    midIndex = (int)((startIndex + endIndex) / 2)
+    midTS = entryList[midIndex].timestamp
+    if targetTS == midTS:
+        return midIndex
+    elif targetTS > midTS:
+        return binary_search_smallest_greater_timestamp_entry_id(targetTS, midIndex, endIndex, entryList)
+    else:
+        return binary_search_smallest_greater_timestamp_entry_id(targetTS, startIndex, midIndex, entryList)
 
 #############################################################################
 ############################ Debugging functions ############################
