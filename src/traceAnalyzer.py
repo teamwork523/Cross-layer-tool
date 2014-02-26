@@ -3,6 +3,23 @@
 """
 @Author Haokun Luo
 @Date   02/02/2013
+
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 The tool parse and analysis the Data Set generated from QxDM filtered log file (in txt)
 It could extract IP packets and RLC PDUs, and map them with context information,
 i.e. RRC state, RSCP, and etc. One case study for the tool is to study cross-layer
@@ -910,6 +927,22 @@ def main():
         elif options.qoe_type.lower() == "detail":
             # print detail data information for QoE trace
             rcw.trace_detail_rrc_info(QCATEntries, options.client_ip, options.network_type)
+        elif options.qoe_type.lower() == "rrc_trans":
+            # check whether rrc transition occurs
+            rrc_trans_timer_map = rtw.getCompleteRRCStateTransitionMap(QCATEntries, \
+                                                                       options.network_type, \
+                                                                       options.carrier)
+            for rrc in rrc_trans_timer_map:
+                print const.RRC_MAP[rrc] + ": " + str(len(rrc_trans_timer_map[rrc]))
+        elif options.qoe_type.lower() == "feasibility":
+            # check whether qoe trace is clearly seperate the region of network traffic
+            #qa.checkWhetherQoEMappingToLowerLayer(QCATEntries, options.qoe_file, options.client_ip, \
+            #                                      options.carrier, options.network_type)
+
+            # Check whether all the flows could be bounded
+            qa.checkWhetherFlowBoundedByQoE(QCATEntries, options.qoe_file, options.client_ip, \
+                                            options.carrier, options.network_type)
+            
 
     # WCDMA downlink cross-layer mapping validation
     if options.validate_downlink and options.client_ip:

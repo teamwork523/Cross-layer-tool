@@ -1,5 +1,23 @@
 import math
 
+"""
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+"""
+
 # Timestamp accuracy, in terms of milliseconds
 TS_DELTA = 1
 
@@ -158,6 +176,7 @@ HOST_OF_INTEREST = set([
 ############### UDP ################
 ####################################
 UDP_RTT_LIMIT = 5
+UDP_Header_Len = 8
 # instrumented index value
 UDP_WAIT_LIMIT = 32
 UDP_GRAN_LIMIT = 1024
@@ -165,6 +184,11 @@ UDP_GRAN_LIMIT = 1024
 # Include data configuration settings
 # TODO: hard configured, to be changed
 DATA_LOGIC_CHANNEL_ID = 19
+
+# DNS related
+DNS_PORT = 53
+DNS_QUERY = 0
+DNS_RESPONSE = 1
 
 ####################################
 ############ RRC State #############
@@ -245,7 +269,6 @@ TLPtoID_MAP = {"TCP": TCP_ID,
 Payload_Header_Len = 8
 IP_Header_Len = 20
 TCP_Header_Len = 20 + 12 # include option
-UDP_Header_Len = 8
 
 ####################################
 ############### RLC ################

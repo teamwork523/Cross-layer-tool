@@ -3,6 +3,23 @@
 """
 @Author Haokun Luo
 @Date   02/02/2013
+
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 This program analyze the Data Set generated from QXDM filtered log file
 It could optionally map the packets from PCAP with the RRC states in the log
 """
@@ -1132,10 +1149,10 @@ def get_rrc_trans_group(network_type, carrier):
         stateOfInterest = const.LTE_RRC_TRANSITION_ID_GROUP
     return stateOfInterest
 
-# find the nearest IP packet before/after the given index
+# find the nearest ID of interest before/after the given index
 # if inverse, then find the first IP after the index
-def find_nearest_ip(entryList, index, after=False, src_ip=None, dst_ip=None, \
-                    lower_bound=None, upper_bound=None):
+def find_nearest_entry(entryList, index, after=False, src_ip=None, dst_ip=None, \
+                    lower_bound=None, upper_bound=None, entry_id=const.PROTOCOL_ID):
     indices = None
     baseTime = entryList[index].timestamp
     if after:
@@ -1144,7 +1161,7 @@ def find_nearest_ip(entryList, index, after=False, src_ip=None, dst_ip=None, \
         indices = range(index)
         indices.reverse()
     for i in indices:
-        if entryList[i].logID == const.PROTOCOL_ID:
+        if entryList[i].logID == entry_id:
             if src_ip != None and entryList[i].ip["src_ip"] != src_ip:
                 continue
             if dst_ip != None and entryList[i].ip["dst_ip"] != dst_ip:
@@ -1249,6 +1266,19 @@ def filterOutStalledIPtraces(entryList, stallMap):
                 normalIPTrace.append(entry)
     return (normalIPTrace, stalledIPTrace)
 
+
+# Check whether an entry fall into a timerMap
+# Output:
+# 1. Boolean: whether falls into one of the timer intervals
+# 2. The timestamp of the greatest smaller entry
+def checkWhetherEntryInTimerMap(entry, timerMap):
+    beginTimerList = sorted(timerMap.keys())
+    # Check the upper bound is included
+    beginTS = binary_search_largest_smaller_value(entry.timestamp, beginTimerList)
+    if beginTS in timerMap and entry.timestamp <= timerMap[beginTS]:
+        return [True, beginTS]
+    return [False, beginTS]
+
 #############################################################################
 ############################ Bianry Search ##################################
 ############################################################################# 
@@ -1347,11 +1377,11 @@ def binary_search_largest_smaller_timestamp_entry_id(targetTS, startIndex, endIn
         return None
     if startIndex < 0 or targetTS < entryList[0].timestamp:
         return 0
-    if endIndex >= len(entryList) or targetTS > entryList[-1].timestamp:
-        print >> std.stderr, "WARNING: binary search end index out of range (largest smaller)"
-        return len(entryList) - 1
     if endIndex - startIndex <= 1:
         return startIndex
+    if endIndex >= len(entryList) or targetTS > entryList[-1].timestamp:
+        print >> sys.stderr, "WARNING: binary search end index out of range (largest smaller)"
+        return len(entryList) - 1
     midIndex = (int)((startIndex + endIndex) / 2)
     midTS = entryList[midIndex].timestamp
     if targetTS == midTS:
@@ -1369,11 +1399,11 @@ def binary_search_smallest_greater_timestamp_entry_id(targetTS, startIndex, endI
         return None
     if startIndex < 0 or targetTS < entryList[0].timestamp:
         return 0
-    if endIndex >= len(entryList) or targetTS > entryList[-1].timestamp:
-        print >> std.stderr, "WARNING: binary search end index out of range (smallest greater)"
-        return len(entryList) - 1
     if endIndex - startIndex <= 1:
         return endIndex
+    if endIndex >= len(entryList) or targetTS > entryList[-1].timestamp:
+        print >> sys.stderr, "WARNING: binary search end index out of range (smallest greater)"
+        return len(entryList) - 1
     midIndex = (int)((startIndex + endIndex) / 2)
     midTS = entryList[midIndex].timestamp
     if targetTS == midTS:

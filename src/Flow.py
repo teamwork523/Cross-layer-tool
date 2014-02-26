@@ -4,6 +4,22 @@
 @Author Haokun Luo
 @Date   01/12/2014
 
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 TCP flow structure
 """
 
@@ -29,9 +45,16 @@ class Flow(object):
         self.properties = {
             "http": None,\
             "index_range": {"min": None, \
-                            "max": None}
+                            "max": None}, \
+            "GET_index": None, \
+            "url": []
             }
         self.cross_layer_trace = []
+
+    # set the URLs request 
+    # notice urls is a list
+    def setURL(self, urls):
+        self.properties["url"] = urls
 
     # Add new packet to the flow
     def addPacket(self, entry, index):
@@ -48,10 +71,15 @@ class Flow(object):
         if self.properties["index_range"]["min"] == None or \
            self.properties["index_range"]["min"] > index:
             self.properties["index_range"]["min"] = index            
-            
+
         if self.properties["index_range"]["max"] == None or \
            self.properties["index_range"]["max"] < index:
             self.properties["index_range"]["max"] = index
+
+        # update the http GET index
+        if self.properties["GET_index"] == None and \
+           entry.http["type"] == "GET":
+            self.properties["GET_index"] = len(self.flow) - 1
 
         # link that entry's flow entry to this instance
         entry.tcp["flow"] = self

@@ -4,6 +4,22 @@
 @Author Haokun Luo
 @Date   03/17/2013
 
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 Functions related to delay, TCP RTT calculation, throughput estimation
 """
 
@@ -197,8 +213,8 @@ def first_hop_latency_evaluation(entryList, pduID):
 def cal_throughput(entryList, interval=1.0, src_ip=None, dst_ip=None):
     if len(entryList) < 2:
         return []
-    #startIP, dummy = util.find_nearest_ip(entryList, 0, True, src_ip, dst_ip)
-    #endIP, dummy = util.find_nearest_ip(entryList, len(entryList) - 1, False, src_ip, dst_ip)
+    #startIP, dummy = util.find_nearest_entry(entryList, 0, True, src_ip, dst_ip)
+    #endIP, dummy = util.find_nearest_entry(entryList, len(entryList) - 1, False, src_ip, dst_ip)
     startIP = entryList[0]
     endIP = entryList[-1]
     slotList = [0.0] * (int)((endIP.timestamp - startIP.timestamp) / interval)

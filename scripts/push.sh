@@ -6,6 +6,7 @@ UPLOAD_DATA=$2
 ZIP_PATH=$3
 TARGET_PATH=$4
 if [ $# -lt 1 ] || [ $# -gt 5 ];then
+    echo "Current parameter length is $#"
     echo $USAGE
     exit 1
 fi

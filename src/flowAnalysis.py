@@ -4,6 +4,22 @@
 @Author Haokun Luo
 @Date   01/12/2014
 
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 TCP flow class analysis including HTTP related parsing as well
 """
 
@@ -16,7 +32,9 @@ import retxWorker as rw
 import Util as util
 import validateWorker as vw
 from Flow import Flow
+from DNS import DNS
 
+DNS_CHECK = False
 FLOW_CHECK = False
 TIMER_CHECK = False
 HTTP_EXTRA = False
@@ -58,6 +76,27 @@ def extractTCPFlows(entryList):
     for flow in ongoingFlows.values():
         finishedFlows.append(flow)
 
+    # filter out super short flow
+    filteredFlows = []
+    for f in finishedFlows:
+        if len(f.flow) > 2:
+            filteredFlows.append(f)
+
+    # initiate the DNS trace
+    dns = DNS(entryList)
+    ipToURLMap = dns.getIpToURLMap()
+    for f in filteredFlows:
+        syn = f.flow[0]
+        inverseIp = None
+        if syn.ip["src_ip"] in ipToURLMap:
+            inverseIp = syn.ip["src_ip"]
+        elif syn.ip["dst_ip"] in ipToURLMap:
+            inverseIp = syn.ip["dst_ip"]
+        if inverseIp != None:
+            f.setURL(ipToURLMap[inverseIp])
+            if DNS_CHECK:
+                print inverseIp + " -> " + str(ipToURLMap[inverseIp])
+
     if FLOW_CHECK:
         for f in finishedFlows:
             if f.properties["http"] != None:
@@ -70,7 +109,28 @@ def extractTCPFlows(entryList):
         print "*" * 60
         print "Total # of flows are " + str(len(finishedFlows))
   
-    return finishedFlows 
+    return filteredFlows
+
+# Filter out the flow with unwanted urls
+def filterOutBlackListDNSurls(flows, blackListURLs):
+    newFlows = []
+    for f in flows:
+        if not any(url in blackListURLs for url in f.properties["url"]):
+            newFlows.append(f)
+    return newFlows
+
+# convert flows into flowTimerMap
+# Format:
+# startTS -> [endTS, flow, flowIndex]
+def convertIntoFlowTimerMap(flows):
+    flowTimerMap = {}
+
+    for i in range(len(flows)):
+        f = flows[i]
+        flowTimerMap[f.flow[0].timestamp] = [f.flow[-1].timestamp, \
+                                             f, i]
+
+    return flowTimerMap
 
 # Validate TCP flow signature hash
 def validateTCPFlowSigantureHashing(entryList):

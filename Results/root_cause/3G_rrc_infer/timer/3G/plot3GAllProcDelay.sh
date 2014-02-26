@@ -3,6 +3,7 @@
 att_file=$1
 tmobile_file=$2
 output=$3
+anonymous=$4
 point_size=1.5
 # Generate CDF plot
 # plot AT&T Demotion timer
@@ -23,6 +24,13 @@ point_size=1.5
 # merge two Promotion files
 ../../Tools/common/mergeTwoFile.py att_cdf tmobile_cdf 2 3 > tmp_promote.txt
 
+att_name="AT&T"
+tmobile_name="T-Mobile"
+if [ $anonymous = "y" ]; then
+    att_name="C2"
+    tmobile_name="C1"
+fi
+
 gnuplot -p <<EOF
 set terminal postscript eps color "Helvetica" 18
 #set size 0.5, 0.5
@@ -36,9 +44,9 @@ set key bottom center
 set ytic 0.2                          # set ytics automatically
 set xlabel "Promotion process delay from QxDM (s)"
 set ylabel "CDF"
-plot "tmp_promote.txt" u 2:1 w linespoints lt 8 pi -30 ps $point_size pt 3 lc rgb "orange" title "AT&T Disconnected_to_DCH", \
-     "" u 3:1 w linespoints lt 1 pi -30 ps $point_size pt 2 title "T-Mobile PCH_to_FACH", \
-     "" u 4:1 w linespoints lt 9 pi -30 ps $point_size pt 5 lc rgb "green" title "T-Mobile FACH_to_DCH"
+plot "tmp_promote.txt" u 3:1 w linespoints lt 1 pi -30 ps $point_size pt 2 title "$tmobile_name PCH->FACH", \
+     "" u 4:1 w linespoints lt 9 pi -30 ps $point_size pt 5 lc rgb "green" title "$tmobile_name FACH->DCH", \
+     "" u 2:1 w linespoints lt 8 pi -30 ps $point_size pt 3 lc rgb "orange" title "$att_name Disconnected->DCH"
 #unset logscale x
 
 # Plot demotion
@@ -49,9 +57,9 @@ set ytic 0.2                          # set ytics automatically
 set xlabel "Demotion process delay from QxDM in logscale (s)"
 set ylabel "CDF"
 
-plot "tmp_demote.txt" u 2:1 w linespoints lt 8 pi -30 ps $point_size pt 3 lc rgb "orange" title "AT&T DCH_to_disconnected",\
-     "" u 3:1 w linespoints lt 1 pi -30 ps $point_size pt 2 title "T-Mobile FACH_to_PCH",\
-     "" u 4:1 w linespoints lt 9 pi -30 ps $point_size pt 5 lc rgb "green" title "T-Mobile DCH_to_FACH"
+plot "tmp_demote.txt" u 3:1 w linespoints lt 1 pi -30 ps $point_size pt 2 title "$tmobile_name FACH->PCH",\
+     "" u 4:1 w linespoints lt 9 pi -30 ps $point_size pt 5 lc rgb "green" title "$tmobile_name DCH->FACH",\
+     "" u 2:1 w linespoints lt 8 pi -30 ps $point_size pt 3 lc rgb "orange" title "$att_name DCH->Disconnected"
 
 unset multiplot
 

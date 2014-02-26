@@ -26,3 +26,4 @@ while (( $i <= $partition ));do
     i=$(($i + 1))
 done
 
+rm -rf profile.txt 2> /dev/null

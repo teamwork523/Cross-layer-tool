@@ -4,6 +4,22 @@
 @Author Haokun Luo
 @Date   11/10/2013
 
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 Validation for RRC inference, feasibility of cross layer mapping and etc.
 """
 
@@ -98,7 +114,7 @@ def validate_rrc_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDM
                     if entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_RADIO_BEARER_RECONFIG and \
                        entry.sig_msg["msg"]["rrc_indicator"] and entry.sig_msg["msg"]["rrc_indicator"] == const.FACH_ID:
-                        # (privIP, dummy) = util.find_nearest_ip(entryList, i)
+                        # (privIP, dummy) = util.find_nearest_entry(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
                            entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
@@ -106,7 +122,7 @@ def validate_rrc_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDM
                     # FACH to PCH
                     if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_PHY_CH_RECONFIG):
-                        #(privIP, dummy) = util.find_nearest_ip(entryList, i)
+                        #(privIP, dummy) = util.find_nearest_entry(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
                            entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
@@ -115,7 +131,7 @@ def validate_rrc_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDM
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CELL_UP):
                         if PCH_to_FACH_start == None:
                             PCH_to_FACH_start = entry
-                        #(privIP, dummy) = util.find_nearest_ip(entryList, i)
+                        #(privIP, dummy) = util.find_nearest_entry(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if privPDU != None and entry.timestamp - privPDU.timestamp < TIMER_UPPER_BOUND and \
                            entry.timestamp - privPDU.timestamp > DEMOTION_LOWER_BOUND:
@@ -152,7 +168,7 @@ def validate_rrc_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDM
                     # DCH to disconnected
                     if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "UL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE_COMPLETE):
-                        # (privIP, dummy) = util.find_nearest_ip(entryList, i)
+                        # (privIP, dummy) = util.find_nearest_entry(entryList, i)
                         privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if last_priv_PDU != None and privPDU != None and privPDU == last_priv_PDU:
                             continue
@@ -181,7 +197,7 @@ def validate_rrc_timer(entryList, carrier=const.TMOBILE, network_type=const.WCDM
                     # connected to idle camped
                     if (entry.sig_msg["ch_type"] and entry.sig_msg["ch_type"] == "DL_DCCH" and \
                        entry.sig_msg["msg"]["type"] and entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE):
-                        (privIP, dummy) = util.find_nearest_ip(entryList, i, lower_bound = DEMOTION_LOWER_BOUND, \
+                        (privIP, dummy) = util.find_nearest_entry(entryList, i, lower_bound = DEMOTION_LOWER_BOUND, \
                                                                     upper_bound = TIMER_UPPER_BOUND)
                         #privPDU = util.find_nearest_rlc_pdu(entryList, i)
                         if last_priv_IP != None and privIP != None and privIP == last_priv_IP:

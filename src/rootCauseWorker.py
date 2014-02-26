@@ -4,6 +4,22 @@
 @Author Haokun Luo
 @Date   11/17/2013
 
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 Root Cause Analysis for
 1. Abnormal inferred RRC state
 """
@@ -110,8 +126,9 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type=const.WCDMA, c
         # TODO: add LTE here if necessary
         pass
 
-    header += "Reset_delay" + DEL + \
-              "IP_to_first_RLC"
+    # Current network delay is defined as last rlc PDU until IP packet received
+    header += "Network_delay" + DEL + \
+              "Rest_of_delay"              
     print header
 
     for i in range(len(entryList)):
@@ -143,7 +160,9 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type=const.WCDMA, c
                                 if cur_inter_packet_time != priv_inter_packet_time:
                                     print priv_output_result
                                 # append the UDP RTT here
-                                (next_ip, dummy) = util.find_nearest_ip(entryList, i, True, src_ip=server_ip)
+                                (next_ip, next_ip_index) = util.find_nearest_entry(entryList, i, \
+                                                                                   True, src_ip=server_ip, \
+                                                                                   entry_id=const.PROTOCOL_ID)
                                 udp_rtt = 0.0
                                 if next_ip != None:
                                     udp_rtt = next_ip.timestamp - entry.timestamp
@@ -161,10 +180,33 @@ def abnormal_rrc_fach_analysis(entryList, server_ip, network_type=const.WCDMA, c
                                                                                            mode="both")
                                     rest_delay -= overlap_timer
                                     cur_output_result += str(overlap_timer) + DEL
+                                # Last RLC PDU to the return IP excluding any transition process
+                                network_delay = 0.0
+                                last_ts_before_network = mapped_RLCs[-1][0].timestamp
+                                if next_ip != None:
+                                    # Heuristic to eliminate the control delay by 
+                                    # searching the nearest SIG_MSG
+                                    (priv_sig, dummy) = util.find_nearest_entry(entryList, next_ip_index, \
+                                                                                False, \
+                                                                                entry_id=const.SIG_MSG_ID)
+                                    if priv_sig.timestamp > last_ts_before_network and \
+                                       priv_sig.timestamp <= next_ip.timestamp:
+                                        last_ts_before_network = priv_sig.timestamp
+                                    network_delay = next_ip.timestamp - last_ts_before_network
+                                    """
+                                    for rrc in rrc_trans_of_interest:
+                                        overlap_timer = util.find_overlapped_transition_period(mapped_RLCs[-1][0].timestamp, \
+                                                                                               last_ts_before_network, \
+                                                                                               rrc_trans_timer_map, \
+                                                                                               rrc, \
+                                                                                               mode="both")
+                                        network_delay -= overlap_timer
+                                    """
+                                cur_output_result += str(network_delay) + DEL
+
                                 # append the rest delay here
-                                cur_output_result += str(rest_delay) + DEL
-                                # find the IP to the first RLC
-                                cur_output_result += str(mapped_RLCs[-1][0].timestamp - entry.timestamp) + DEL
+                                rest_delay -= network_delay
+                                cur_output_result += str(max(rest_delay, 0.0)) + DEL
                                 
                                 # reset everything all the time
                                 priv_inter_packet_time = cur_inter_packet_time
@@ -340,7 +382,7 @@ def rrc_state_transition_timers(entryList):
 #
 # 1. Pair the possible interrupted flow with the non-interrupted flow
 # 2. Compare the problematic TCP packet and the corresponding normal packet
-def performance_analysis_for_browsing(entryList, flows, client_ip, network_type, \
+def performance_analysis_for_browsing(entryList, flows, client_ip, network_type=const.WCDMA, \
                                       target_timer=1000.0, problem_timer=7000.0, \
                                       carrier=const.TMOBILE):
     DEL = "\t"
@@ -349,6 +391,9 @@ def performance_analysis_for_browsing(entryList, flows, client_ip, network_type,
     for url in const.HOST_OF_INTEREST:
         # timerMap[url] = {target_timer:[], problem_timer:[]}
         timerMap[url] = {"good":[], "bad":[]}
+
+    # get the timer map
+    rrc_trans_timer_map = rtw.getCompleteRRCStateTransitionMap(entryList, network_type, carrier)
 
     for f in flows:
         if f.properties["http"] != None and \
@@ -395,6 +440,7 @@ def performance_analysis_for_browsing(entryList, flows, client_ip, network_type,
 
             if traceStartIndex != None and traceEndIndex != None:
                 # Future RTT value
+                """
                 RTT = "N/A"
                 if traceEndIndex > len(flowTrace):
                     traceEndIndex = len(flowTrace) - 1
@@ -403,10 +449,11 @@ def performance_analysis_for_browsing(entryList, flows, client_ip, network_type,
                 rtts = util.getListOfRTTBasedonIndices(flowTrace, interfered_indices, src_ip = client_ip)
                 if len(rtts) > 0:
                     RTT = util.getMedian(rtts) 
+                """
                 lastData = fa.findLastPayload(f.flow)
                 
-                # Header: hostname, interference type, user delay, http embeddied timer, 
-                #         SYN to the last IP packet, Interference time
+                # Header: 1. hostname, 2 . interference type, 3. user delay, 
+                #         4. http embeddied timer, 5. SYN RTT, 6. GET RTT
                 # not None means bad
                 if lastData.timestamp - f.flow[0].timestamp > const.MAX_USER_DELAY_SEC:
                     continue
@@ -415,7 +462,45 @@ def performance_analysis_for_browsing(entryList, flows, client_ip, network_type,
                 #if len(inaccurateMap) > 0:
                     # detect abnormal state occurs in between state transitions
                     #line += "Inaccurate" + DEL
-                # NEW: add carrier
+                # Find overlap
+                rrc_trans_state_bool_map = util.gen_RRC_trans_state_list_map(carrier, \
+                                                                             network_type, \
+                                                                             item="bool")
+                # Assume the forth packet is the GET request
+                get_index = f.properties["GET_index"]
+                if get_index == None:
+                    get_index = min(5, len(f.flow) - 1)
+                else:
+                    get_index += 1
+                for rrc_trans_state in rrc_trans_state_bool_map.keys():
+                    overlap_timer = util.find_overlapped_transition_period(f.flow[0].timestamp, \
+                                                                           f.flow[get_index].timestamp, \
+                                                                           rrc_trans_timer_map, \
+                                                                           rrc_trans_state, \
+                                                                           mode="both")
+                    if overlap_timer > 0:
+                        rrc_trans_state_bool_map[rrc_trans_state] = True
+                
+                if network_type == const.WCDMA:
+                    if carrier == const.TMOBILE:
+                        if rrc_trans_state_bool_map[const.DCH_TO_FACH_ID] == True:
+                            line += const.RRC_MAP[const.DCH_TO_FACH_ID] + DEL
+                        elif rrc_trans_state_bool_map[const.PCH_TO_FACH_ID] == True and \
+                             rrc_trans_state_bool_map[const.FACH_TO_DCH_ID] == True:
+                            line += const.RRC_MAP[const.PCH_TO_FACH_ID] + "+" + \
+                                    const.RRC_MAP[const.FACH_TO_DCH_ID] + DEL
+                        elif rrc_trans_state_bool_map[const.FACH_TO_DCH_ID] == True:
+                            line += const.RRC_MAP[const.FACH_TO_DCH_ID] + DEL
+                        else:
+                            line += "Normal" + DEL
+                    elif carrier == const.ATT:
+                        if rrc_trans_state_bool_map[const.DCH_TO_DISCONNECTED_ID] == True:
+                            line += const.RRC_MAP[const.DCH_TO_DISCONNECTED_ID] + DEL
+                        elif rrc_trans_state_bool_map[const.DISCONNECTED_TO_DCH_ID] == True:
+                            line += const.RRC_MAP[const.DISCONNECTED_TO_DCH_ID] + DEL
+                        else:
+                            line += "Normal" + DEL
+                """
                 if const.PCH_TO_FACH_ID in interfered_states and const.FACH_TO_DCH_ID in interfered_states:
                     #timerMap[f.properties["http"]["host"]]["bad"].append(lastData.timestamp - f.flow[0].timestamp)
                     line += const.RRC_MAP[const.PCH_TO_FACH_ID] + "+" + const.RRC_MAP[const.FACH_TO_DCH_ID] + DEL
@@ -432,6 +517,7 @@ def performance_analysis_for_browsing(entryList, flows, client_ip, network_type,
                     if len(rtts) > 0:
                         RTT = util.getMedian(rtts)
                     line += "Normal" + DEL
+                """
                 
                 line += str(lastData.timestamp - f.flow[0].timestamp) + DEL
                 # http embeddied timer
@@ -440,6 +526,7 @@ def performance_analysis_for_browsing(entryList, flows, client_ip, network_type,
                 else:
                     continue
                 # SYN to last IP
+                """
                 lastIPpacketBeforeFlow = f.getLastPacketBeforeFlow(entryList)
                 if lastIPpacketBeforeFlow != None:
                     line += str(f.flow[0].timestamp - lastIPpacketBeforeFlow.timestamp) + DEL
@@ -450,24 +537,32 @@ def performance_analysis_for_browsing(entryList, flows, client_ip, network_type,
                 for state_index in range(len(interfered_states)):
                     # PCH_to_FACH interfer time
                     if interfered_states[state_index] == const.FACH_ID:
-                        (priv_IP, dummy) = util.find_nearest_ip(flowTrace, interfered_indices[state_index])
-                        (later_IP, dummy) = util.find_nearest_ip(flowTrace, interfered_indices[state_index], inverse = True)
+                        (priv_IP, dummy) = util.find_nearest_entry(flowTrace, interfered_indices[state_index])
+                        (later_IP, dummy) = util.find_nearest_entry(flowTrace, interfered_indices[state_index], inverse = True)
                         if priv_IP != None and later_IP != None:
                             interfer_time.append(later_IP.timestamp - priv_IP.timestamp)
                     elif interfered_states[state_index] == const.DCH_ID:
-                        (priv_IP, dummy) = util.find_nearest_ip(flowTrace, interfered_indices[state_index])
+                        (priv_IP, dummy) = util.find_nearest_entry(flowTrace, interfered_indices[state_index])
                         finish_index = findNextRadioBearerConfiguration(flowTrace, interfered_indices[state_index])
                         if finish_index != None:
-                            (later_IP, dummy) = util.find_nearest_ip(flowTrace, finish_index, inverse = True)
+                            (later_IP, dummy) = util.find_nearest_entry(flowTrace, finish_index, inverse = True)
                             if priv_IP != None and later_IP != None:
                                 interfer_time.append(later_IP.timestamp - priv_IP.timestamp)
+
+
                 if len(interfer_time) > 0:
                     line += str(sum(interfer_time)) + DEL
                 else:
                     line += "0.0" + DEL
-                
-                if RTT != "N/A":
-                    line += str(RTT) + DEL
+                """
+                # Get all the RTTs
+                syn_rtt = f.flow[0].rtt["tcp"]
+                get_rtt = None
+                if f.properties["GET_index"] != None:
+                    get_rtt = f.flow[f.properties["GET_index"]].rtt["tcp"]
+                if syn_rtt != None and get_rtt != None:
+                    line += str(syn_rtt) + DEL + \
+                            str(get_rtt)
                     print line
 
     # print result

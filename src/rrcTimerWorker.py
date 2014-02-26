@@ -4,6 +4,22 @@
 @Author Haokun Luo
 @Date   04/28/2013
 
+Copyright (c) 2012-2014 RobustNet Research Group, University of Michigan.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the RobustNet Research Group, University of Michigan.  The name of the
+RobustNet Research Group, University of Michigan may not 
+be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 Validate the inferred RRC Timer
 """
 
@@ -147,7 +163,7 @@ def getCompleteRRCStateTransitionMap(entryList, \
                 # connected to idle camped
                 elif entry.sig_msg["ch_type"] == "DL_DCCH" and \
                      entry.sig_msg["msg"]["type"] == const.MSG_CONNECT_RELEASE:
-                    (privIP, privIPindex) = util.find_nearest_ip(entryList, i, lower_bound = LOWER_BOUND)
+                    (privIP, privIPindex) = util.find_nearest_entry(entryList, i, lower_bound = LOWER_BOUND)
                     if privIP != None:
                         rrc_trans_timer_map[const.CONNECTED_TO_IDLE_CAMPED_ID][entry.timestamp] = \
                                            [privIP.timestamp, [privIP, privIPindex], [entry, i]]
